@@ -5,6 +5,7 @@ import { COMPANY, ANALYTICS } from '@/lib/constants'
 import { getLocalBusinessSchema } from '@/lib/metadata'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
+import ScrollToTop from '@/components/effects/ScrollToTop'
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -100,6 +101,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           />
         </noscript>
 
+        <ScrollToTop />
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
