@@ -73,11 +73,18 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - 3 breadcrumb scripts (2 unused) → build into components
 - 6 padding utility components → CSS classes
 
+## GitHub Repository
+- **Repo:** https://github.com/cqdesignsny/tz-electric.git
+- **Branch:** main
+- **Rule:** Always commit & push after changes. Keep README.md and MEMORY.md in sync between local and repo.
+
 ## Key Files
 - README.md - Full project documentation
+- MEMORY.md - Project memory (also in repo root)
 - webflow-data.md - CMS collection schemas
 - STRATEGY.md - Comprehensive redesign strategy
 - [feedback_tailwind4_layers.md](feedback_tailwind4_layers.md) - Tailwind CSS 4 @layer base gotcha
+- [feedback_github_sync.md](feedback_github_sync.md) - Always keep GitHub repo in sync with local
 
 ## Project Directory: tz-site/
 - `src/app/layout.tsx` — Root layout (fonts, GTM, LocalBusiness schema, Header/Footer)
@@ -94,6 +101,7 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - `src/app/services/page.tsx` — Services landing
 - `src/app/service-areas/page.tsx` — Service areas main listing
 - `src/app/service-areas/[city]/page.tsx` — Dynamic city pages (SSG, 7 cities)
+- `src/app/service-areas/county/[county]/page.tsx` — Dynamic county pages (SSG, 5 counties)
 - `src/app/privacy-policy/page.tsx` — Privacy policy (prose layout)
 - `src/app/terms-condition/page.tsx` — Terms & conditions
 - `src/app/cookies/page.tsx` — Cookie policy
@@ -102,7 +110,7 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - `src/lib/constants.ts` — All company data, nav items, services, analytics IDs
 - `src/lib/metadata.ts` — SEO utilities (createMetadata, JSON-LD schemas)
 - `src/lib/services-data.ts` — All 7 service pages data (titles, features, FAQs)
-- `src/lib/service-areas-data.ts` — 7 cities data (slug, county, meta, descriptions)
+- `src/lib/service-areas-data.ts` — 7 cities + 5 counties data (slug, county, meta, descriptions)
 - `src/app/mitsubishi/page.tsx` — Mitsubishi Electric Diamond Elite landing page
 - `src/app/signature-plans/page.tsx` — Signature Plans (pricing cards, comparison table, terms accordion)
 - `src/lib/mitsubishi-data.ts` — Mitsubishi landing page data (benefits, models, FAQ)
@@ -115,8 +123,9 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - `src/components/sections/` — HeroSection, TrustBar, ServicesGrid, WhyChooseUs, ReviewsSection, ServiceAreaSection, CTASection, ServicePageTemplate
 
 ## Build Status
-- **Last build:** Successful — 33 static pages (homepage, 7 services, mitsubishi, about, contact, reviews, financing, gallery, promotions, careers, services landing, signature-plans, 5 legal pages, service-areas main + 7 city pages)
-- **Build verified:** 2026-03-12 Session 6
+- **Last build:** Successful — 38 static pages (homepage, 7 services, mitsubishi, about, contact, reviews, financing, gallery, promotions, careers, services landing, signature-plans, 5 legal pages, service-areas main + 7 city pages + 5 county pages)
+- **Build verified:** 2026-03-16 Session 7
+- **Vercel deployment:** https://tz-electric.vercel.app/
 
 ## Completed
 - [x] Project setup (Next.js, Tailwind 4, TypeScript, Framer Motion)
@@ -139,6 +148,20 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - [x] Service page FAQ blue-branded accordion with icon badges
 - [x] Fixed plumbing service image (was showing outlet photo)
 - [x] Added Mitsubishi Electric to nav dropdown
+- [x] Luxury redesign: rounded-full buttons, scale hover, deeper navy/royal blue palette
+- [x] Hero image slider (6 photos cycling, navy gradient overlay, slide indicators)
+- [x] Official Diamond Contractor SVG + Mitsubishi Electric SVG logos added
+- [x] Mitsubishi page: large DC logo in hero, ME logo card, redesigned credential section
+- [x] Certification slider: new logos, 2x faster (14s), grayscale→color on hover
+- [x] Footer: certification logo bar, navy gradient CTA, "Follow Us" social section
+- [x] 5 county landing pages (Greene, Columbia, Ulster, Dutchess, Albany) with SEO
+- [x] Social media: YouTube added, icons in header top bar + footer
+- [x] Plumbing image fixed (was using water-heater.png in both constants + services-data)
+- [x] About page: team photo next to Our Story, Tyler photo crop adjusted
+- [x] Mitsubishi Electric added to mega menu MEGA_MENU_SERVICES array
+- [x] About page certifications updated with new DC + ME logos
+- [x] GitHub repo initialized and synced (https://github.com/cqdesignsny/tz-electric.git)
+- [x] Vercel deployment live at https://tz-electric.vercel.app/
 
 ## Remaining
 - [ ] Blog system (listing + individual posts)
@@ -159,3 +182,4 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - **2026-03-12 (Session 4):** All content pages built — About Us, Contact, Reviews, Financing, Gallery, Promotions, Careers, Services landing, 5 legal pages, service areas (main + 7 city SSG pages), service-areas-data.ts module. Build verified: 31 static pages.
 - **2026-03-12 (Session 5):** Visual review & CSS fix — previewed site on port 3007, found invisible button text and missing h1 on about-us. Root cause: Tailwind CSS 4 cascade layer issue — base element styles (`a`, `h1-h6` color rules) were unlayered in globals.css, overriding Tailwind utility classes like `text-white`. Fixed by wrapping all base styles in `@layer base {}`. Verified fix across 8+ pages/sections (homepage, about, contact, electrical, reviews, careers, service areas, footer). No regressions.
 - **2026-03-12 (Session 6):** Design polish & new features — Built ElectricCursor canvas particle effect (electric sparks on mouse hover) and added to ALL hero sections across every page. Created CertificationSlider infinite-scroll logo bar (Mitsubishi Diamond Elite, Generac, BBB, Nextdoor, Chronogrammy) and added below homepage hero. Built dedicated Mitsubishi Electric landing page with Diamond Elite content, benefits grid, system models, FAQ. Added hero background images with gradient overlays to all 7 service pages via ServicePageTemplate. Fixed Signature Plans: redesigned prepaid pricing as legible card-style rows, restyled Terms accordion with blue-branded icons/chevrons/hover effects. Fixed FAQ styling across service pages with same blue-branded treatment. Fixed plumbing image bug (was showing outlet photo in both constants.ts and services-data.ts). Added Mitsubishi Electric to nav dropdown. Increased certification logo sizing across the site: slider logos from 72px to 96px, about-us logos from 80px to 112px for better readability. Created README.md with full project documentation. Build verified: 33 static pages.
+- **2026-03-16 (Session 7):** Luxury redesign & expansion — GitHub repo initialized and pushed (3 commits). Vercel deployment connected at tz-electric.vercel.app. Major luxury redesign: rounded-full buttons with scale hover, deeper navy/royal blue color palette, hero image slider with 6 cycling photos and navy gradient overlay. Added official Diamond Contractor + Mitsubishi Electric SVG logos throughout site (hero, Mitsubishi page, footer, certification slider, about page). Certification slider 2x faster with grayscale→color hover. Footer refined with navy gradient CTA and certification logo bar. Built 5 county landing pages (Greene, Columbia, Ulster, Dutchess, Albany) with SSG, towns grid, services, and county-level SEO meta. Added social media (YouTube) to constants, header top bar social icons, and footer "Follow Us" section. Fixed plumbing image, about page team photo, Tyler crop. Added Mitsubishi to mega menu. Build: 38 static pages.

@@ -13,7 +13,7 @@ Full-stack website redesign migrating from Webflow to Next.js. Built for **TZ El
 | Animations | Framer Motion 12.35.2 |
 | Bundler | Turbopack (default) |
 | CMS | Sanity.io (planned) |
-| Deployment | Vercel (planned) |
+| Deployment | Vercel ([tz-electric.vercel.app](https://tz-electric.vercel.app/)) |
 
 ## Getting Started
 
@@ -52,7 +52,7 @@ src/
 │   ├── promotions/                # Current deals & specials
 │   ├── careers/                   # Job listings & benefits
 │   ├── services/                  # Services landing page
-│   ├── service-areas/             # Main listing + 7 dynamic city pages
+│   ├── service-areas/             # Main listing + 7 city pages + 5 county pages
 │   ├── privacy-policy/            # Privacy policy
 │   ├── terms-condition/           # Terms & conditions
 │   ├── cookies/                   # Cookie policy
@@ -69,19 +69,19 @@ src/
     ├── constants.ts               # Company data, nav, services, analytics IDs
     ├── metadata.ts                # SEO utilities, JSON-LD schema generators
     ├── services-data.ts           # 7 service pages data (features, FAQs, content)
-    ├── service-areas-data.ts      # 7 cities data (slug, county, meta, descriptions)
+    ├── service-areas-data.ts      # 7 cities + 5 counties data (slug, county, meta, descriptions)
     ├── mitsubishi-data.ts         # Mitsubishi landing page content
     ├── signature-plans-data.ts    # Maintenance plan tiers & pricing
     └── utils.ts                   # cn(), formatPhone()
 ```
 
-## Pages (33 Static Routes)
+## Pages (38 Static Routes)
 
-- **Homepage** — Hero with electric cursor effect, trust bar, services grid, why choose us, reviews, service areas, CTA
+- **Homepage** — Hero image slider (6 cycling photos), trust bar, services grid, why choose us, reviews, service areas, CTA
 - **7 Service Pages** — Electrical, HVAC, Mini Splits, Generators, Plumbing, Hot Water Heaters, Emergency
-- **Mitsubishi Landing** — Dedicated Mitsubishi Diamond Elite page
+- **Mitsubishi Landing** — Dedicated Mitsubishi Diamond Elite page with official DC + ME logos
 - **Signature Plans** — Maintenance plan pricing with branded Terms accordion
-- **About Us** — Company story, values, certifications, service area map
+- **About Us** — Company story, team photo, values, certifications, service area map
 - **Contact Us** — 3 contact methods, business hours, Typeform CTA
 - **Reviews** — Customer testimonials with star ratings and stats
 - **Financing** — How-it-works flow, Wisetack + Synchrony options, FAQ
@@ -89,24 +89,28 @@ src/
 - **Promotions** — Current deals and special offers
 - **Careers** — Benefits list and 6 job openings
 - **Services Landing** — All services overview with feature lists
-- **Service Areas** — Main listing + 7 individual city pages (SSG)
+- **Service Areas** — Main listing + 7 individual city pages + 5 county pages (SSG)
 - **5 Legal Pages** — Privacy, terms, cookies, accessibility, refund
 
 ## Design System
 
 Defined in `globals.css` using Tailwind CSS 4 `@theme`:
 
-- **Colors**: Navy (`#0f172a`), Blue (`#2563eb`), Blue Light (`#60a5fa`), Success (`#16a34a`), Warning (`#f59e0b`), Emergency (`#dc2626`)
+- **Colors**: Navy (`#0F1C3F`), Blue (`#1E40AF`), Blue Light (`#2563EB`), Gold (`#C9A84C`), Success (`#059669`), Warning (`#D97706`), Emergency (`#DC2626`)
 - **Typography**: Montserrat (headings), Manrope (body)
 - **Spacing**: `section-padding`, `container-site` utility classes
 - **Components**: Cards with hover shadows, gradient hero overlays, blue-branded accordions
 
 ## Key Features
 
+- **Hero Image Slider** — 6 cycling photos with navy gradient overlay and slide indicators
 - **Electric Cursor Effect** — Canvas-based particle system on all page heroes (sparks follow mouse)
-- **Certification Slider** — Infinite-scrolling logo carousel (Mitsubishi, Generac, BBB, Nextdoor, Chronogrammy)
+- **Certification Slider** — Infinite-scrolling logo carousel with grayscale→color hover (Mitsubishi DC, ME, Generac, BBB, Nextdoor, Chronogrammy)
+- **Luxury Design** — Rounded-full buttons, scale hover effects, deep navy/royal blue palette, gold accents
+- **County Landing Pages** — 5 county-level SEO pages (Greene, Columbia, Ulster, Dutchess, Albany) with towns grid
 - **Service Page Template** — Reusable component for consistent service page layouts
-- **SEO** — Custom meta per page, LocalBusiness + BreadcrumbList JSON-LD schemas
+- **Social Media Integration** — Facebook, Instagram, YouTube, Google icons in header top bar + footer
+- **SEO** — Custom meta per page, LocalBusiness + BreadcrumbList JSON-LD schemas, county-level targeting
 - **Responsive** — Mobile-first with sticky header, mobile menu, touch-friendly
 
 ## Analytics & Tracking
