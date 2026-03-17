@@ -199,19 +199,19 @@ export default function AboutPage() {
           {founder.map((member) => (
             <div
               key={member.name}
-              className="mb-12 bg-navy rounded-2xl overflow-hidden grid md:grid-cols-2 gap-0"
+              className="mb-12 max-w-4xl mx-auto bg-navy rounded-2xl overflow-hidden grid md:grid-cols-2 gap-0"
             >
-              <div className="relative aspect-[3/4]">
+              <div className="relative aspect-square">
                 <Image
                   src={member.photo}
                   alt={`${member.name} — ${member.role}`}
                   fill
                   className="object-cover object-top"
-                  sizes="(max-width: 768px) 100vw, 50vw"
+                  sizes="(max-width: 768px) 100vw, 448px"
                   priority
                 />
               </div>
-              <div className="flex flex-col justify-center p-8 lg:p-12">
+              <div className="flex flex-col justify-center p-8 lg:p-10">
                 <span className="text-blue-light text-sm font-semibold uppercase tracking-wider">
                   Founder
                 </span>
