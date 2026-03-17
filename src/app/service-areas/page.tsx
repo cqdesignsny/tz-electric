@@ -1,8 +1,8 @@
+import Link from 'next/link'
 import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
-import { SERVICE_AREAS } from '@/lib/service-areas-data'
+import { SERVICE_AREAS, COUNTY_AREAS } from '@/lib/service-areas-data'
 import Button from '@/components/ui/Button'
-import Card from '@/components/ui/Card'
 import CTASection from '@/components/sections/CTASection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 
@@ -62,58 +62,114 @@ export default function ServiceAreasPage() {
         </div>
       </section>
 
-      {/* Counties */}
-      <section className="bg-white border-b border-gray-200 py-8">
+      {/* Counties We Serve */}
+      <section className="section-padding">
         <div className="container-site">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="text-navy font-semibold text-sm">Counties We Serve:</span>
-            {COMPANY.counties.map((county) => (
-              <span key={county} className="bg-blue/10 text-blue text-sm font-medium px-3 py-1 rounded-full">
-                {county} County
-              </span>
+          <div className="text-center mb-10">
+            <span className="text-blue text-sm font-semibold uppercase tracking-wider">
+              Counties We Serve
+            </span>
+            <h2 className="font-heading font-bold text-navy text-3xl mt-2">
+              5 Counties Across the Hudson Valley
+            </h2>
+            <p className="mt-3 text-gray-600 max-w-2xl mx-auto">
+              We proudly serve homeowners throughout five Hudson Valley counties with expert
+              plumbing, HVAC, electrical, and generator services.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {COUNTY_AREAS.map((county) => (
+              <Link
+                key={county.slug}
+                href={`/service-areas/county/${county.slug}`}
+                className="group relative rounded-2xl border-2 border-blue/20 bg-white p-6 transition-all duration-300 hover:border-blue hover:shadow-lg hover:shadow-blue/10 hover:-translate-y-1"
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue/10 flex items-center justify-center group-hover:bg-blue group-hover:text-white transition-all duration-300">
+                      <svg className="w-5 h-5 text-blue group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="font-heading font-bold text-navy text-lg group-hover:text-blue transition-colors">
+                      {county.county} County
+                    </h3>
+                  </div>
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-blue group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
+                </div>
+                <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-4">
+                  {county.description}
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {county.cities.slice(0, 5).map((city) => (
+                    <span key={city} className="text-xs bg-blue/5 text-blue/70 px-2 py-0.5 rounded-full">
+                      {city}
+                    </span>
+                  ))}
+                  {county.cities.length > 5 && (
+                    <span className="text-xs text-gray-400 px-2 py-0.5">
+                      +{county.cities.length - 5} more
+                    </span>
+                  )}
+                </div>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Map Placeholder */}
-      <section className="section-padding">
+      {/* Cities & Towns */}
+      <section className="section-padding bg-gray-50">
         <div className="container-site">
-          <div className="bg-gray-200 rounded-xl aspect-[21/9] flex items-center justify-center mb-12">
-            <span className="text-gray-400 text-sm">Interactive Service Area Map</span>
+          <div className="text-center mb-10">
+            <span className="text-blue text-sm font-semibold uppercase tracking-wider">
+              Cities & Towns
+            </span>
+            <h2 className="font-heading font-bold text-navy text-3xl mt-2">
+              Cities & Towns We Serve
+            </h2>
           </div>
 
-          {/* City Grid */}
-          <h2 className="font-heading font-bold text-navy text-2xl mb-6">
-            Cities & Towns We Serve
-          </h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {SERVICE_AREAS.map((area) => (
-              <Card key={area.slug} href={`/service-areas/${area.slug}`} className="group">
-                <div className="p-6">
-                  <div className="flex items-center justify-between">
+              <Link
+                key={area.slug}
+                href={`/service-areas/${area.slug}`}
+                className="group rounded-2xl border-2 border-blue/20 bg-white p-6 transition-all duration-300 hover:border-blue hover:shadow-lg hover:shadow-blue/10 hover:-translate-y-1"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-blue/10 flex items-center justify-center group-hover:bg-blue group-hover:text-white transition-all duration-300">
+                      <svg className="w-5 h-5 text-blue group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 3H21" />
+                      </svg>
+                    </div>
                     <div>
                       <h3 className="font-heading font-bold text-navy text-lg group-hover:text-blue transition-colors">
                         {area.city}, {area.state}
                       </h3>
                       <span className="text-gray-500 text-sm">{area.county} County</span>
                     </div>
-                    <svg className="w-5 h-5 text-gray-400 group-hover:text-blue transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                    </svg>
                   </div>
-                  <p className="mt-3 text-gray-600 text-sm leading-relaxed line-clamp-2">
-                    {area.description}
-                  </p>
+                  <svg className="w-5 h-5 text-gray-400 group-hover:text-blue group-hover:translate-x-1 transition-all" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                  </svg>
                 </div>
-              </Card>
+                <p className="mt-3 text-gray-600 text-sm leading-relaxed line-clamp-2">
+                  {area.description}
+                </p>
+              </Link>
             ))}
           </div>
         </div>
       </section>
 
       {/* Not listed? */}
-      <section className="bg-gray-50 py-12">
+      <section className="bg-white py-12">
         <div className="container-site text-center">
           <h2 className="font-heading font-bold text-navy text-2xl">
             Don&apos;t See Your Town?

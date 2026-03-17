@@ -71,15 +71,15 @@ export default function Footer() {
                 className="h-14 w-auto brightness-0 invert"
               />
             </Link>
-            <address className="not-italic text-gray-400 text-sm space-y-2 mt-4">
-              <p>{COMPANY.address.full}</p>
+            <address className="not-italic text-gray-300 text-base space-y-2 mt-4">
+              <p className="text-white">{COMPANY.address.full}</p>
               <p>
                 <a href={`tel:${COMPANY.phoneRaw}`} className="text-white hover:text-sky transition-colors">
                   {COMPANY.phone}
                 </a>
               </p>
               <p>
-                <a href={`mailto:${COMPANY.email}`} className="hover:text-sky transition-colors">
+                <a href={`mailto:${COMPANY.email}`} className="text-white hover:text-sky transition-colors">
                   {COMPANY.email}
                 </a>
               </p>
