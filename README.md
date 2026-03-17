@@ -59,7 +59,7 @@ src/
 │   ├── accessibility-statement/   # WCAG 2.1 AA compliance
 │   └── refund-cancellation-policy/# Refund policy
 ├── components/
-│   ├── ui/                        # Button, Badge, Card, SectionHeader, StarRating
+│   ├── ui/                        # Button, Badge, Card, SectionHeader, StarRating, TrustIndexWidget
 │   ├── layout/                    # Header (sticky, dropdowns, mobile), Footer (4-col)
 │   ├── sections/                  # HeroSection, TrustBar, ServicesGrid, WhyChooseUs,
 │   │                              # ReviewsSection, ServiceAreaSection, CTASection,
@@ -83,12 +83,12 @@ src/
 - **Signature Plans** — Maintenance plan pricing with branded Terms accordion
 - **About Us** — Company story, team photo, values, certifications, service area map
 - **Contact Us** — 3 contact methods, business hours, Typeform CTA
-- **Reviews** — Customer testimonials with star ratings and stats
+- **Reviews** — Live Trust Index Google reviews widget, stats bar, star ratings
 - **Financing** — How-it-works flow, Wisetack + Synchrony options, FAQ
 - **Gallery** — Category-filtered project photo grid
 - **Promotions** — Current deals and special offers
 - **Careers** — Benefits list and 6 job openings
-- **Services Landing** — All services overview with feature lists
+- **Services Landing** — 2-column grid with blue outline cards, real images, hover effects
 - **Service Areas** — Main listing + 7 individual city pages + 5 county pages (SSG)
 - **5 Legal Pages** — Privacy, terms, cookies, accessibility, refund
 
@@ -109,6 +109,7 @@ Defined in `globals.css` using Tailwind CSS 4 `@theme`:
 - **Luxury Design** — Rounded-full buttons, scale hover effects, deep navy/royal blue palette, gold accents
 - **County Landing Pages** — 5 county-level SEO pages (Greene, Columbia, Ulster, Dutchess, Albany) with towns grid
 - **Service Page Template** — Reusable component for consistent service page layouts
+- **Trust Index Integration** — Live Google reviews widget on reviews page + homepage, badge on all hero sections
 - **Social Media Integration** — Facebook, Instagram, YouTube, Google icons in header top bar + footer
 - **SEO** — Custom meta per page, LocalBusiness + BreadcrumbList JSON-LD schemas, county-level targeting
 - **Responsive** — Mobile-first with sticky header, mobile menu, touch-friendly
@@ -139,7 +140,7 @@ All preserved from the original Webflow site:
 - [ ] Download & integrate high-res images from Webflow
 - [ ] Sanity.io CMS setup
 - [ ] Google Maps embeds (placeholders in contact & service-areas)
-- [ ] Real review widget integration (Trust Index)
+- [x] ~~Real review widget integration (Trust Index)~~ ✓ Done
 - [ ] Interactive gallery filtering (client component)
 - [ ] Housecall Pro API integration (scheduling)
 - [ ] Replace Typeform with native forms

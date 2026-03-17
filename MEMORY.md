@@ -93,7 +93,7 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - `src/app/(services)/[slug]/page.tsx` — 7 service pages (electrical, hvac, mini-split, generator, plumbing, hot-water-heaters, emergency)
 - `src/app/about-us/page.tsx` — About Us (story, values, certifications, service area)
 - `src/app/contact-us/page.tsx` — Contact (3 methods, hours, Typeform CTA, map placeholder)
-- `src/app/reviews/page.tsx` — Reviews (6 reviews, stats bar, star ratings)
+- `src/app/reviews/page.tsx` — Reviews (Trust Index widget, stats bar, star ratings)
 - `src/app/financing/page.tsx` — Financing (how-it-works, Wisetack + Synchrony, FAQ)
 - `src/app/gallery/page.tsx` — Gallery (category filter, 9 project placeholders)
 - `src/app/promotions/page.tsx` — Promotions (4 promo cards)
@@ -116,7 +116,8 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - `src/lib/mitsubishi-data.ts` — Mitsubishi landing page data (benefits, models, FAQ)
 - `src/lib/signature-plans-data.ts` — 3 plans: Core ($35), Preferred ($45), Elite ($60)
 - `src/lib/utils.ts` — cn(), formatPhone()
-- `src/components/ui/` — Button, Badge, SectionHeader, Card, StarRating
+- `src/components/ui/TrustIndexWidget.tsx` — Trust Index Google Reviews widget + badge (useRef/useEffect script injection)
+- `src/components/ui/` — Button, Badge, SectionHeader, Card, StarRating, TrustIndexWidget
 - `src/components/layout/` — Header (sticky, dropdowns, mobile menu), Footer (4-col, CTA banner)
 - `src/components/effects/ElectricCursor.tsx` — Canvas-based electric spark particle effect for hero sections
 - `src/components/sections/CertificationSlider.tsx` — Infinite-scrolling logo slider (Mitsubishi, Generac, BBB, Nextdoor, Chronogrammy)
@@ -124,7 +125,7 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 
 ## Build Status
 - **Last build:** Successful — 38 static pages (homepage, 7 services, mitsubishi, about, contact, reviews, financing, gallery, promotions, careers, services landing, signature-plans, 5 legal pages, service-areas main + 7 city pages + 5 county pages)
-- **Build verified:** 2026-03-16 Session 7
+- **Build verified:** 2026-03-17 Session 8
 - **Vercel deployment:** https://tz-electric.vercel.app/
 
 ## Completed
@@ -162,6 +163,15 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - [x] About page certifications updated with new DC + ME logos
 - [x] GitHub repo initialized and synced (https://github.com/cqdesignsny/tz-electric.git)
 - [x] Vercel deployment live at https://tz-electric.vercel.app/
+- [x] Trust Index Google Reviews widget integrated (reviews page + homepage ReviewsSection)
+- [x] Trust Index Badge widget on homepage hero + all service page heroes
+- [x] Reviews page rewritten with live Trust Index widget (replaced static reviews)
+- [x] Homepage ReviewsSection rewritten with live Trust Index widget (replaced static cards)
+- [x] Plumbing image updated to real copper parts/tools photo (plumbing.jpg)
+- [x] Tyler Zitz founder card resized (max-w-4xl, grid-cols-[2fr_3fr], aspect-[3/4] matching leadership cards)
+- [x] Homepage hero height reduced (min-h 700/750→500/550px, padding py-16/20→py-12/16)
+- [x] Services page redesigned: 2-column grid, blue outline cards, real images, hover effects, 95% width
+- [x] TrustIndexWidget.tsx component created (useRef+useEffect script injection pattern)
 
 ## Remaining
 - [ ] Blog system (listing + individual posts)
@@ -169,7 +179,6 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - [ ] Download & integrate high-res images from Webflow
 - [ ] Sanity.io CMS setup
 - [ ] Google Maps embeds (placeholders in contact & service-areas)
-- [ ] Real review widget integration
 - [ ] Interactive gallery filtering
 - [ ] Housecall Pro API integration (future)
 - [ ] Replace Typeform with native forms (future)
@@ -183,3 +192,4 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - **2026-03-12 (Session 5):** Visual review & CSS fix — previewed site on port 3007, found invisible button text and missing h1 on about-us. Root cause: Tailwind CSS 4 cascade layer issue — base element styles (`a`, `h1-h6` color rules) were unlayered in globals.css, overriding Tailwind utility classes like `text-white`. Fixed by wrapping all base styles in `@layer base {}`. Verified fix across 8+ pages/sections (homepage, about, contact, electrical, reviews, careers, service areas, footer). No regressions.
 - **2026-03-12 (Session 6):** Design polish & new features — Built ElectricCursor canvas particle effect (electric sparks on mouse hover) and added to ALL hero sections across every page. Created CertificationSlider infinite-scroll logo bar (Mitsubishi Diamond Elite, Generac, BBB, Nextdoor, Chronogrammy) and added below homepage hero. Built dedicated Mitsubishi Electric landing page with Diamond Elite content, benefits grid, system models, FAQ. Added hero background images with gradient overlays to all 7 service pages via ServicePageTemplate. Fixed Signature Plans: redesigned prepaid pricing as legible card-style rows, restyled Terms accordion with blue-branded icons/chevrons/hover effects. Fixed FAQ styling across service pages with same blue-branded treatment. Fixed plumbing image bug (was showing outlet photo in both constants.ts and services-data.ts). Added Mitsubishi Electric to nav dropdown. Increased certification logo sizing across the site: slider logos from 72px to 96px, about-us logos from 80px to 112px for better readability. Created README.md with full project documentation. Build verified: 33 static pages.
 - **2026-03-16 (Session 7):** Luxury redesign & expansion — GitHub repo initialized and pushed (3 commits). Vercel deployment connected at tz-electric.vercel.app. Major luxury redesign: rounded-full buttons with scale hover, deeper navy/royal blue color palette, hero image slider with 6 cycling photos and navy gradient overlay. Added official Diamond Contractor + Mitsubishi Electric SVG logos throughout site (hero, Mitsubishi page, footer, certification slider, about page). Certification slider 2x faster with grayscale→color hover. Footer refined with navy gradient CTA and certification logo bar. Built 5 county landing pages (Greene, Columbia, Ulster, Dutchess, Albany) with SSG, towns grid, services, and county-level SEO meta. Added social media (YouTube) to constants, header top bar social icons, and footer "Follow Us" section. Fixed plumbing image, about page team photo, Tyler crop. Added Mitsubishi to mega menu. Build: 38 static pages.
+- **2026-03-17 (Session 8):** Trust Index integration & visual polish — Integrated Trust Index premium Google reviews widget on reviews page and homepage (replacing static review cards). Created TrustIndexWidget.tsx with useRef+useEffect script injection pattern (Trust Index scripts must be inline in DOM). Added Trust Index Badge to homepage hero and all service page heroes (replaced static "330+ 5-Star Reviews" pill). Updated plumbing image to real copper parts/tools photo (plumbing.jpg). Fixed Tyler Zitz founder card sizing on about page (6+ iterations to match leadership card proportions: max-w-4xl, grid-cols-[2fr_3fr], aspect-[3/4]). Reduced homepage hero height from 700/750px to 500/550px. Redesigned services page: 2-column grid with blue outline cards, real service images, hover effects (border, shadow, translate-y, scale, gradient overlay, accent bar), 95% viewport width. Build: 38 static pages.
