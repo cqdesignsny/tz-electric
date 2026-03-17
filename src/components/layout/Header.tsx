@@ -95,9 +95,10 @@ const MEGA_MENU_SERVICES = [
   },
 ]
 
-const SERVICE_AREA_COUNTIES: { county: string; cities: { label: string; href: string }[] }[] = [
+const SERVICE_AREA_COUNTIES: { county: string; href: string; cities: { label: string; href: string }[] }[] = [
   {
     county: 'Greene County',
+    href: '/service-areas/county/greene-county',
     cities: [
       { label: 'Catskill', href: '/service-areas/catskill-ny' },
       { label: 'Hunter', href: '/service-areas/hunter-ny' },
@@ -105,12 +106,14 @@ const SERVICE_AREA_COUNTIES: { county: string; cities: { label: string; href: st
   },
   {
     county: 'Columbia County',
+    href: '/service-areas/county/columbia-county',
     cities: [
       { label: 'Hudson', href: '/service-areas/hudson-ny' },
     ],
   },
   {
     county: 'Ulster County',
+    href: '/service-areas/county/ulster-county',
     cities: [
       { label: 'Woodstock', href: '/service-areas/woodstock-ny' },
       { label: 'Saugerties', href: '/service-areas/saugerties-ny' },
@@ -118,12 +121,14 @@ const SERVICE_AREA_COUNTIES: { county: string; cities: { label: string; href: st
   },
   {
     county: 'Dutchess County',
+    href: '/service-areas/county/dutchess-county',
     cities: [
       { label: 'Rhinebeck', href: '/service-areas/rhinebeck-ny' },
     ],
   },
   {
     county: 'Albany County',
+    href: '/service-areas/county/albany-county',
     cities: [
       { label: 'Albany', href: '/service-areas/albany-ny' },
     ],
@@ -350,9 +355,13 @@ function ServiceAreasMegaPanel({ onClose }: { onClose: () => void }) {
       <div className="grid grid-cols-3 lg:grid-cols-5 gap-6">
         {SERVICE_AREA_COUNTIES.map((group) => (
           <div key={group.county}>
-            <h4 className="font-heading font-semibold text-navy text-xs uppercase tracking-wider mb-3 pb-2 border-b border-gray-200">
+            <Link
+              href={group.href}
+              onClick={onClose}
+              className="block font-heading font-semibold text-navy text-xs uppercase tracking-wider mb-3 pb-2 border-b border-gray-200 hover:text-blue transition-colors"
+            >
               {group.county}
-            </h4>
+            </Link>
             <ul className="space-y-1.5">
               {group.cities.map((city) => (
                 <li key={city.href}>
@@ -751,9 +760,13 @@ export default function Header() {
                   <div className="space-y-3">
                     {SERVICE_AREA_COUNTIES.map((group) => (
                       <div key={group.county}>
-                        <span className="block px-3 text-xs font-heading font-semibold text-gray-400 uppercase tracking-wider mb-1">
+                        <Link
+                          href={group.href}
+                          onClick={closeMobile}
+                          className="block px-3 text-xs font-heading font-semibold text-gray-400 uppercase tracking-wider mb-1 hover:text-blue transition-colors"
+                        >
                           {group.county}
-                        </span>
+                        </Link>
                         {group.cities.map((city) => (
                           <Link
                             key={city.href}
