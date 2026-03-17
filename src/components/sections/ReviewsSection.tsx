@@ -14,15 +14,17 @@ export default function ReviewsSection() {
           title={`${COMPANY.reviews.count}+ Five-Star Google Reviews`}
           description="Don't just take our word for it. See what our customers say about their experience with TZ Electric."
         />
+      </div>
 
-        {/* Trust Index Google Reviews Widget */}
+      {/* Trust Index Google Reviews Widget — full width */}
+      <div className="mx-auto w-[95%] max-w-[1600px]">
         <TrustIndexWidget />
+      </div>
 
-        <div className="mt-10 text-center">
-          <Button href="/reviews" variant="outline">
-            Read All Reviews
-          </Button>
-        </div>
+      <div className="mt-10 text-center">
+        <Button href="/reviews" variant="outline">
+          Read All Reviews
+        </Button>
       </div>
     </section>
   )
