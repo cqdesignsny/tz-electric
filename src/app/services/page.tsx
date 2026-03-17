@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { COMPANY, SERVICES, TYPEFORM_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import SectionHeader from '@/components/ui/SectionHeader'
@@ -129,8 +130,14 @@ export default function ServicesPage() {
                         </svg>
                       </span>
                     </div>
-                    <div className="bg-gray-200 rounded-xl aspect-[4/3] flex items-center justify-center">
-                      <span className="text-gray-400 text-sm">{service.title} Image</span>
+                    <div className={`relative rounded-xl aspect-[4/3] overflow-hidden ${isEven ? 'lg:direction-ltr' : ''}`}>
+                      <Image
+                        src={service.image}
+                        alt={service.title}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                      />
                     </div>
                   </div>
                 </Card>
