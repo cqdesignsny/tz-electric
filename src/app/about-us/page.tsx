@@ -199,7 +199,7 @@ export default function AboutPage() {
           {founder.map((member) => (
             <div
               key={member.name}
-              className="mb-12 max-w-4xl mx-auto bg-navy rounded-2xl overflow-hidden grid md:grid-cols-2 gap-0"
+              className="mb-12 max-w-3xl mx-auto bg-navy rounded-2xl overflow-hidden grid md:grid-cols-[2fr_3fr] gap-0"
             >
               <div className="relative aspect-square">
                 <Image
