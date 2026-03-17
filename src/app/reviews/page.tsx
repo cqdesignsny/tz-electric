@@ -3,57 +3,13 @@ import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import Button from '@/components/ui/Button'
 import CTASection from '@/components/sections/CTASection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
+import { TrustIndexWidget } from '@/components/ui/TrustIndexWidget'
 
 export const metadata = createMetadata({
   title: `${COMPANY.reviews.count}+ 5-Star Reviews | TZ Electric Inc | Hudson Valley`,
   description: `Read ${COMPANY.reviews.count}+ five-star Google reviews from satisfied Hudson Valley homeowners. See why TZ Electric is the most trusted plumbing, HVAC, and electrical company in the region.`,
   path: '/reviews',
 })
-
-const reviews = [
-  {
-    name: 'Michael R.',
-    location: 'Catskill, NY',
-    rating: 5,
-    text: 'TZ Electric went above and beyond with our whole-home generator installation. Professional, clean, and on time. Highly recommend!',
-    service: 'Generator Installation',
-  },
-  {
-    name: 'Sarah L.',
-    location: 'Hudson, NY',
-    rating: 5,
-    text: 'We had an emergency plumbing situation on a Sunday night. They were here within the hour and fixed everything perfectly. Lifesavers!',
-    service: 'Emergency Plumbing',
-  },
-  {
-    name: 'James K.',
-    location: 'Rhinebeck, NY',
-    rating: 5,
-    text: 'Best mini split installation experience. The team was knowledgeable about Mitsubishi systems and the whole process was seamless.',
-    service: 'Mini Split Installation',
-  },
-  {
-    name: 'Patricia M.',
-    location: 'Woodstock, NY',
-    rating: 5,
-    text: 'Had our entire HVAC system replaced. Fair pricing, excellent work, and they cleaned up everything when they were done.',
-    service: 'HVAC Replacement',
-  },
-  {
-    name: 'Robert T.',
-    location: 'Hunter, NY',
-    rating: 5,
-    text: 'Panel upgrade completed in one day. Very professional crew, explained everything clearly, and the work was impeccable.',
-    service: 'Electrical Panel Upgrade',
-  },
-  {
-    name: 'Linda C.',
-    location: 'Catskill, NY',
-    rating: 5,
-    text: 'We use TZ Electric for all our home services — plumbing, electrical, HVAC. One company that does it all and does it right.',
-    service: 'Multiple Services',
-  },
-]
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -135,35 +91,16 @@ export default function ReviewsPage() {
         </div>
       </section>
 
-      {/* Reviews Grid */}
+      {/* Trust Index Google Reviews Widget */}
       <section className="section-padding">
         <div className="container-site">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {reviews.map((review, index) => (
-              <div key={index} className="bg-white border border-gray-200 rounded-xl p-6">
-                <StarRating rating={review.rating} />
-                <p className="mt-4 text-gray-700 leading-relaxed text-sm">
-                  &ldquo;{review.text}&rdquo;
-                </p>
-                <div className="mt-4 pt-4 border-t border-gray-100">
-                  <p className="font-semibold text-navy text-sm">{review.name}</p>
-                  <p className="text-gray-500 text-xs">{review.location}</p>
-                  <span className="inline-block mt-2 bg-blue/10 text-blue text-xs font-medium px-2 py-0.5 rounded-full">
-                    {review.service}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+          <TrustIndexWidget />
 
-          {/* Google Reviews CTA */}
+          {/* CTA */}
           <div className="mt-12 text-center">
-            <p className="text-gray-600">
-              Want to see more? Read all our reviews on Google.
-            </p>
-            <div className="mt-4 flex flex-wrap gap-4 justify-center">
+            <div className="flex flex-wrap gap-4 justify-center">
               <Button href={COMPANY.social.google} external variant="secondary">
-                Read All Google Reviews
+                Leave Us a Review
               </Button>
               <Button href={TYPEFORM_URL} external>
                 Get a Free Quote

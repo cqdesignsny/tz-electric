@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { COMPANY, NAV_ITEMS, TYPEFORM_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
+import { TrustIndexBadge } from '@/components/ui/TrustIndexWidget'
 
 // ============================================
 // MEGA MENU DATA
@@ -663,6 +664,8 @@ export default function Header() {
 
           {/* Desktop CTA */}
           <div className="hidden lg:flex items-center gap-3 flex-shrink-0">
+            {/* Trust Index Badge */}
+            <TrustIndexBadge />
             <a
               href={`tel:${COMPANY.phoneRaw}`}
               className="flex items-center gap-2 text-navy font-heading font-semibold text-sm hover:text-blue transition-colors"
