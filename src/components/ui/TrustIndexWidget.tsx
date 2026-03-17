@@ -43,5 +43,9 @@ export function TrustIndexBadge() {
     containerRef.current.appendChild(script)
   }, [])
 
-  return <div ref={containerRef} />
+  return (
+    <div className="inline-flex bg-white/10 backdrop-blur-sm rounded-2xl px-4 py-3 border border-white/15">
+      <div ref={containerRef} />
+    </div>
+  )
 }
