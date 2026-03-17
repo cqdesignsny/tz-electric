@@ -27,7 +27,8 @@ export function TrustIndexWidget() {
 
 /**
  * Trust Index Badge
- * Small badge showing Google review rating — for header/nav.
+ * Small badge showing Google review rating — displayed in a frosted glass bubble.
+ * CSS overrides force all Trust Index text to white for visibility on dark hero backgrounds.
  */
 export function TrustIndexBadge() {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -43,5 +44,20 @@ export function TrustIndexBadge() {
     containerRef.current.appendChild(script)
   }, [])
 
-  return <div ref={containerRef} />
+  return (
+    <div className="inline-flex items-center bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 border border-white/15">
+      <style>{`
+        .ti-badge-container * {
+          color: white !important;
+        }
+        .ti-badge-container a {
+          color: white !important;
+        }
+        .ti-badge-container img {
+          filter: brightness(0) invert(1);
+        }
+      `}</style>
+      <div ref={containerRef} className="ti-badge-container" />
+    </div>
+  )
 }
