@@ -53,7 +53,7 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
 
         <div className="container-site relative z-10 py-16 lg:py-20">
           <div className="max-w-3xl">
-            <div className="mb-6">
+            <div className="mb-4">
               <TrustIndexBadge />
             </div>
             <h1 className="text-white text-4xl lg:text-5xl font-heading font-bold leading-tight">

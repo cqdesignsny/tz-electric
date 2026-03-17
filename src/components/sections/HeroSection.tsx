@@ -61,7 +61,7 @@ export default function HeroSection() {
       <ElectricCursor />
 
       <div className="container-site relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[700px] lg:min-h-[750px] py-16 lg:py-20">
+        <div className="grid lg:grid-cols-2 gap-12 items-center min-h-[500px] lg:min-h-[550px] py-12 lg:py-16">
           {/* Content */}
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -69,7 +69,7 @@ export default function HeroSection() {
             transition={{ duration: 0.6 }}
           >
             {/* Trust Index Badge */}
-            <div className="mb-6">
+            <div className="mb-4">
               <TrustIndexBadge />
             </div>
 
