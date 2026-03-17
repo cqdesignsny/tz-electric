@@ -201,7 +201,7 @@ export default function AboutPage() {
               key={member.name}
               className="mb-12 bg-navy rounded-2xl overflow-hidden grid md:grid-cols-2 gap-0"
             >
-              <div className="relative aspect-[3/4] md:aspect-auto md:min-h-[400px]">
+              <div className="relative aspect-[3/4]">
                 <Image
                   src={member.photo}
                   alt={`${member.name} — ${member.role}`}
