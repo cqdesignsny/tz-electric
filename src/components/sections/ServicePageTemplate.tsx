@@ -5,9 +5,9 @@ import { getBreadcrumbSchema, getFAQSchema } from '@/lib/metadata'
 import SectionHeader from '@/components/ui/SectionHeader'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
-import StarRating from '@/components/ui/StarRating'
 import CTASection from '@/components/sections/CTASection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
+import { TrustIndexBadge } from '@/components/ui/TrustIndexWidget'
 
 interface ServicePageTemplateProps {
   service: ServicePage
@@ -53,9 +53,8 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
 
         <div className="container-site relative z-10 py-16 lg:py-20">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6">
-              <StarRating rating={5} size="sm" />
-              <span className="text-white text-sm">{COMPANY.reviews.count}+ 5-Star Reviews</span>
+            <div className="mb-6">
+              <TrustIndexBadge />
             </div>
             <h1 className="text-white text-4xl lg:text-5xl font-heading font-bold leading-tight">
               {service.heroTitle}

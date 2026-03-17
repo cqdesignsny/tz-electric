@@ -5,8 +5,8 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
-import StarRating from '@/components/ui/StarRating'
 import ElectricCursor from '@/components/effects/ElectricCursor'
+import { TrustIndexBadge } from '@/components/ui/TrustIndexWidget'
 
 const HERO_SLIDES = [
   { src: '/images/hero/tz-team-2025.avif', alt: 'TZ Electric team of professionals' },
@@ -68,12 +68,9 @@ export default function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            {/* Trust Badge */}
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-2 mb-6 border border-white/10">
-              <StarRating rating={5} size="sm" />
-              <span className="text-white text-sm font-medium">
-                {COMPANY.reviews.count}+ Five-Star Reviews
-              </span>
+            {/* Trust Index Badge */}
+            <div className="mb-6">
+              <TrustIndexBadge />
             </div>
 
             <h1 className="text-white text-4xl lg:text-5xl xl:text-6xl font-heading font-bold leading-[1.1]">

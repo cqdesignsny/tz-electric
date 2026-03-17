@@ -93,7 +93,7 @@ export default function ReviewsPage() {
 
       {/* Trust Index Google Reviews Widget */}
       <section className="section-padding">
-        <div className="container-site">
+        <div className="mx-auto w-[95%] max-w-[1600px]">
           <TrustIndexWidget />
 
           {/* CTA */}
