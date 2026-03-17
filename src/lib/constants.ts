@@ -33,6 +33,7 @@ export const COMPANY = {
     facebook: 'https://www.facebook.com/tzelectricinc',
     instagram: 'https://www.instagram.com/tzelectricinc',
     google: 'https://g.page/tzelectricinc',
+    youtube: 'https://www.youtube.com/@tzelectricinc',
   },
   hours: {
     weekday: '7:00 AM - 5:00 PM',
@@ -140,7 +141,7 @@ export const SERVICES = [
     slug: 'plumbing',
     caption: 'Full-Service Plumbing',
     description: 'Pipe repair, drain cleaning, fixture installation, and complete plumbing solutions.',
-    image: '/images/services/water-heater.png',
+    image: '/images/services/plumbing.webp',
   },
   {
     title: 'Hot Water Heaters',

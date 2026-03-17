@@ -5,24 +5,34 @@ import { motion } from 'framer-motion'
 
 const CERTIFICATIONS = [
   {
-    name: 'Mitsubishi Diamond Elite Contractor',
-    src: '/images/certifications/mitsubishi-diamond.webp',
+    name: 'Mitsubishi Diamond Contractor',
+    src: '/images/certifications/diamond-contractor.svg',
+    invert: true,
+  },
+  {
+    name: 'Mitsubishi Electric',
+    src: '/images/certifications/mitsubishi-electric.svg',
+    invert: false,
   },
   {
     name: 'Generac Authorized Dealer',
     src: '/images/certifications/generac.webp',
+    invert: false,
   },
   {
     name: 'BBB Accredited Business',
     src: '/images/certifications/bbb.webp',
+    invert: false,
   },
   {
     name: 'Nextdoor Neighborhood Faves 2024',
     src: '/images/certifications/neighborhood-faves.webp',
+    invert: false,
   },
   {
     name: 'Chronogram Neighborhood Faves Award Winner',
     src: '/images/certifications/chronogrammy.webp',
+    invert: false,
   },
 ]
 
@@ -48,7 +58,7 @@ export default function CertificationSlider() {
           animate={{ x: ['0%', '-50%'] }}
           transition={{
             x: {
-              duration: 25,
+              duration: 14,
               repeat: Infinity,
               ease: 'linear',
             },
@@ -57,14 +67,14 @@ export default function CertificationSlider() {
           {DOUBLED.map((cert, i) => (
             <div
               key={`${cert.name}-${i}`}
-              className="flex-shrink-0 flex items-center justify-center h-24 w-52"
+              className="flex-shrink-0 flex items-center justify-center h-24 w-52 group"
             >
               <Image
                 src={cert.src}
                 alt={cert.name}
                 width={200}
                 height={96}
-                className="object-contain max-h-[96px] w-auto grayscale hover:grayscale-0 transition-all duration-300 opacity-70 hover:opacity-100"
+                className={`object-contain max-h-[96px] w-auto transition-all duration-300 opacity-40 grayscale group-hover:opacity-100 group-hover:grayscale-0 group-hover:scale-110 ${cert.invert ? 'brightness-0' : ''}`}
               />
             </div>
           ))}

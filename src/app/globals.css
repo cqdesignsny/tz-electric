@@ -5,14 +5,16 @@
    ============================================ */
 
 @theme {
-  /* Brand Colors */
-  --color-navy: #1B2A4A;
-  --color-navy-light: #243660;
-  --color-navy-dark: #111D35;
-  --color-blue: #2563EB;
-  --color-blue-light: #3B82F6;
-  --color-blue-dark: #1D4ED8;
-  --color-sky: #E0F2FE;
+  /* Brand Colors — refined for luxury feel */
+  --color-navy: #0F1C3F;
+  --color-navy-light: #1A2D5A;
+  --color-navy-dark: #0A1128;
+  --color-blue: #1E40AF;
+  --color-blue-light: #2563EB;
+  --color-blue-dark: #1E3A8A;
+  --color-sky: #EFF6FF;
+  --color-gold: #C9A84C;
+  --color-gold-light: #D4B96A;
 
   /* Functional Colors */
   --color-success: #059669;

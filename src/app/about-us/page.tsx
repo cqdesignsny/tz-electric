@@ -53,10 +53,10 @@ const values = [
 ]
 
 const certifications = [
-  { name: 'Mitsubishi Diamond Elite Contractor', description: 'Top-tier certification for ductless mini split installation and service', image: '/images/certifications/mitsubishi-diamond.webp' },
-  { name: 'Generac Authorized Dealer', description: 'Factory-trained and authorized for whole-home generator systems', image: '/images/certifications/generac.webp' },
-  { name: 'BBB Accredited Business', description: 'Maintaining the highest standards of trust and business ethics', image: '/images/certifications/bbb.webp' },
-  { name: 'Neighborhood Faves Winner', description: 'Recognized by our community as a top local service provider', image: '/images/certifications/neighborhood-faves.webp' },
+  { name: 'Mitsubishi Diamond Contractor', description: 'Top-tier certification for ductless mini split installation and service', image: '/images/certifications/diamond-contractor.svg', isSvg: true },
+  { name: 'Mitsubishi Electric', description: 'Authorized Mitsubishi Electric heating & cooling dealer', image: '/images/certifications/mitsubishi-electric.svg', isSvg: true },
+  { name: 'Generac Authorized Dealer', description: 'Factory-trained and authorized for whole-home generator systems', image: '/images/certifications/generac.webp', isSvg: false },
+  { name: 'BBB Accredited Business', description: 'Maintaining the highest standards of trust and business ethics', image: '/images/certifications/bbb.webp', isSvg: false },
 ]
 
 const founder = TEAM_MEMBERS.filter((m) => m.category === 'founder')
@@ -146,10 +146,10 @@ export default function AboutPage() {
                 </Button>
               </div>
             </div>
-            <div className="relative rounded-xl overflow-hidden aspect-[4/3]">
+            <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
               <Image
-                src="/images/hero/about-image.avif"
-                alt="TZ Electric team at work in the Hudson Valley"
+                src="/images/hero/tz-team-2025.avif"
+                alt="The TZ Electric team — Hudson Valley's trusted home service professionals"
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
@@ -206,7 +206,7 @@ export default function AboutPage() {
                   src={member.photo}
                   alt={`${member.name} — ${member.role}`}
                   fill
-                  className="object-cover object-[center_20%]"
+                  className="object-cover object-[center_30%]"
                   sizes="(max-width: 768px) 100vw, 50vw"
                   priority
                 />
@@ -345,12 +345,12 @@ export default function AboutPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {certifications.map((cert) => (
               <div key={cert.name} className="bg-white border border-gray-200 rounded-xl p-6 text-center">
-                <div className="w-28 h-28 relative mx-auto">
+                <div className="w-28 h-28 relative mx-auto flex items-center justify-center">
                   <Image
                     src={cert.image}
                     alt={cert.name}
                     fill
-                    className="object-contain"
+                    className={`object-contain ${cert.isSvg ? '' : ''}`}
                     sizes="112px"
                   />
                 </div>

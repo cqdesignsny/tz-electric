@@ -77,59 +77,76 @@ export default function MitsubishiPage() {
             src="/images/services/mini-split.webp"
             alt="Mitsubishi Electric ductless mini split system"
             fill
-            className="object-cover opacity-20"
+            className="object-cover"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/95 to-navy/80" />
+          <div className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/75 to-navy/60" />
+          <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-navy/40" />
         </div>
 
         {/* Electric Cursor Effect */}
         <ElectricCursor />
 
         <div className="container-site relative z-10 py-16 lg:py-24">
-          <div className="max-w-3xl">
-            {/* Diamond Elite Badge */}
-            <div className="inline-flex items-center gap-3 bg-white/10 backdrop-blur-sm rounded-full px-5 py-2.5 mb-6">
-              <Image
-                src="/images/certifications/mitsubishi-diamond.webp"
-                alt="Mitsubishi Diamond Elite Contractor"
-                width={32}
-                height={32}
-                className="rounded"
-              />
-              <span className="text-blue-light text-sm font-semibold">
-                Diamond Elite Contractor
-              </span>
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            <div>
+              {/* Diamond Contractor Logo — large, front and center */}
+              <div className="mb-8">
+                <Image
+                  src="/images/certifications/diamond-contractor.svg"
+                  alt="Mitsubishi Diamond Contractor"
+                  width={340}
+                  height={100}
+                  className="brightness-0 invert"
+                  priority
+                />
+              </div>
+
+              <h1 className="text-white text-4xl lg:text-5xl xl:text-6xl font-heading font-bold leading-[1.1]">
+                Hudson Valley&apos;s{' '}
+                <span className="text-blue-light">Mitsubishi Electric</span>{' '}
+                HVAC Experts
+              </h1>
+
+              <p className="mt-6 text-gray-200 text-lg lg:text-xl max-w-2xl leading-relaxed">
+                As a Mitsubishi Electric Diamond Contractor &mdash; the
+                highest dealer certification &mdash; we deliver superior ductless
+                mini split installation, Hyper-Heating systems, and smart climate
+                control for homes across the Hudson Valley.
+              </p>
+
+              <div className="mt-8 flex flex-wrap gap-4">
+                <Button href={TYPEFORM_URL} external size="lg">
+                  Get a Free Quote
+                </Button>
+                <Button
+                  href={`tel:${COMPANY.phoneRaw}`}
+                  variant="outline"
+                  size="lg"
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
+                  </svg>
+                  Call {COMPANY.phone}
+                </Button>
+              </div>
             </div>
 
-            <h1 className="text-white text-4xl lg:text-5xl xl:text-6xl font-heading font-bold leading-[1.1]">
-              Hudson Valley&apos;s{' '}
-              <span className="text-blue-light">Mitsubishi Electric</span>{' '}
-              HVAC Experts
-            </h1>
-
-            <p className="mt-6 text-gray-300 text-lg lg:text-xl max-w-2xl leading-relaxed">
-              As a Mitsubishi Electric Diamond Elite Contractor &mdash; the
-              highest dealer certification &mdash; we deliver superior ductless
-              mini split installation, Hyper-Heating systems, and smart climate
-              control for homes across the Hudson Valley.
-            </p>
-
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Button href={TYPEFORM_URL} external size="lg">
-                Get a Free Quote
-              </Button>
-              <Button
-                href={`tel:${COMPANY.phoneRaw}`}
-                variant="outline"
-                size="lg"
-                className="border-white text-white hover:bg-white hover:text-navy"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
-                </svg>
-                Call {COMPANY.phone}
-              </Button>
+            {/* Right side — Mitsubishi Electric logo card */}
+            <div className="hidden lg:flex justify-center">
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-10 text-center">
+                <Image
+                  src="/images/certifications/mitsubishi-electric.svg"
+                  alt="Mitsubishi Electric"
+                  width={280}
+                  height={112}
+                  className="mx-auto mb-6"
+                />
+                <div className="w-16 h-px bg-white/20 mx-auto mb-4" />
+                <p className="text-gray-300 text-sm max-w-xs">
+                  Authorized Diamond Contractor for the entire Mitsubishi Electric product line
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -256,20 +273,20 @@ export default function MitsubishiPage() {
         </div>
       </section>
 
-      {/* Diamond Elite Credential */}
-      <section className="section-padding bg-gradient-to-br from-blue to-blue-dark">
+      {/* Diamond Contractor Credential */}
+      <section className="section-padding bg-gradient-to-br from-navy-light to-navy">
         <div className="container-site">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <span className="text-blue-100 text-sm font-semibold uppercase tracking-wider">
+              <span className="text-blue-light text-sm font-semibold uppercase tracking-wider">
                 Our Certification
               </span>
               <h2 className="font-heading font-bold text-white text-3xl lg:text-4xl mt-2">
-                What Diamond Elite Means for You
+                What Diamond Contractor Means for You
               </h2>
-              <p className="mt-4 text-blue-100 leading-relaxed">
-                Diamond Elite is the highest certification tier Mitsubishi Electric
-                awards to its contractors. Only a select few companies in the entire
+              <p className="mt-4 text-gray-300 leading-relaxed">
+                Diamond Contractor is the highest certification tier Mitsubishi Electric
+                awards to its dealers. Only a select few companies in the entire
                 Hudson Valley hold this distinction.
               </p>
               <ul className="mt-6 space-y-3">
@@ -292,16 +309,24 @@ export default function MitsubishiPage() {
             </div>
 
             <div className="flex justify-center">
-              <div className="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-sm">
+              <div className="bg-white rounded-2xl p-10 shadow-2xl text-center max-w-md">
                 <Image
-                  src="/images/certifications/mitsubishi-diamond.webp"
-                  alt="Mitsubishi Diamond Elite Contractor certification"
-                  width={200}
-                  height={200}
-                  className="mx-auto object-contain"
+                  src="/images/certifications/diamond-contractor.svg"
+                  alt="Mitsubishi Diamond Contractor certification"
+                  width={320}
+                  height={100}
+                  className="mx-auto object-contain mb-4"
                 />
-                <h3 className="font-heading font-bold text-navy text-xl mt-6">
-                  Mitsubishi Electric Diamond Elite
+                <Image
+                  src="/images/certifications/mitsubishi-electric.svg"
+                  alt="Mitsubishi Electric"
+                  width={200}
+                  height={80}
+                  className="mx-auto object-contain mt-4"
+                />
+                <div className="w-16 h-px bg-gray-200 mx-auto my-4" />
+                <h3 className="font-heading font-bold text-navy text-xl">
+                  Diamond Contractor
                 </h3>
                 <p className="text-gray-600 text-sm mt-2">
                   Awarded to TZ Electric, Inc. for exceptional installation
