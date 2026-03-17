@@ -206,7 +206,7 @@ export default function AboutPage() {
                   src={member.photo}
                   alt={`${member.name} — ${member.role}`}
                   fill
-                  className="object-cover object-[center_30%]"
+                  className="object-cover object-top"
                   sizes="(max-width: 768px) 100vw, 50vw"
                   priority
                 />
