@@ -152,7 +152,7 @@ export const SERVICE_PAGES: ServicePage[] = [
     heroTitle: 'Full-Service Plumbing Solutions',
     heroDescription:
       'From routine repairs to complete plumbing overhauls, our licensed plumbers deliver reliable, lasting solutions for your home.',
-    image: { src: '/images/services/plumbing.webp', alt: 'Licensed plumbing services by TZ Electric' },
+    image: { src: '/images/services/plumbing.jpg', alt: 'Licensed plumbing services by TZ Electric' },
     features: [
       { title: 'Pipe Repair & Replacement', description: 'Fix leaks, burst pipes, and corroded plumbing.' },
       { title: 'Drain Cleaning', description: 'Professional drain cleaning and clog removal.' },

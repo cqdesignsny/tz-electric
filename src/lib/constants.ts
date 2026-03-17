@@ -141,7 +141,7 @@ export const SERVICES = [
     slug: 'plumbing',
     caption: 'Full-Service Plumbing',
     description: 'Pipe repair, drain cleaning, fixture installation, and complete plumbing solutions.',
-    image: '/images/services/plumbing.webp',
+    image: '/images/services/plumbing.jpg',
   },
   {
     title: 'Hot Water Heaters',
