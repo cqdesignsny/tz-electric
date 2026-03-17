@@ -37,7 +37,7 @@ export function TrustIndexBadge() {
     if (containerRef.current.querySelector('script')) return
 
     const script = document.createElement('script')
-    script.src = 'https://cdn.trustindex.io/loader.js?5304051673a2380f7156027fee9'
+    script.src = 'https://cdn.trustindex.io/loader.js?e8c0fbe6745938084466880002c'
     script.defer = true
     script.async = true
     containerRef.current.appendChild(script)
