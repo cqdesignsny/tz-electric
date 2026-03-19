@@ -20,7 +20,7 @@ export const SERVICE_PAGES: ServicePage[] = [
     heroTitle: 'Expert Electrical Services',
     heroDescription:
       'From panel upgrades to whole-home rewiring, our licensed electricians deliver safe, code-compliant electrical work for your home.',
-    image: { src: '/images/services/electrical-upgrade.webp', alt: 'Professional electrical panel upgrade by TZ Electric' },
+    image: { src: '/images/services/clean-panel.jpeg', alt: 'Professional electrical panel upgrade by TZ Electric' },
     features: [
       { title: 'Panel Upgrades', description: '100A to 200A panel upgrades for modern electrical demands.' },
       { title: 'Whole-Home Rewiring', description: 'Safe, code-compliant rewiring for older homes.' },
@@ -85,7 +85,7 @@ export const SERVICE_PAGES: ServicePage[] = [
     heroTitle: 'Ductless Mini Split Systems',
     heroDescription:
       'As a Mitsubishi Diamond Elite Contractor, we provide top-tier ductless mini split installation, repair, and maintenance for ultimate comfort and efficiency.',
-    image: { src: '/images/services/mini-split.webp', alt: 'Mitsubishi ductless mini split installation by TZ Electric' },
+    image: { src: '/images/services/minisplit-install.jpeg', alt: 'Mitsubishi ductless mini split installation by TZ Electric' },
     features: [
       { title: 'Single-Zone Systems', description: 'Perfect for adding comfort to a single room or addition.' },
       { title: 'Multi-Zone Systems', description: 'Control temperatures independently in multiple rooms.' },

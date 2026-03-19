@@ -10,9 +10,9 @@ import { TrustIndexBadge } from '@/components/ui/TrustIndexWidget'
 
 const HERO_SLIDES = [
   { src: '/images/hero/tz-team-2025.avif', alt: 'TZ Electric team of professionals' },
-  { src: '/images/services/electrical-panel.webp', alt: 'Electrical panel upgrade service' },
+  { src: '/images/services/clean-panel.jpeg', alt: 'Electrical panel upgrade service' },
   { src: '/images/services/hvac-hero.png', alt: 'HVAC installation and repair' },
-  { src: '/images/services/mini-split.webp', alt: 'Mitsubishi ductless mini split system' },
+  { src: '/images/services/minisplit-install.jpeg', alt: 'Mitsubishi ductless mini split system' },
   { src: '/images/services/generator.webp', alt: 'Generac whole-home generator' },
   { src: '/images/services/service-1.avif', alt: 'Professional home service work' },
 ]
