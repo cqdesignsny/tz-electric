@@ -160,7 +160,7 @@ export default function FinancingPage() {
                 key={partner.name} 
                 className="group block bg-white border border-gray-200 rounded-2xl p-8 transition-all duration-300 hover:border-blue hover:shadow-xl hover:-translate-y-1 cursor-pointer"
               >
-                <div className="w-full h-24 bg-gray-50 rounded-lg flex items-center justify-center mb-6 transition-colors group-hover:bg-blue/5">
+                <div className="w-full h-24 bg-blue rounded-lg flex items-center justify-center mb-6 transition-colors group-hover:bg-navy">
                   <img src={partner.logo} alt={`${partner.name} Logo`} className="max-h-12 w-auto object-contain" />
                 </div>
                 <div className="flex items-center justify-between">
