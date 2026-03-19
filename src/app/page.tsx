@@ -50,7 +50,7 @@ export default function HomePage() {
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-10 md:gap-16">
             <Image
-              src="/images/certifications/diamond-contractor.svg"
+              src="/images/certifications/diamond-contractor-color.png"
               alt="Mitsubishi Diamond Contractor"
               width={200}
               height={60}
