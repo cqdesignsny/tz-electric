@@ -114,7 +114,7 @@ export const SERVICES = [
     slug: 'mini-split',
     caption: 'Ductless Comfort',
     description: 'Mitsubishi Diamond Elite mini split installation, repair, and maintenance.',
-    image: '/images/services/mini-split.webp',
+    image: '/images/services/minisplit-install.jpeg',
   },
   {
     title: 'HVAC',
@@ -128,7 +128,7 @@ export const SERVICES = [
     slug: 'electrical',
     caption: 'Expert Electrical Services',
     description: 'Panel upgrades, rewiring, lighting, EV chargers, and complete electrical services for your home.',
-    image: '/images/services/electrical-upgrade.webp',
+    image: '/images/services/clean-panel.jpeg',
   },
   {
     title: 'Plumbing',
