@@ -57,7 +57,7 @@ export default function HomePage() {
               className="h-14 w-auto"
             />
             <Image
-              src="/images/certifications/mitsubishi-electric.svg"
+              src="/images/certifications/mitsubishi-electric-dark.svg"
               alt="Mitsubishi Electric"
               width={160}
               height={64}
