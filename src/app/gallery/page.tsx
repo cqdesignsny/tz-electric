@@ -3,25 +3,88 @@ import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import Button from '@/components/ui/Button'
 import CTASection from '@/components/sections/CTASection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
+import GalleryGrid from '@/components/sections/GalleryGrid'
 
 export const metadata = createMetadata({
   title: 'Project Gallery | TZ Electric Inc | Hudson Valley',
-  description: `Browse our project gallery showcasing HVAC, electrical, plumbing, and generator installations across the Hudson Valley. ${COMPANY.reviews.count}+ 5-star reviews.`,
+  description: `Browse our project gallery showcasing mini split, HVAC, electrical, plumbing, and generator installations across the Hudson Valley. ${COMPANY.reviews.count}+ 5-star reviews.`,
   path: '/gallery',
 })
 
-const categories = ['All', 'Electrical', 'HVAC', 'Mini Splits', 'Generators', 'Plumbing', 'Hot Water Heaters']
+const categories = ['All', 'Mini Splits', 'HVAC', 'Electrical', 'Plumbing', 'Generators', 'Hot Water Heaters']
 
 const projects = [
-  { title: 'Whole-Home Generator Installation', category: 'Generators', location: 'Catskill, NY' },
-  { title: 'Mini Split Multi-Zone System', category: 'Mini Splits', location: 'Hudson, NY' },
-  { title: 'Electrical Panel Upgrade', category: 'Electrical', location: 'Rhinebeck, NY' },
-  { title: 'HVAC System Replacement', category: 'HVAC', location: 'Woodstock, NY' },
-  { title: 'Tankless Water Heater Install', category: 'Hot Water Heaters', location: 'Hunter, NY' },
-  { title: 'Commercial Electrical Work', category: 'Electrical', location: 'Catskill, NY' },
-  { title: 'Ductless Heating Solution', category: 'Mini Splits', location: 'Kingston, NY' },
-  { title: 'Emergency Plumbing Repair', category: 'Plumbing', location: 'Saugerties, NY' },
-  { title: 'Generac Standby Generator', category: 'Generators', location: 'Windham, NY' },
+  {
+    title: 'Ductless Mini Split Living Room Installation',
+    description: 'Wall-mounted Mitsubishi mini split providing efficient cooling and heating in a modern living space.',
+    category: 'Mini Splits',
+    image: '/images/gallery/mitsubishi-mini-split-living-room-installation.png',
+    alt: 'Mitsubishi ductless mini split installed above living room couch with exposed beam ceiling',
+  },
+  {
+    title: 'Mini Split in Modern Living Room',
+    description: 'Sleek concealed mini split unit blending seamlessly into a contemporary living room design.',
+    category: 'Mini Splits',
+    image: '/images/gallery/mitsubishi-mini-split-modern-living-room.png',
+    alt: 'Mitsubishi mini split unit in modern luxury living room with neutral decor',
+  },
+  {
+    title: 'Home Office Mini Split Installation',
+    description: 'Ductless mini split keeping a home office comfortable year-round for remote work.',
+    category: 'Mini Splits',
+    image: '/images/gallery/mitsubishi-mini-split-home-office-installation.png',
+    alt: 'Mitsubishi mini split installed in home office above desk workspace',
+  },
+  {
+    title: 'Mitsubishi Wall-Mounted Mini Split Unit',
+    description: 'Wi-Fi enabled Mitsubishi mini split unit with smart controls for convenient temperature management.',
+    category: 'Mini Splits',
+    image: '/images/gallery/mitsubishi-mini-split-wall-mounted-wifi-unit.png',
+    alt: 'Mitsubishi wall-mounted mini split unit with Wi-Fi connectivity',
+  },
+  {
+    title: 'Family Room Ductless Comfort System',
+    description: 'Mitsubishi ductless mini split providing whole-room comfort for the entire family.',
+    category: 'Mini Splits',
+    image: '/images/gallery/mitsubishi-mini-split-family-room-comfort.png',
+    alt: 'Family enjoying comfort from Mitsubishi mini split in wood-paneled living room',
+  },
+  {
+    title: 'Mini Split Installation in Progress',
+    description: 'TZ Electric technician mounting a Mitsubishi ductless mini split indoor unit.',
+    category: 'Mini Splits',
+    image: '/images/services/minisplit-install.jpeg',
+    alt: 'TZ Electric technician installing Mitsubishi mini split indoor unit on wall',
+  },
+  {
+    title: 'Electrical Panel Upgrade',
+    description: 'TZ Electric technician performing a residential electrical panel upgrade with clean, code-compliant wiring.',
+    category: 'Electrical',
+    image: '/images/services/clean-panel.jpeg',
+    alt: 'TZ Electric technician working on residential electrical panel upgrade',
+  },
+  {
+    title: 'Residential Lighting & Electrical Work',
+    description: 'Residential room with new lighting installation and electrical wiring during a renovation project.',
+    category: 'Electrical',
+    image: '/images/services/mini-split.webp',
+    alt: 'Residential room renovation with new lighting installation and exposed beam ceiling',
+  },
+  {
+    title: 'Generac Whole-Home Standby Generator',
+    description: 'Generac standby generator installed and ready to provide automatic backup power during outages.',
+    category: 'Generators',
+    image: '/images/services/generator.webp',
+    alt: 'Generac whole-home standby generator installed outside residential home',
+  },
+  {
+    title: 'Mitsubishi Hyper-Heat Outdoor Condenser',
+    description: 'Mitsubishi Electric Hyper-Heat outdoor condenser unit for efficient heating and cooling.',
+    category: 'HVAC',
+    image: '/images/services/hvac-hero.png',
+    alt: 'Mitsubishi Electric Hyper-Heat outdoor condenser unit close-up',
+  },
+
 ]
 
 export default function GalleryPage() {
@@ -61,57 +124,13 @@ export default function GalleryPage() {
         </div>
       </section>
 
-      {/* Category Filter */}
-      <section className="bg-white border-b border-gray-200 py-4">
-        <div className="container-site">
-          <div className="flex flex-wrap gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  cat === 'All'
-                    ? 'bg-blue text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
+      <GalleryGrid categories={categories} projects={projects} />
 
-      {/* Gallery Grid */}
-      <section className="section-padding">
-        <div className="container-site">
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project, index) => (
-              <div key={index} className="group cursor-pointer">
-                <div className="bg-gray-200 rounded-xl aspect-[4/3] flex items-center justify-center overflow-hidden">
-                  <span className="text-gray-400 text-sm">{project.title} Photo</span>
-                </div>
-                <div className="mt-3">
-                  <h3 className="font-semibold text-navy group-hover:text-blue transition-colors">
-                    {project.title}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-xs bg-blue/10 text-blue font-medium px-2 py-0.5 rounded-full">
-                      {project.category}
-                    </span>
-                    <span className="text-gray-500 text-xs">{project.location}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-12 text-center">
-            <Button href={TYPEFORM_URL} external size="lg">
-              Start Your Project Today
-            </Button>
-          </div>
-        </div>
-      </section>
+      <div className="py-12 text-center">
+        <Button href={TYPEFORM_URL} external size="lg">
+          Start Your Project Today
+        </Button>
+      </div>
 
       <CTASection />
     </>
