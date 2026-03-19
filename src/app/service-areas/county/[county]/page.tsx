@@ -160,7 +160,7 @@ export default async function CountyPage({ params }: { params: Promise<{ county:
                   <div className="text-sm text-gray-500">5-Star Reviews</div>
                 </div>
                 <div className="bg-navy/5 rounded-xl p-4 text-center">
-                  <div className="text-2xl font-heading font-bold text-navy">20+</div>
+                  <div className="text-2xl font-heading font-bold text-navy">12+</div>
                   <div className="text-sm text-gray-500">Years Experience</div>
                 </div>
                 <div className="bg-navy/5 rounded-xl p-4 text-center">

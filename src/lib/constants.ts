@@ -36,9 +36,10 @@ export const COMPANY = {
     youtube: 'https://www.youtube.com/@tzelectricinc',
   },
   hours: {
-    weekday: '7:00 AM - 5:00 PM',
-    saturday: '8:00 AM - 2:00 PM',
-    sunday: 'Emergency Only',
+    weekday: '7:30 AM - 4:00 PM',
+    saturday: 'Closed',
+    sunday: 'Closed',
+    emergencyNote: '24/7 Emergency Service Available (After Hours)',
   },
 } as const
 
@@ -59,14 +60,14 @@ export const NAV_ITEMS = [
     label: 'Services',
     href: '/services',
     children: [
-      { label: 'Electrical', href: '/electrical', description: 'Panel upgrades, rewiring, lighting & more' },
-      { label: 'HVAC', href: '/hvac', description: 'Heating, ventilation & air conditioning' },
-      { label: 'Mini Splits', href: '/mini-split', description: 'Ductless heating & cooling systems' },
-      { label: 'Generators', href: '/generator', description: 'Backup power solutions' },
-      { label: 'Plumbing', href: '/plumbing', description: 'Full-service plumbing solutions' },
-      { label: 'Hot Water Heaters', href: '/hot-water-heaters', description: 'Installation & repair' },
-      { label: 'Emergency Services', href: '/emergency', description: '24/7 emergency repair' },
       { label: 'Mitsubishi Electric', href: '/mitsubishi', description: 'Diamond Elite mini split systems' },
+      { label: 'Mini Splits', href: '/mini-split', description: 'Ductless heating & cooling systems' },
+      { label: 'HVAC', href: '/hvac', description: 'Heating, ventilation & air conditioning' },
+      { label: 'Electrical', href: '/electrical', description: 'Panel upgrades, rewiring, lighting & more' },
+      { label: 'Plumbing', href: '/plumbing', description: 'Full-service plumbing solutions' },
+      { label: 'Generators', href: '/generator', description: 'Backup power solutions' },
+      { label: 'Hot Water Heaters', href: '/hot-water-heaters', description: 'Installation & repair' },
+      { label: '24/7 Emergency Services', href: '/emergency', description: '24/7 emergency repair' },
     ],
   },
   {
@@ -109,11 +110,11 @@ export const NAV_ITEMS = [
 // Services data
 export const SERVICES = [
   {
-    title: 'Electrical',
-    slug: 'electrical',
-    caption: 'Expert Electrical Services',
-    description: 'Panel upgrades, rewiring, lighting, EV chargers, and complete electrical services for your home.',
-    image: '/images/services/electrical-upgrade.webp',
+    title: 'Mini Splits',
+    slug: 'mini-split',
+    caption: 'Ductless Comfort',
+    description: 'Mitsubishi Diamond Elite mini split installation, repair, and maintenance.',
+    image: '/images/services/mini-split.webp',
   },
   {
     title: 'HVAC',
@@ -123,18 +124,11 @@ export const SERVICES = [
     image: '/images/services/hvac-hero.png',
   },
   {
-    title: 'Mini Splits',
-    slug: 'mini-split',
-    caption: 'Ductless Comfort',
-    description: 'Mitsubishi Diamond Elite mini split installation, repair, and maintenance.',
-    image: '/images/services/mini-split.webp',
-  },
-  {
-    title: 'Generators',
-    slug: 'generator',
-    caption: 'Backup Power',
-    description: 'Generac authorized dealer — whole-home generator installation and service.',
-    image: '/images/services/generator.webp',
+    title: 'Electrical',
+    slug: 'electrical',
+    caption: 'Expert Electrical Services',
+    description: 'Panel upgrades, rewiring, lighting, EV chargers, and complete electrical services for your home.',
+    image: '/images/services/electrical-upgrade.webp',
   },
   {
     title: 'Plumbing',
@@ -142,6 +136,13 @@ export const SERVICES = [
     caption: 'Full-Service Plumbing',
     description: 'Pipe repair, drain cleaning, fixture installation, and complete plumbing solutions.',
     image: '/images/services/plumbing.jpg',
+  },
+  {
+    title: 'Generators',
+    slug: 'generator',
+    caption: 'Backup Power',
+    description: 'Generac authorized dealer — whole-home generator installation and service.',
+    image: '/images/services/generator.webp',
   },
   {
     title: 'Hot Water Heaters',

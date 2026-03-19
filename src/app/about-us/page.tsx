@@ -9,7 +9,7 @@ import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
   title: 'About TZ Electric Inc | Hudson Valley Trusted Home Service Experts',
-  description: `Learn about TZ Electric Inc — over 20 years of plumbing, HVAC, and electrical expertise in the Hudson Valley. ${COMPANY.reviews.count}+ 5-star reviews. Mitsubishi Diamond Elite & Generac Authorized Dealer.`,
+  description: `Learn about TZ Electric Inc — over 12 years of plumbing, HVAC, and electrical expertise in the Hudson Valley. ${COMPANY.reviews.count}+ 5-star reviews. Mitsubishi Diamond Elite & Generac Authorized Dealer.`,
   path: '/about-us',
 })
 
@@ -102,7 +102,7 @@ export default function AboutPage() {
               Your Trusted Hudson Valley Home Service Experts
             </h1>
             <p className="mt-4 text-gray-300 text-lg max-w-2xl">
-              For over 20 years, TZ Electric has been the name Hudson Valley homeowners
+              For over 12 years, TZ Electric has been the name Hudson Valley homeowners
               trust for plumbing, heating, cooling, and electrical services.
             </p>
           </div>
@@ -233,7 +233,7 @@ export default function AboutPage() {
             <h3 className="font-heading font-bold text-navy text-xl mb-6">
               Leadership &amp; Management
             </h3>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
               {leadership.map((member) => (
                 <div
                   key={member.name}

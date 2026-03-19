@@ -18,7 +18,7 @@ export const TEAM_MEMBERS: TeamMember[] = [
     name: 'Tyler Zitz',
     role: 'Founder & CEO',
     photo: '/images/team/tyler-zitz.webp',
-    bio: 'Tyler founded TZ Electric with a vision to bring honest, high-quality home services to the Hudson Valley. With over 20 years in the trade, he leads the team with hands-on expertise and an unwavering commitment to customer satisfaction.',
+    bio: 'Tyler founded TZ Electric with a vision to bring honest, high-quality home services to the Hudson Valley. With over 12 years in the trade, he leads the team with hands-on expertise and an unwavering commitment to customer satisfaction.',
     category: 'founder',
   },
 
@@ -65,7 +65,7 @@ export const TEAM_MEMBERS: TeamMember[] = [
     role: 'Senior Technician',
     photo: '/images/team/terry-evanson.webp',
     bio: 'Terry specializes in complex installations and troubleshooting, with a reputation for getting it right the first time.',
-    category: 'technician',
+    category: 'leadership',
   },
   {
     name: 'Ian Foster',

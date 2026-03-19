@@ -13,12 +13,22 @@ import Button from '@/components/ui/Button'
 
 const MEGA_MENU_SERVICES = [
   {
-    title: 'Electrical',
-    href: '/electrical',
-    description: 'Panel upgrades, rewiring, lighting, EV chargers & more',
+    title: 'Mitsubishi Electric',
+    href: '/mitsubishi',
+    description: 'Diamond Elite ductless mini split systems',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'Mini Splits',
+    href: '/mini-split',
+    description: 'Mitsubishi Diamond Elite ductless systems',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
       </svg>
     ),
   },
@@ -34,22 +44,12 @@ const MEGA_MENU_SERVICES = [
     ),
   },
   {
-    title: 'Mini Splits',
-    href: '/mini-split',
-    description: 'Mitsubishi Diamond Elite ductless systems',
+    title: 'Electrical',
+    href: '/electrical',
+    description: 'Panel upgrades, rewiring, lighting, EV chargers & more',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Generators',
-    href: '/generator',
-    description: 'Generac whole-home backup power solutions',
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
       </svg>
     ),
   },
@@ -64,6 +64,16 @@ const MEGA_MENU_SERVICES = [
     ),
   },
   {
+    title: 'Generators',
+    href: '/generator',
+    description: 'Generac whole-home backup power solutions',
+    icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" />
+      </svg>
+    ),
+  },
+  {
     title: 'Hot Water Heaters',
     href: '/hot-water-heaters',
     description: 'Tankless & traditional water heater install & repair',
@@ -74,22 +84,12 @@ const MEGA_MENU_SERVICES = [
     ),
   },
   {
-    title: 'Emergency Services',
+    title: '24/7 Emergency Services',
     href: '/emergency',
     description: '24/7 emergency plumbing, electrical & HVAC repair',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Mitsubishi Electric',
-    href: '/mitsubishi',
-    description: 'Diamond Elite ductless mini split systems',
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
       </svg>
     ),
   },
@@ -474,22 +474,18 @@ function MobileAccordion({
 
   return (
     <div>
-      <div className="flex items-center rounded-xl hover:bg-gray-50 transition-colors">
-        <Link
-          href={href}
-          onClick={onClose}
-          className="flex-1 px-4 py-3.5 text-base font-medium text-navy hover:text-blue transition-colors"
-        >
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex items-center w-full rounded-xl hover:bg-gray-50 transition-colors"
+        aria-expanded={expanded}
+      >
+        <span className="flex-1 px-4 py-3.5 text-base font-medium text-navy text-left">
           {label}
-        </Link>
-        <button
-          onClick={() => setExpanded(!expanded)}
-          className="p-3 text-gray-500 hover:text-blue transition-colors"
-          aria-label={`${expanded ? 'Collapse' : 'Expand'} ${label}`}
-        >
+        </span>
+        <span className="p-3 text-gray-500">
           <ChevronDown open={expanded} />
-        </button>
-      </div>
+        </span>
+      </button>
       <AnimatePresence>
         {expanded && (
           <motion.div
@@ -595,7 +591,7 @@ export default function Header() {
             </span>
           </div>
           <div className="hidden md:flex items-center gap-4 text-gray-300">
-            <span>{COMPANY.hours.weekday} Mon-Fri</span>
+            <span>Mon-Fri: {COMPANY.hours.weekday}</span>
             <span className="text-gray-500">|</span>
             <span className="text-amber-400 font-medium">24/7 Emergency Service</span>
             <span className="text-gray-500">|</span>

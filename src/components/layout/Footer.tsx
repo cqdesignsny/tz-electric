@@ -4,13 +4,13 @@ import { COMPANY, NAV_ITEMS, TYPEFORM_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 
 const footerServices = [
-  { label: 'Electrical Services', href: '/electrical' },
-  { label: 'HVAC Services', href: '/hvac' },
   { label: 'Mini Split Installation', href: '/mini-split' },
-  { label: 'Generator Installation', href: '/generator' },
+  { label: 'HVAC Services', href: '/hvac' },
+  { label: 'Electrical Services', href: '/electrical' },
   { label: 'Plumbing Services', href: '/plumbing' },
+  { label: 'Generator Installation', href: '/generator' },
   { label: 'Hot Water Heaters', href: '/hot-water-heaters' },
-  { label: 'Emergency Services', href: '/emergency' },
+  { label: '24/7 Emergency Services', href: '/emergency' },
 ]
 
 const footerCompany = [
@@ -192,9 +192,12 @@ export default function Footer() {
               </li>
               <li className="flex justify-between">
                 <span>Sunday</span>
-                <span className="text-amber-400">{COMPANY.hours.sunday}</span>
+                <span className="text-white">{COMPANY.hours.sunday}</span>
               </li>
             </ul>
+            <p className="mt-3 text-amber-400 text-xs font-medium">
+              {COMPANY.hours.emergencyNote}
+            </p>
 
             <h4 className="font-heading font-bold text-white text-sm uppercase tracking-wider mt-8 mb-4">
               Certifications

@@ -118,7 +118,7 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
                 Trusted {service.title} in the Hudson Valley
               </h2>
               <p className="mt-4 text-gray-600 leading-relaxed">
-                With over 20 years of experience and {COMPANY.reviews.count}+ five-star reviews,
+                With over 12 years of experience and {COMPANY.reviews.count}+ five-star reviews,
                 we&apos;re the Hudson Valley&apos;s go-to team for {service.title.toLowerCase()}.
                 Every job comes with upfront pricing, professional technicians, and our satisfaction guarantee.
               </p>

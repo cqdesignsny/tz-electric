@@ -2,7 +2,7 @@ import { COMPANY } from '@/lib/constants'
 import StarRating from '@/components/ui/StarRating'
 
 const stats = [
-  { value: '20+', label: 'Years Experience' },
+  { value: '12+', label: 'Years Experience' },
   { value: `${COMPANY.reviews.count}+`, label: '5-Star Reviews' },
   { value: '5', label: 'Counties Served' },
   { value: '24/7', label: 'Emergency Service' },

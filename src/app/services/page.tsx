@@ -8,8 +8,8 @@ import CTASection from '@/components/sections/CTASection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
-  title: 'Our Services | Plumbing, HVAC, Electrical & More',
-  description: `TZ Electric offers complete home services in the Hudson Valley: electrical, HVAC, mini splits, generators, plumbing, and hot water heaters. ${COMPANY.reviews.count}+ 5-star reviews. Call ${COMPANY.phone}.`,
+  title: 'Our Services | Cooling, Heating, Electrical & More',
+  description: `TZ Electric offers complete home services in the Hudson Valley: mini splits, HVAC, electrical, plumbing, generators, and hot water heaters. ${COMPANY.reviews.count}+ 5-star reviews. Call ${COMPANY.phone}.`,
   path: '/services',
 })
 
@@ -18,7 +18,7 @@ const serviceDetails: Record<string, { features: string[] }> = {
     features: ['Panel Upgrades', 'Whole-Home Rewiring', 'Lighting Installation', 'EV Charger Installation', 'Surge Protection'],
   },
   hvac: {
-    features: ['Furnace Installation & Repair', 'Boiler Services', 'Air Conditioning', 'Heat Pumps', 'Ductwork'],
+    features: ['Furnace Installation & Repair', 'Air Conditioning', 'Heat Pumps', 'Ductwork', 'Maintenance Plans'],
   },
   'mini-split': {
     features: ['Single-Zone Systems', 'Multi-Zone Systems', 'Hyper-Heating', 'Concealed Duct Units', 'Repair & Maintenance'],
@@ -27,7 +27,7 @@ const serviceDetails: Record<string, { features: string[] }> = {
     features: ['Whole-Home Generators', 'Generator Sizing', 'Automatic Transfer Switch', 'Maintenance Plans', 'Repair Service'],
   },
   plumbing: {
-    features: ['Pipe Repair & Replacement', 'Drain Cleaning', 'Fixture Installation', 'Sewer Line Services', 'Gas Line Services'],
+    features: ['Pipe Repair & Replacement', 'Drain Cleaning', 'Fixture Installation', 'Water Line Repair'],
   },
   'hot-water-heaters': {
     features: ['Tankless Water Heaters', 'Traditional Tank Heaters', 'Hybrid Heat Pump Heaters', 'Water Heater Repair', 'Emergency Replacement'],
@@ -90,7 +90,7 @@ export default function ServicesPage() {
           <SectionHeader
             label="What We Do"
             title="Expert Home Services for Every Need"
-            description={`With over 20 years of experience and ${COMPANY.reviews.count}+ five-star reviews, we deliver professional results on every job.`}
+            description={`With over 12 years of experience and ${COMPANY.reviews.count}+ five-star reviews, we deliver professional results on every job.`}
           />
         </div>
 

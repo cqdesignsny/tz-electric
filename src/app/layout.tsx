@@ -6,6 +6,7 @@ import { getLocalBusinessSchema } from '@/lib/metadata'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import ScrollToTop from '@/components/effects/ScrollToTop'
+import FloatingCTA from '@/components/ui/FloatingCTA'
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -26,7 +27,7 @@ export const metadata: Metadata = {
     default: `${COMPANY.name} | ${COMPANY.tagline} | ${COMPANY.serviceArea}`,
     template: `%s | ${COMPANY.name}`,
   },
-  description: `${COMPANY.name} provides expert plumbing, heating, cooling, electrical, and generator services in the ${COMPANY.serviceArea} region. ${COMPANY.reviews.count}+ five-star Google reviews. Call ${COMPANY.phone}.`,
+  description: `${COMPANY.name} provides expert cooling, heating, electrical, plumbing, and generator services in the ${COMPANY.serviceArea} region. ${COMPANY.reviews.count}+ five-star Google reviews. Call ${COMPANY.phone}.`,
   metadataBase: new URL('https://tzelectricinc.com'),
   keywords: [
     'plumber near me',
@@ -105,6 +106,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+        <FloatingCTA />
       </body>
     </html>
   )

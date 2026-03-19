@@ -49,14 +49,13 @@ export const SERVICE_PAGES: ServicePage[] = [
     title: 'HVAC Services',
     metaTitle: 'HVAC Contractor Hudson Valley, NY | Heating & Cooling',
     metaDescription:
-      'Expert HVAC installation, repair & maintenance in the Hudson Valley. Furnaces, boilers, AC systems, heat pumps. 330+ 5-star reviews. Call (518) 678-1230.',
+      'Expert HVAC installation, repair & maintenance in the Hudson Valley. Furnaces, AC systems, heat pumps, ductwork. 330+ 5-star reviews. Call (518) 678-1230.',
     heroTitle: 'Heating & Cooling Experts',
     heroDescription:
       'Keep your home comfortable year-round with our expert HVAC services. Installation, repair, and maintenance for all heating and cooling systems.',
     image: { src: '/images/services/hvac-hero.png', alt: 'HVAC system installation and maintenance by TZ Electric' },
     features: [
       { title: 'Furnace Installation & Repair', description: 'High-efficiency furnace installation, repair, and maintenance.' },
-      { title: 'Boiler Services', description: 'Boiler installation, repair, and annual maintenance.' },
       { title: 'Air Conditioning', description: 'Central AC installation, repair, and seasonal tune-ups.' },
       { title: 'Heat Pumps', description: 'Energy-efficient heat pump systems for year-round comfort.' },
       { title: 'Ductwork', description: 'Duct installation, repair, sealing, and cleaning.' },
@@ -148,7 +147,7 @@ export const SERVICE_PAGES: ServicePage[] = [
     title: 'Plumbing Services',
     metaTitle: 'Plumber Hudson Valley, NY | Expert Plumbing Services',
     metaDescription:
-      'Licensed plumber in the Hudson Valley. Pipe repair, drain cleaning, fixture installation, water heaters, sewer line repair. Call (518) 678-1230.',
+      'Licensed plumber in the Hudson Valley. Pipe repair, drain cleaning, fixture installation, water line repair. Call (518) 678-1230.',
     heroTitle: 'Full-Service Plumbing Solutions',
     heroDescription:
       'From routine repairs to complete plumbing overhauls, our licensed plumbers deliver reliable, lasting solutions for your home.',
@@ -157,9 +156,7 @@ export const SERVICE_PAGES: ServicePage[] = [
       { title: 'Pipe Repair & Replacement', description: 'Fix leaks, burst pipes, and corroded plumbing.' },
       { title: 'Drain Cleaning', description: 'Professional drain cleaning and clog removal.' },
       { title: 'Fixture Installation', description: 'Faucets, sinks, toilets, and shower installation.' },
-      { title: 'Sewer Line Services', description: 'Sewer line inspection, repair, and replacement.' },
       { title: 'Water Line Repair', description: 'Main water line repair and replacement.' },
-      { title: 'Gas Line Services', description: 'Gas line installation, repair, and leak detection.' },
     ],
     faqs: [
       {
@@ -167,12 +164,12 @@ export const SERVICE_PAGES: ServicePage[] = [
         answer: 'Yes! We offer 24/7 emergency plumbing service. Burst pipes, sewage backups, and major leaks can\'t wait — call us anytime at (518) 678-1230.',
       },
       {
-        question: 'How do I know if I have a sewer line problem?',
-        answer: 'Signs include slow drains throughout the house, gurgling sounds, sewage odors, and wet spots in the yard. We offer video inspection to diagnose sewer issues.',
+        question: 'How often should I have my drains cleaned?',
+        answer: 'We recommend annual drain cleaning as preventative maintenance. If you notice slow drains, gurgling sounds, or recurring clogs, schedule a professional cleaning right away.',
       },
       {
-        question: 'Do you handle gas line work?',
-        answer: 'Yes, our licensed technicians handle gas line installation, repair, and leak detection for gas ranges, dryers, fireplaces, and outdoor grills.',
+        question: 'Do you install new fixtures?',
+        answer: 'Yes! We handle all fixture installations including faucets, sinks, toilets, showers, and bathtubs. We can also help you choose the right fixtures for your home.',
       },
     ],
   },
@@ -211,7 +208,7 @@ export const SERVICE_PAGES: ServicePage[] = [
   },
   {
     slug: 'emergency',
-    title: 'Emergency Services',
+    title: '24/7 Emergency Services',
     metaTitle: '24/7 Emergency Plumbing, Heating & Electrical | Hudson Valley',
     metaDescription:
       '24/7 emergency plumbing, heating, cooling, and electrical services in the Hudson Valley. Fast response, expert repairs. Call (518) 678-1230 now.',
@@ -224,8 +221,6 @@ export const SERVICE_PAGES: ServicePage[] = [
       { title: 'No-Heat Calls', description: 'Furnace or boiler failures in winter demand immediate attention.' },
       { title: 'No-AC Emergencies', description: 'AC breakdowns during heat waves — we\'ll get you cool fast.' },
       { title: 'Electrical Emergencies', description: 'Power outages, sparking outlets, and electrical hazards.' },
-      { title: 'Gas Leak Response', description: 'Suspected gas leaks require immediate professional attention.' },
-      { title: 'Flood Damage', description: 'Emergency water shutoff and damage mitigation.' },
     ],
     faqs: [
       {

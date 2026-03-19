@@ -80,7 +80,7 @@ export default function HeroSection() {
             </h1>
 
             <p className="mt-6 text-gray-200 text-lg lg:text-xl max-w-xl leading-relaxed">
-              Expert plumbing, heating, cooling, electrical, and generator services
+              Expert cooling, heating, electrical, plumbing, and generator services
               for the {COMPANY.serviceArea} region. Licensed, insured, and
               committed to your comfort.
             </p>
@@ -139,7 +139,7 @@ export default function HeroSection() {
               />
               <div className="flex items-center justify-center gap-4 pt-4 border-t border-white/10">
                 <div className="text-center">
-                  <div className="text-2xl font-heading font-bold text-white">20+</div>
+                  <div className="text-2xl font-heading font-bold text-white">12+</div>
                   <div className="text-xs text-gray-400">Years</div>
                 </div>
                 <div className="w-px h-8 bg-white/20" />

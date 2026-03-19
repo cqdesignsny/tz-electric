@@ -174,7 +174,7 @@ export default function ContactPage() {
                     <p className="text-gray-500 text-sm">5-Star Reviews</p>
                   </div>
                   <div>
-                    <p className="text-2xl font-bold text-navy">20+</p>
+                    <p className="text-2xl font-bold text-navy">12+</p>
                     <p className="text-gray-500 text-sm">Years Experience</p>
                   </div>
                   <div>

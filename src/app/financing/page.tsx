@@ -21,6 +21,8 @@ const financingPartners = [
       'No prepayment penalties',
       'Fast, easy online application',
     ],
+    logo: '/images/logo/wisetack.svg',
+    link: 'https://wisetack.us/#/z8edwg3/prequalify',
   },
   {
     name: 'Synchrony',
@@ -32,6 +34,8 @@ const financingPartners = [
       'Use for future purchases too',
       'Quick credit decisions',
     ],
+    logo: '/images/logo/synchrony.svg',
+    link: 'https://www.synchrony.com/mmc/HY232392100',
   },
 ]
 
@@ -149,27 +153,38 @@ export default function FinancingPage() {
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             {financingPartners.map((partner) => (
-              <div key={partner.name} className="bg-white border border-gray-200 rounded-2xl p-8">
-                <div className="w-full h-16 bg-gray-100 rounded-lg flex items-center justify-center mb-6">
-                  <span className="text-gray-400 font-semibold">{partner.name} Logo</span>
+              <a 
+                href={partner.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                key={partner.name} 
+                className="group block bg-white border border-gray-200 rounded-2xl p-8 transition-all duration-300 hover:border-blue hover:shadow-xl hover:-translate-y-1 cursor-pointer"
+              >
+                <div className="w-full h-24 bg-gray-50 rounded-lg flex items-center justify-center mb-6 transition-colors group-hover:bg-blue/5">
+                  <img src={partner.logo} alt={`${partner.name} Logo`} className="max-h-12 w-auto object-contain" />
                 </div>
-                <h3 className="font-heading font-bold text-navy text-xl">
-                  {partner.name}
-                </h3>
-                <p className="mt-2 text-gray-600 text-sm leading-relaxed">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-heading font-bold text-navy text-xl group-hover:text-blue transition-colors">
+                    {partner.name}
+                  </h3>
+                  <svg className="w-5 h-5 text-gray-400 opacity-0 -translate-x-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 group-hover:text-blue" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                  </svg>
+                </div>
+                <p className="mt-3 text-gray-600 text-sm leading-relaxed">
                   {partner.description}
                 </p>
-                <ul className="mt-4 space-y-2">
+                <ul className="mt-5 space-y-3">
                   {partner.features.map((feature) => (
-                    <li key={feature} className="flex items-center gap-2 text-sm text-gray-700">
-                      <svg className="w-4 h-4 text-success flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <li key={feature} className="flex items-start gap-2.5 text-sm text-gray-700">
+                      <svg className="w-5 h-5 text-success flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                       </svg>
                       {feature}
                     </li>
                   ))}
                 </ul>
-              </div>
+              </a>
             ))}
           </div>
         </div>

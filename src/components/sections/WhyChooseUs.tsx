@@ -65,7 +65,7 @@ export default function WhyChooseUs() {
         <SectionHeader
           label="Why Choose Us"
           title="The Hudson Valley's Most Trusted Home Services Team"
-          description="For over 20 years, homeowners across the Hudson Valley have trusted TZ Electric for reliable, professional service."
+          description="For over 12 years, homeowners across the Hudson Valley have trusted TZ Electric for reliable, professional service."
         />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">

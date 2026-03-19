@@ -80,7 +80,7 @@ export default function ReviewsPage() {
               <p className="text-gray-500 text-sm mt-1">Average Rating</p>
             </div>
             <div>
-              <p className="text-3xl font-bold text-navy">20+</p>
+              <p className="text-3xl font-bold text-navy">12+</p>
               <p className="text-gray-500 text-sm mt-1">Years of Service</p>
             </div>
             <div>
