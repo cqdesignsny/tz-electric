@@ -830,6 +830,38 @@ export default function Header() {
                   </div>
                 </MobileAccordion>
 
+                {/* Plans */}
+                <MobileAccordion label="Plans" href="/signature-plans" onClose={closeMobile}>
+                  <div className="space-y-0.5">
+                    <Link
+                      href="/signature-plans"
+                      onClick={closeMobile}
+                      className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-blue hover:bg-sky/40 rounded-lg transition-colors"
+                    >
+                      <span className="w-8 h-8 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      </span>
+                      <div>
+                        <span className="font-medium text-navy">Signature Plans</span>
+                        <span className="block text-xs text-gray-400">Annual maintenance memberships</span>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/maintenance"
+                      onClick={closeMobile}
+                      className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-blue hover:bg-sky/40 rounded-lg transition-colors"
+                    >
+                      <span className="w-8 h-8 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" /></svg>
+                      </span>
+                      <div>
+                        <span className="font-medium text-navy">Generator Maintenance</span>
+                        <span className="block text-xs text-gray-400">Generator maintenance plans</span>
+                      </div>
+                    </Link>
+                  </div>
+                </MobileAccordion>
+
                 {/* Direct Links */}
                 <Link
                   href="/financing"
