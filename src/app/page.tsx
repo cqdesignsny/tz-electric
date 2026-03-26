@@ -55,11 +55,11 @@ export default function HomePage() {
                 type="email"
                 placeholder="Enter your email"
                 required
-                className="flex-1 px-4 py-3 rounded-full text-navy text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="flex-1 px-5 py-3 rounded-full text-navy text-sm placeholder-gray-500 bg-white border-2 border-white/80 focus:outline-none focus:ring-2 focus:ring-white focus:border-white shadow-inner"
               />
               <button
                 type="submit"
-                className="px-6 py-3 bg-white text-blue font-heading font-semibold text-sm rounded-full hover:bg-gray-100 transition-colors"
+                className="px-6 py-3 bg-accent text-white font-heading font-semibold text-sm rounded-full hover:bg-accent-dark transition-colors shadow-lg"
               >
                 Subscribe
               </button>
@@ -85,11 +85,11 @@ export default function HomePage() {
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-10 md:gap-16">
             <Image
-              src="/images/certifications/diamond-contractor-color.png"
+              src="/images/certifications/diamond-contractor.svg"
               alt="Mitsubishi Diamond Elite Contractor"
               width={200}
               height={60}
-              className="h-14 w-auto"
+              className="h-14 w-auto brightness-0"
             />
             <Image
               src="/images/certifications/mitsubishi-electric-dark.svg"

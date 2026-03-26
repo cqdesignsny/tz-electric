@@ -381,7 +381,7 @@ export default function AboutPage() {
           />
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {certifications.map((cert) => (
-              <div key={cert.name} className="bg-white border border-gray-200 rounded-xl p-6 text-center">
+              <div key={cert.name} className="bg-white border-2 border-blue/15 rounded-2xl p-6 text-center shadow-sm hover:border-blue/40 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                 <div className="w-28 h-28 relative mx-auto flex items-center justify-center">
                   <Image
                     src={cert.image}

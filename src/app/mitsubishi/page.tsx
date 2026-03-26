@@ -168,7 +168,7 @@ export default function MitsubishiPage() {
             {UNIT_TYPES.map((unit) => (
               <div
                 key={unit.name}
-                className="bg-white rounded-xl border-2 border-gray-100 p-6 hover:border-blue/30 hover:shadow-card-hover transition-all duration-300 group"
+                className="bg-white rounded-2xl border-2 border-blue/15 p-6 shadow-sm hover:border-blue/40 hover:shadow-lg hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 group"
               >
                 <div className="w-12 h-12 rounded-xl bg-blue/10 text-blue flex items-center justify-center mb-4 group-hover:bg-blue group-hover:text-white transition-colors">
                   {unitIcons[unit.icon]}
@@ -198,7 +198,7 @@ export default function MitsubishiPage() {
             {TECHNOLOGIES.map((tech) => (
               <div
                 key={tech.name}
-                className="bg-white rounded-xl border border-gray-200 p-6 flex gap-4 items-start hover:shadow-card transition-shadow"
+                className="bg-white rounded-2xl border-2 border-blue/15 p-6 flex gap-4 items-start shadow-sm hover:border-blue/30 hover:shadow-lg transition-all duration-300"
               >
                 <div className="w-10 h-10 rounded-lg bg-blue text-white flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -355,7 +355,7 @@ export default function MitsubishiPage() {
               {miniSplitService.features.map((feature) => (
                 <div
                   key={feature.title}
-                  className="bg-white rounded-xl border-2 border-gray-100 p-6 hover:border-blue/30 hover:shadow-card-hover transition-all duration-300 group"
+                  className="bg-white rounded-2xl border-2 border-blue/15 p-6 shadow-sm hover:border-blue/40 hover:shadow-lg hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 group"
                 >
                   <div className="w-10 h-10 rounded-lg bg-blue/10 text-blue flex items-center justify-center mb-4 group-hover:bg-blue group-hover:text-white transition-colors">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

@@ -18,7 +18,7 @@ export default function CTASection() {
             href={TYPEFORM_URL}
             external
             size="lg"
-            className="bg-white text-blue hover:bg-gray-100 shadow-lg"
+            className="!bg-accent !text-white hover:!bg-accent-dark shadow-lg"
           >
             Get a Free Quote
           </Button>

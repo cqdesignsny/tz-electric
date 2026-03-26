@@ -332,7 +332,7 @@ export default function MaintenancePage() {
             {CANCELLATION_TERMS.map((term) => (
               <details
                 key={term.title}
-                className="group bg-white rounded-xl border-2 border-gray-100 overflow-hidden hover:border-blue/30 transition-colors"
+                className="group bg-white rounded-2xl border-2 border-blue/15 overflow-hidden shadow-sm hover:border-blue/40 hover:shadow-lg transition-all duration-300"
               >
                 <summary className="flex items-center justify-between px-6 py-5 cursor-pointer list-none font-heading font-semibold text-navy hover:text-blue transition-colors">
                   <span className="flex items-center gap-3">

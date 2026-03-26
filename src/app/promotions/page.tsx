@@ -119,7 +119,7 @@ export default function PromotionsPage() {
         <div className="container-site">
           <div className="grid md:grid-cols-2 gap-8">
             {promotions.map((promo) => (
-              <div key={promo.title} className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+              <div key={promo.title} className="bg-white border-2 border-blue/15 rounded-2xl overflow-hidden shadow-sm hover:border-blue/40 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                 <div className="bg-blue/5 px-6 py-3 flex items-center justify-between border-b border-gray-100">
                   <span className="text-blue text-sm font-semibold">{promo.category}</span>
                   <span className="text-xs text-gray-500">{promo.expires}</span>
@@ -135,7 +135,7 @@ export default function PromotionsPage() {
                   <p className="mt-3 text-gray-500 text-xs">
                     {promo.details}
                   </p>
-                  <Button href={TYPEFORM_URL} external className="mt-4" size="sm">
+                  <Button href={TYPEFORM_URL} external className="mt-4 !bg-accent hover:!bg-accent-dark" size="sm">
                     Claim This Offer
                   </Button>
                 </div>

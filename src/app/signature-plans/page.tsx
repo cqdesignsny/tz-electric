@@ -191,8 +191,8 @@ export default function SignaturePlansPage() {
                       href={`tel:${COMPANY.phoneRaw}`}
                       className={`w-full inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-heading font-semibold text-sm transition-colors ${
                         plan.highlighted
-                          ? 'bg-white text-blue hover:bg-gray-100'
-                          : 'bg-blue text-white hover:bg-blue-dark'
+                          ? 'bg-accent text-white hover:bg-accent-dark'
+                          : 'bg-accent text-white hover:bg-accent-dark'
                       }`}
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
@@ -224,7 +224,7 @@ export default function SignaturePlansPage() {
             {SERVICE_DESCRIPTIONS.map((service) => (
               <div
                 key={service.title}
-                className="bg-white rounded-xl border-2 border-gray-100 p-6 hover:border-blue/30 hover:shadow-card transition-all duration-300"
+                className="bg-white rounded-2xl border-2 border-blue/15 p-6 shadow-sm hover:border-blue/40 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
               >
                 <div className="w-12 h-12 rounded-xl bg-blue/10 text-blue flex items-center justify-center mb-4">
                   {icons[service.icon]}
@@ -254,7 +254,7 @@ export default function SignaturePlansPage() {
           </div>
           <div className="space-y-4">
             {CHOOSING_RIGHT_PLAN.map((tip, i) => (
-              <div key={i} className="flex items-start gap-4 bg-white rounded-xl border border-gray-100 p-5">
+              <div key={i} className="flex items-start gap-4 bg-white rounded-2xl border-2 border-blue/15 p-5 shadow-sm hover:border-blue/30 transition-colors">
                 <div className="w-8 h-8 rounded-lg bg-blue/10 text-blue flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -372,7 +372,7 @@ export default function SignaturePlansPage() {
             <Button
               href={`tel:${COMPANY.phoneRaw}`}
               size="lg"
-              className="bg-white text-blue hover:bg-gray-100 shadow-lg"
+              className="!bg-accent !text-white hover:!bg-accent-dark shadow-lg"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z" />
@@ -393,7 +393,7 @@ export default function SignaturePlansPage() {
             {PLAN_TERMS.map((term) => (
               <details
                 key={term.title}
-                className="group bg-white rounded-xl border-2 border-gray-100 overflow-hidden hover:border-blue/30 transition-colors"
+                className="group bg-white rounded-2xl border-2 border-blue/15 overflow-hidden shadow-sm hover:border-blue/40 hover:shadow-lg transition-all duration-300"
               >
                 <summary className="flex items-center justify-between px-6 py-5 cursor-pointer list-none font-heading font-semibold text-navy hover:text-blue transition-colors">
                   <span className="flex items-center gap-3">

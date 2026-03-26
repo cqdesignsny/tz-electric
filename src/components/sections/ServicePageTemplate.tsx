@@ -92,7 +92,7 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
             {service.features.map((feature) => {
               const content = (
                 <>
-                  <div className="w-10 h-10 bg-blue/10 rounded-lg flex items-center justify-center text-blue mb-4">
+                  <div className="w-11 h-11 bg-gradient-to-br from-blue/10 to-blue/20 rounded-xl flex items-center justify-center text-blue mb-4 group-hover:from-blue group-hover:to-blue-dark group-hover:text-white transition-all duration-300">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -113,14 +113,14 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
                 <Link
                   key={feature.title}
                   href={feature.href}
-                  className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-card-hover transition-all group hover:border-blue/30 hover:-translate-y-1"
+                  className="bg-white rounded-2xl border-2 border-blue/15 p-6 shadow-sm hover:shadow-lg hover:border-blue/40 hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 group"
                 >
                   {content}
                 </Link>
               ) : (
                 <div
                   key={feature.title}
-                  className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-card-hover transition-shadow"
+                  className="bg-white rounded-2xl border-2 border-blue/15 p-6 shadow-sm hover:shadow-lg hover:border-blue/40 hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 group"
                 >
                   {content}
                 </div>
@@ -188,7 +188,7 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
             {service.faqs.map((faq) => (
               <details
                 key={faq.question}
-                className="group bg-white rounded-xl border-2 border-gray-100 overflow-hidden hover:border-blue/30 transition-colors"
+                className="group bg-white rounded-2xl border-2 border-blue/15 overflow-hidden shadow-sm hover:border-blue/40 hover:shadow-lg transition-all duration-300"
               >
                 <summary className="flex items-center justify-between px-6 py-5 cursor-pointer list-none font-heading font-semibold text-navy hover:text-blue transition-colors">
                   <span className="flex items-center gap-3">

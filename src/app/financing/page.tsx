@@ -264,7 +264,7 @@ export default function FinancingPage() {
                 a: 'No hidden fees. We believe in transparent pricing. Your financing terms, including interest rates and monthly payments, are clearly presented before you commit.',
               },
             ].map((faq) => (
-              <div key={faq.q} className="border border-gray-200 rounded-xl p-6">
+              <div key={faq.q} className="border-2 border-blue/15 rounded-2xl p-6 shadow-sm hover:border-blue/30 transition-colors">
                 <h3 className="font-semibold text-navy">{faq.q}</h3>
                 <p className="mt-2 text-gray-600 text-sm leading-relaxed">{faq.a}</p>
               </div>

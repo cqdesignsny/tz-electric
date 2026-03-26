@@ -16,6 +16,11 @@
   --color-gold: #C9A84C;
   --color-gold-light: #D4B96A;
 
+  /* Accent — Orange CTA */
+  --color-accent: #F97316;
+  --color-accent-dark: #EA580C;
+  --color-accent-light: #FB923C;
+
   /* Functional Colors */
   --color-success: #059669;
   --color-warning: #D97706;
