@@ -44,9 +44,9 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
           priority
           sizes="100vw"
         />
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/95 to-navy/70" />
-        <div className="absolute inset-0 bg-gradient-to-t from-navy/60 to-transparent" />
+        {/* Gradient Overlay — lightened so background image is more visible */}
+        <div className="absolute inset-0 bg-gradient-to-r from-navy/85 via-navy/70 to-navy/50" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy/50 to-transparent" />
 
         {/* Electric Cursor Effect */}
         <ElectricCursor />

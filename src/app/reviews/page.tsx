@@ -7,7 +7,7 @@ import { TrustIndexWidget } from '@/components/ui/TrustIndexWidget'
 
 export const metadata = createMetadata({
   title: `${COMPANY.reviews.count}+ 5-Star Reviews | TZ Electric Inc | Hudson Valley`,
-  description: `Read ${COMPANY.reviews.count}+ five-star Google reviews from satisfied Hudson Valley homeowners. See why TZ Electric is the most trusted plumbing, HVAC, and electrical company in the region.`,
+  description: `Read ${COMPANY.reviews.count}+ five-star Google reviews from satisfied Hudson Valley homeowners. See why TZ Electric is the most trusted cooling, heating, and electrical company in the region.`,
   path: '/reviews',
 })
 

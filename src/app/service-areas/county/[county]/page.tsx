@@ -279,7 +279,7 @@ export default async function CountyPage({ params }: { params: Promise<{ county:
                 </svg>
               </div>
               <h3 className="font-heading font-bold text-navy">Certified Pros</h3>
-              <p className="mt-2 text-gray-600 text-sm">Mitsubishi Diamond Contractor, Generac Authorized Dealer, BBB Accredited.</p>
+              <p className="mt-2 text-gray-600 text-sm">Mitsubishi Diamond Elite Contractor, Generac Authorized Dealer, BBB Accredited.</p>
             </div>
           </div>
         </div>

@@ -10,6 +10,7 @@ const footerServices = [
   { label: 'Plumbing Services', href: '/plumbing' },
   { label: 'Generator Installation', href: '/generator' },
   { label: 'Hot Water Heaters', href: '/hot-water-heaters' },
+  { label: 'Maintenance Plans', href: '/maintenance' },
   { label: '24/7 Emergency Services', href: '/emergency' },
 ]
 
@@ -59,7 +60,7 @@ export default function Footer() {
 
       {/* Main Footer */}
       <div className="container-site py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 text-center md:text-left">
           {/* Company Info */}
           <div className="lg:col-span-1">
             <Link href="/" className="inline-block mb-4">
@@ -87,7 +88,7 @@ export default function Footer() {
 
             {/* Social */}
             <p className="text-gray-400 text-xs uppercase tracking-wider font-semibold mt-6 mb-3">Follow Us</p>
-            <div className="flex gap-3">
+            <div className="flex gap-3 justify-center md:justify-start">
               <a
                 href={COMPANY.social.facebook}
                 target="_blank"
@@ -221,7 +222,7 @@ export default function Footer() {
         <div className="container-site py-8 flex flex-wrap items-center justify-center gap-8">
           <Image
             src="/images/certifications/diamond-contractor.svg"
-            alt="Mitsubishi Diamond Contractor"
+            alt="Mitsubishi Diamond Elite Contractor"
             width={180}
             height={50}
             className="h-12 w-auto opacity-50 hover:opacity-100 transition-opacity"

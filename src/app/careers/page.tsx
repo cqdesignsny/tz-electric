@@ -12,40 +12,40 @@ export const metadata = createMetadata({
 
 const openings = [
   {
-    title: 'Lead Residential Electrician',
-    slug: 'lead-residential-electrician',
+    title: 'Lead Electrician',
+    slug: 'lead-electrician',
     type: 'Full-Time',
     description: 'Experienced electrician to lead residential projects including panel upgrades, rewiring, and EV charger installations.',
   },
   {
-    title: 'HVAC Project Manager & Installer',
-    slug: 'hvac-project-manager-installer',
+    title: 'HVAC Project Manager',
+    slug: 'hvac-project-manager',
     type: 'Full-Time',
     description: 'Manage and execute HVAC installation projects from start to finish. Experience with Mitsubishi systems a plus.',
   },
   {
-    title: 'Electrical Estimator & Salesman',
-    slug: 'electrical-estimator-salesman-position',
+    title: 'HVAC Installer',
+    slug: 'hvac-installer',
     type: 'Full-Time',
-    description: 'Prepare accurate estimates and build relationships with customers. Technical knowledge and sales experience required.',
+    description: 'Install and service HVAC systems including ductless mini splits, furnaces, and air conditioners.',
   },
   {
-    title: 'General Apprentice',
-    slug: 'general-apprentice',
+    title: 'Estimator',
+    slug: 'estimator',
+    type: 'Full-Time',
+    description: 'Prepare accurate estimates and build relationships with customers. Technical knowledge and customer-facing experience required.',
+  },
+  {
+    title: 'Apprentice',
+    slug: 'apprentice',
     type: 'Full-Time',
     description: 'Entry-level position with hands-on training in electrical, HVAC, and plumbing trades. Great career starter.',
   },
   {
-    title: 'Office Assistant / Receptionist',
-    slug: 'office-assistant-receptionist',
+    title: 'Office Assistant',
+    slug: 'office-assistant',
     type: 'Full-Time',
     description: 'Manage front office operations, customer communications, and scheduling. Organized and friendly personality required.',
-  },
-  {
-    title: 'Warehouse Operations Coordinator',
-    slug: 'warehouse-operations-coordinator',
-    type: 'Full-Time',
-    description: 'Oversee inventory management, parts ordering, and warehouse organization. Attention to detail is key.',
   },
 ]
 
@@ -87,7 +87,7 @@ export default function CareersPage() {
               Join Our Team
             </span>
             <h1 className="text-white text-4xl lg:text-5xl font-heading font-bold leading-tight mt-2">
-              Build Your Career with TZ Electric
+              Build Your Career with TZ Electric, Plumbing, Heating &amp; Cooling
             </h1>
             <p className="mt-4 text-gray-300 text-lg max-w-2xl">
               We&apos;re growing and looking for talented people to join our team.

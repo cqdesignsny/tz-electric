@@ -4,7 +4,7 @@
 
 export const COMPANY = {
   name: 'TZ Electric, Inc.',
-  tagline: 'Plumbing | Heating | Cooling',
+  tagline: 'Cooling | Heating | Electrical',
   phone: '(518) 678-1230',
   phoneRaw: '+15186781230',
   email: 'service@tzelectricinc.com',
@@ -27,6 +27,7 @@ export const COMPANY = {
     'Mitsubishi Diamond Elite Contractor',
     'Generac Authorized Dealer',
     'BBB Accredited Business',
+    'Voted Best Electrician — Hudson Valley',
   ],
   financing: ['Wisetack', 'Synchrony'],
   social: {
@@ -62,10 +63,10 @@ export const NAV_ITEMS = [
     children: [
       { label: 'Mitsubishi Electric', href: '/mitsubishi', description: 'Diamond Elite mini split systems' },
       { label: 'Mini Splits', href: '/mini-split', description: 'Ductless heating & cooling systems' },
-      { label: 'HVAC', href: '/hvac', description: 'Heating, ventilation & air conditioning' },
+      { label: 'HVAC', href: '/hvac', description: 'Ducted heating & air conditioning' },
       { label: 'Electrical', href: '/electrical', description: 'Panel upgrades, rewiring, lighting & more' },
       { label: 'Plumbing', href: '/plumbing', description: 'Full-service plumbing solutions' },
-      { label: 'Generators', href: '/generator', description: 'Backup power solutions' },
+      { label: 'Generators', href: '/generator', description: 'Generac backup power solutions' },
       { label: 'Hot Water Heaters', href: '/hot-water-heaters', description: 'Installation & repair' },
       { label: '24/7 Emergency Services', href: '/emergency', description: '24/7 emergency repair' },
     ],
@@ -94,8 +95,12 @@ export const NAV_ITEMS = [
     ],
   },
   {
-    label: 'Signature Plans',
+    label: 'Plans',
     href: '/signature-plans',
+    children: [
+      { label: 'Signature Plans', href: '/signature-plans', description: 'Annual maintenance memberships' },
+      { label: 'Generator Maintenance', href: '/maintenance', description: 'Generator maintenance plans' },
+    ],
   },
   {
     label: 'Financing',
@@ -107,20 +112,20 @@ export const NAV_ITEMS = [
   },
 ] as const
 
-// Services data
+// Services data (ordered: Cooling → Heating → Electrical → Plumbing → Generator)
 export const SERVICES = [
   {
     title: 'Mini Splits',
     slug: 'mini-split',
-    caption: 'Ductless Comfort',
+    caption: 'Ductless Cooling & Heating',
     description: 'Mitsubishi Diamond Elite mini split installation, repair, and maintenance.',
     image: '/images/services/minisplit-install.jpeg',
   },
   {
     title: 'HVAC',
     slug: 'hvac',
-    caption: 'Heating & Cooling Solutions',
-    description: 'Installation, repair, and maintenance for all heating and cooling systems.',
+    caption: 'Ducted Heating & Cooling',
+    description: 'Installation, repair, and maintenance for furnaces, central air, and heat pump systems.',
     image: '/images/services/hvac-hero.png',
   },
   {
@@ -141,7 +146,7 @@ export const SERVICES = [
     title: 'Generators',
     slug: 'generator',
     caption: 'Backup Power',
-    description: 'Generac authorized dealer — whole-home generator installation and service.',
+    description: 'Generac authorized dealer — whole-home generator installation and service. Repair services limited to Generac.',
     image: '/images/services/generator.webp',
   },
   {

@@ -90,11 +90,11 @@ export default function MitsubishiPage() {
         <div className="container-site relative z-10 py-16 lg:py-24">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              {/* Diamond Contractor Logo — large, front and center */}
+              {/* Diamond Elite Contractor Logo — large, front and center */}
               <div className="mb-8">
                 <Image
                   src="/images/certifications/diamond-contractor.svg"
-                  alt="Mitsubishi Diamond Contractor"
+                  alt="Mitsubishi Diamond Elite Contractor"
                   width={340}
                   height={100}
                   className="brightness-0 invert"
@@ -109,7 +109,7 @@ export default function MitsubishiPage() {
               </h1>
 
               <p className="mt-6 text-gray-200 text-lg lg:text-xl max-w-2xl leading-relaxed">
-                As a Mitsubishi Electric Diamond Contractor &mdash; the
+                As a Mitsubishi Electric Diamond Elite Contractor &mdash; the
                 highest dealer certification &mdash; we deliver superior ductless
                 mini split installation, Hyper-Heating systems, and smart climate
                 control for homes across the Hudson Valley.
@@ -144,7 +144,7 @@ export default function MitsubishiPage() {
                 />
                 <div className="w-16 h-px bg-white/20 mx-auto mb-4" />
                 <p className="text-gray-300 text-sm max-w-xs">
-                  Authorized Diamond Contractor for the entire Mitsubishi Electric product line
+                  Authorized Diamond Elite Contractor for the entire Mitsubishi Electric product line
                 </p>
               </div>
             </div>
@@ -273,7 +273,7 @@ export default function MitsubishiPage() {
         </div>
       </section>
 
-      {/* Diamond Contractor Credential */}
+      {/* Diamond Elite Contractor Credential */}
       <section className="section-padding bg-gradient-to-br from-navy-light to-navy">
         <div className="container-site">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -282,10 +282,10 @@ export default function MitsubishiPage() {
                 Our Certification
               </span>
               <h2 className="font-heading font-bold text-white text-3xl lg:text-4xl mt-2">
-                What Diamond Contractor Means for You
+                What Diamond Elite Contractor Means for You
               </h2>
               <p className="mt-4 text-gray-300 leading-relaxed">
-                Diamond Contractor is the highest certification tier Mitsubishi Electric
+                Diamond Elite Contractor is the highest certification tier Mitsubishi Electric
                 awards to its dealers. Only a select few companies in the entire
                 Hudson Valley hold this distinction.
               </p>
@@ -312,7 +312,7 @@ export default function MitsubishiPage() {
               <div className="bg-white rounded-2xl p-10 shadow-2xl text-center max-w-md">
                 <Image
                   src="/images/certifications/diamond-contractor.svg"
-                  alt="Mitsubishi Diamond Contractor certification"
+                  alt="Mitsubishi Diamond Elite Contractor certification"
                   width={320}
                   height={100}
                   className="mx-auto object-contain mb-4"
@@ -326,7 +326,7 @@ export default function MitsubishiPage() {
                 />
                 <div className="w-16 h-px bg-gray-200 mx-auto my-4" />
                 <h3 className="font-heading font-bold text-navy text-xl">
-                  Diamond Contractor
+                  Diamond Elite Contractor
                 </h3>
                 <p className="text-gray-600 text-sm mt-2">
                   Awarded to TZ Electric, Inc. for exceptional installation

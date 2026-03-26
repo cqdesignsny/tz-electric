@@ -9,7 +9,7 @@ import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
   title: 'About TZ Electric Inc | Hudson Valley Trusted Home Service Experts',
-  description: `Learn about TZ Electric Inc — over 12 years of plumbing, HVAC, and electrical expertise in the Hudson Valley. ${COMPANY.reviews.count}+ 5-star reviews. Mitsubishi Diamond Elite & Generac Authorized Dealer.`,
+  description: `Learn about TZ Electric Inc — over 12 years of cooling, heating, electrical, and plumbing expertise in the Hudson Valley. ${COMPANY.reviews.count}+ 5-star reviews. Mitsubishi Diamond Elite Contractor & Generac Authorized Dealer.`,
   path: '/about-us',
 })
 
@@ -53,7 +53,7 @@ const values = [
 ]
 
 const certifications = [
-  { name: 'Mitsubishi Diamond Contractor', description: 'Top-tier certification for ductless mini split installation and service', image: '/images/certifications/diamond-contractor.svg', isSvg: true },
+  { name: 'Mitsubishi Diamond Elite Contractor', description: 'Highest-tier certification for ductless mini split installation and service', image: '/images/certifications/diamond-contractor.svg', isSvg: true },
   { name: 'Mitsubishi Electric', description: 'Authorized Mitsubishi Electric heating & cooling dealer', image: '/images/certifications/mitsubishi-electric.svg', isSvg: true },
   { name: 'Generac Authorized Dealer', description: 'Factory-trained and authorized for whole-home generator systems', image: '/images/certifications/generac.webp', isSvg: false },
   { name: 'BBB Accredited Business', description: 'Maintaining the highest standards of trust and business ethics', image: '/images/certifications/bbb.webp', isSvg: false },
@@ -61,6 +61,7 @@ const certifications = [
 
 const founder = TEAM_MEMBERS.filter((m) => m.category === 'founder')
 const leadership = TEAM_MEMBERS.filter((m) => m.category === 'leadership')
+const support = TEAM_MEMBERS.filter((m) => m.category === 'support')
 const technicians = TEAM_MEMBERS.filter((m) => m.category === 'technician')
 const mascot = TEAM_MEMBERS.filter((m) => m.category === 'mascot')
 
@@ -103,7 +104,7 @@ export default function AboutPage() {
             </h1>
             <p className="mt-4 text-gray-300 text-lg max-w-2xl">
               For over 12 years, TZ Electric has been the name Hudson Valley homeowners
-              trust for plumbing, heating, cooling, and electrical services.
+              trust for cooling, heating, electrical, and plumbing services.
             </p>
           </div>
         </div>
@@ -125,7 +126,7 @@ export default function AboutPage() {
                   TZ Electric started with a simple mission: provide honest, high-quality home
                   services to the Hudson Valley community. What began as a small electrical
                   contracting business has grown into a full-service home comfort company
-                  offering plumbing, HVAC, generators, and more.
+                  offering cooling, heating, electrical, plumbing, generators, and more.
                 </p>
                 <p>
                   Today, with {COMPANY.reviews.count}+ five-star Google reviews and a team of
@@ -264,10 +265,46 @@ export default function AboutPage() {
             </div>
           </div>
 
-          {/* Technicians */}
+          {/* Support Staff */}
           <div className="mb-8">
             <h3 className="font-heading font-bold text-navy text-xl mb-6">
-              Our Technicians
+              Support Staff
+            </h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
+              {support.map((member) => (
+                <div
+                  key={member.name}
+                  className="group bg-white border border-gray-200 rounded-xl overflow-hidden transition-shadow duration-300 hover:shadow-lg"
+                >
+                  <div className="relative aspect-[3/4] overflow-hidden">
+                    <Image
+                      src={member.photo}
+                      alt={`${member.name} — ${member.role}`}
+                      fill
+                      className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h4 className="font-heading font-bold text-navy">
+                      {member.name}
+                    </h4>
+                    <p className="text-blue text-sm font-medium">
+                      {member.role}
+                    </p>
+                    <p className="mt-2 text-gray-500 text-sm leading-relaxed">
+                      {member.bio}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Field Technicians */}
+          <div className="mb-8">
+            <h3 className="font-heading font-bold text-navy text-xl mb-6">
+              Field Technicians
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
               {technicians.map((member) => (
@@ -362,6 +399,53 @@ export default function AboutPage() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Licensed, Insured & Available 24/7 */}
+      <section className="section-padding bg-navy">
+        <div className="container-site">
+          <div className="grid md:grid-cols-3 gap-8 text-center">
+            <div>
+              <div className="w-14 h-14 rounded-2xl bg-blue/20 text-blue-light flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+                </svg>
+              </div>
+              <h3 className="font-heading font-bold text-white text-lg">
+                Fully Licensed
+              </h3>
+              <p className="mt-2 text-gray-400 text-sm leading-relaxed">
+                Our team holds all required state and local licenses for electrical, HVAC, and plumbing work in New York.
+              </p>
+            </div>
+            <div>
+              <div className="w-14 h-14 rounded-2xl bg-blue/20 text-blue-light flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="font-heading font-bold text-white text-lg">
+                Fully Insured
+              </h3>
+              <p className="mt-2 text-gray-400 text-sm leading-relaxed">
+                Complete liability and workers&apos; compensation coverage protects you and your property on every job.
+              </p>
+            </div>
+            <div>
+              <div className="w-14 h-14 rounded-2xl bg-blue/20 text-blue-light flex items-center justify-center mx-auto mb-4">
+                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="font-heading font-bold text-white text-lg">
+                Here When You Need Us 24/7
+              </h3>
+              <p className="mt-2 text-gray-400 text-sm leading-relaxed">
+                Emergencies don&apos;t wait for business hours. We offer 24/7 emergency service for cooling, heating, electrical, and plumbing emergencies.
+              </p>
+            </div>
           </div>
         </div>
       </section>

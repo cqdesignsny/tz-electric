@@ -12,71 +12,6 @@ export interface ServicePage {
 
 export const SERVICE_PAGES: ServicePage[] = [
   {
-    slug: 'electrical',
-    title: 'Electrical Services',
-    metaTitle: 'Electrician in Hudson Valley, NY | Electrical Services',
-    metaDescription:
-      'Licensed electrician serving the Hudson Valley. Panel upgrades, rewiring, lighting, EV chargers, whole-home surge protection. Call (518) 678-1230 for a free quote.',
-    heroTitle: 'Expert Electrical Services',
-    heroDescription:
-      'From panel upgrades to whole-home rewiring, our licensed electricians deliver safe, code-compliant electrical work for your home.',
-    image: { src: '/images/services/clean-panel.jpeg', alt: 'Professional electrical panel upgrade by TZ Electric' },
-    features: [
-      { title: 'Panel Upgrades', description: '100A to 200A panel upgrades for modern electrical demands.' },
-      { title: 'Whole-Home Rewiring', description: 'Safe, code-compliant rewiring for older homes.' },
-      { title: 'Lighting Installation', description: 'Indoor, outdoor, recessed, and landscape lighting.' },
-      { title: 'EV Charger Installation', description: 'Level 2 home charging stations for electric vehicles.' },
-      { title: 'Surge Protection', description: 'Whole-home surge protection to safeguard your electronics.' },
-      { title: 'Ceiling Fan Installation', description: 'Professional installation and wiring for ceiling fans.' },
-    ],
-    faqs: [
-      {
-        question: 'How do I know if I need a panel upgrade?',
-        answer: 'If your home has a 100-amp panel, frequently trips breakers, or you\'re adding major appliances like EV chargers or mini splits, a panel upgrade to 200 amps is recommended.',
-      },
-      {
-        question: 'Do you install EV chargers?',
-        answer: 'Yes! We install Level 2 EV chargers for all major electric vehicle brands. We handle the electrical work, permitting, and installation.',
-      },
-      {
-        question: 'How much does rewiring a house cost?',
-        answer: 'Rewiring costs vary based on home size and complexity. We provide free, detailed estimates. Contact us for an upfront quote with no hidden fees.',
-      },
-    ],
-  },
-  {
-    slug: 'hvac',
-    title: 'HVAC Services',
-    metaTitle: 'HVAC Contractor Hudson Valley, NY | Heating & Cooling',
-    metaDescription:
-      'Expert HVAC installation, repair & maintenance in the Hudson Valley. Furnaces, AC systems, heat pumps, ductwork. 330+ 5-star reviews. Call (518) 678-1230.',
-    heroTitle: 'Heating & Cooling Experts',
-    heroDescription:
-      'Keep your home comfortable year-round with our expert HVAC services. Installation, repair, and maintenance for all heating and cooling systems.',
-    image: { src: '/images/services/hvac-hero.png', alt: 'HVAC system installation and maintenance by TZ Electric' },
-    features: [
-      { title: 'Furnace Installation & Repair', description: 'High-efficiency furnace installation, repair, and maintenance.' },
-      { title: 'Air Conditioning', description: 'Central AC installation, repair, and seasonal tune-ups.' },
-      { title: 'Heat Pumps', description: 'Energy-efficient heat pump systems for year-round comfort.' },
-      { title: 'Ductwork', description: 'Duct installation, repair, sealing, and cleaning.' },
-      { title: 'Maintenance Plans', description: 'Annual maintenance plans to extend system life and prevent breakdowns.' },
-    ],
-    faqs: [
-      {
-        question: 'How often should I service my HVAC system?',
-        answer: 'We recommend annual maintenance — heating systems in fall and AC systems in spring. Regular maintenance prevents breakdowns and extends equipment life.',
-      },
-      {
-        question: 'Should I repair or replace my furnace?',
-        answer: 'If your furnace is over 15 years old, requires frequent repairs, or your energy bills are rising, replacement with a high-efficiency unit is usually more cost-effective.',
-      },
-      {
-        question: 'Do you offer HVAC financing?',
-        answer: 'Yes! We offer flexible financing through Wisetack and Synchrony so you can get the comfort you need today and pay over time.',
-      },
-    ],
-  },
-  {
     slug: 'mini-split',
     title: 'Mini Split Installation',
     metaTitle: 'Mini Split Installation Hudson Valley | Mitsubishi Diamond Elite',
@@ -110,35 +45,67 @@ export const SERVICE_PAGES: ServicePage[] = [
     ],
   },
   {
-    slug: 'generator',
-    title: 'Generator Installation',
-    metaTitle: 'Generac Generator Installation Hudson Valley | Authorized Dealer',
+    slug: 'hvac',
+    title: 'HVAC Services',
+    metaTitle: 'HVAC Contractor Hudson Valley, NY | Heating & Cooling',
     metaDescription:
-      'Generac authorized generator dealer in the Hudson Valley. Whole-home standby generators. Automatic power protection. Free estimates. Call (518) 678-1230.',
-    heroTitle: 'Whole-Home Generator Solutions',
+      'Expert HVAC installation, repair & maintenance in the Hudson Valley. Furnaces, AC systems, heat pumps, ductwork. 330+ 5-star reviews. Call (518) 678-1230.',
+    heroTitle: 'Heating & Cooling Experts',
     heroDescription:
-      'As a Generac Authorized Dealer, we provide expert generator installation, maintenance, and repair to keep your home powered during any outage.',
-    image: { src: '/images/services/generator.webp', alt: 'Generac whole-home standby generator installed by TZ Electric' },
+      'Keep your home comfortable year-round with our expert HVAC services. Installation, repair, and maintenance for all ducted heating and cooling systems.',
+    image: { src: '/images/services/hvac-hero.png', alt: 'HVAC system installation and maintenance by TZ Electric' },
     features: [
-      { title: 'Whole-Home Generators', description: 'Automatic standby generators that power your entire home.' },
-      { title: 'Generator Sizing', description: 'Expert load calculation to determine the right generator size.' },
-      { title: 'Automatic Transfer Switch', description: 'Seamless automatic power transfer during outages.' },
-      { title: 'Maintenance Plans', description: 'Annual maintenance to keep your generator ready when you need it.' },
-      { title: 'Repair Service', description: 'Fast repair service for all generator brands.' },
-      { title: 'Fuel Options', description: 'Natural gas and propane generator options available.' },
+      { title: 'Furnace Installation & Repair', description: 'High-efficiency furnace installation, repair, and maintenance.' },
+      { title: 'Air Conditioning', description: 'Central AC installation, repair, and seasonal tune-ups.' },
+      { title: 'Heat Pumps', description: 'Energy-efficient heat pump systems for year-round comfort.' },
+      { title: 'Ductwork', description: 'Duct installation, repair, sealing, and cleaning.' },
+      { title: 'Maintenance Plans', description: 'Annual maintenance plans to extend system life and prevent breakdowns.' },
     ],
     faqs: [
       {
-        question: 'How much does a whole-home generator cost?',
-        answer: 'Whole-home Generac generators typically range from $5,000-$15,000 installed, depending on size and fuel type. We provide free in-home consultations and quotes.',
+        question: 'How often should I service my HVAC system?',
+        answer: 'We recommend annual maintenance — heating systems in fall and AC systems in spring. Regular maintenance prevents breakdowns and extends equipment life.',
       },
       {
-        question: 'How long does generator installation take?',
-        answer: 'Most residential generator installations are completed in 1-2 days, plus time for permitting and utility coordination.',
+        question: 'Should I repair or replace my furnace?',
+        answer: 'If your furnace is over 15 years old, requires frequent repairs, or your energy bills are rising, replacement with a high-efficiency unit is usually more cost-effective.',
       },
       {
-        question: 'Do generators need maintenance?',
-        answer: 'Yes, annual maintenance is recommended. Our maintenance plans include oil changes, filter replacement, and full system testing to ensure reliability.',
+        question: 'Do you offer HVAC financing?',
+        answer: 'Yes! We offer flexible financing through Wisetack and Synchrony so you can get the comfort you need today and pay over time.',
+      },
+    ],
+  },
+  {
+    slug: 'electrical',
+    title: 'Electrical Services',
+    metaTitle: 'Electrician in Hudson Valley, NY | Electrical Services',
+    metaDescription:
+      'Licensed electrician serving the Hudson Valley. Panel upgrades, rewiring, lighting, EV chargers, whole-home surge protection. Call (518) 678-1230 for a free quote.',
+    heroTitle: 'Expert Electrical Services',
+    heroDescription:
+      'From panel upgrades to whole-home rewiring, our licensed electricians deliver safe, code-compliant electrical work for your home.',
+    image: { src: '/images/services/clean-panel.jpeg', alt: 'Professional electrical panel upgrade by TZ Electric' },
+    features: [
+      { title: 'Panel Upgrades', description: '100A to 200A panel upgrades for modern electrical demands.' },
+      { title: 'Whole-Home Rewiring', description: 'Safe, code-compliant rewiring for older homes.' },
+      { title: 'Lighting Installation', description: 'Indoor, outdoor, recessed, and landscape lighting.' },
+      { title: 'EV Charger Installation', description: 'Level 2 home charging stations for electric vehicles.' },
+      { title: 'Surge Protection', description: 'Whole-home surge protection to safeguard your electronics.' },
+      { title: 'Ceiling Fan Installation', description: 'Professional installation and wiring for ceiling fans.' },
+    ],
+    faqs: [
+      {
+        question: 'How do I know if I need a panel upgrade?',
+        answer: 'If your home has a 100-amp panel, frequently trips breakers, or you\'re adding major appliances like EV chargers or mini splits, a panel upgrade to 200 amps is recommended.',
+      },
+      {
+        question: 'Do you install EV chargers?',
+        answer: 'Yes! We install Level 2 EV chargers for all major electric vehicle brands. We handle the electrical work, permitting, and installation.',
+      },
+      {
+        question: 'How much does rewiring a house cost?',
+        answer: 'Rewiring costs vary based on home size and complexity. We provide free, detailed estimates. Contact us for an upfront quote with no hidden fees.',
       },
     ],
   },
@@ -170,6 +137,39 @@ export const SERVICE_PAGES: ServicePage[] = [
       {
         question: 'Do you install new fixtures?',
         answer: 'Yes! We handle all fixture installations including faucets, sinks, toilets, showers, and bathtubs. We can also help you choose the right fixtures for your home.',
+      },
+    ],
+  },
+  {
+    slug: 'generator',
+    title: 'Generator Installation',
+    metaTitle: 'Generac Generator Installation Hudson Valley | Authorized Dealer',
+    metaDescription:
+      'Generac authorized generator dealer in the Hudson Valley. Whole-home standby generators. Automatic power protection. Free estimates. Call (518) 678-1230.',
+    heroTitle: 'Whole-Home Generator Solutions',
+    heroDescription:
+      'As a Generac Authorized Dealer, we provide expert generator installation, maintenance, and repair to keep your home powered during any outage.',
+    image: { src: '/images/services/generator.webp', alt: 'Generac whole-home standby generator installed by TZ Electric' },
+    features: [
+      { title: 'Whole-Home Generators', description: 'Automatic standby generators that power your entire home.' },
+      { title: 'Generator Sizing', description: 'Expert load calculation to determine the right generator size.' },
+      { title: 'Automatic Transfer Switch', description: 'Seamless automatic power transfer during outages.' },
+      { title: 'Maintenance Plans', description: 'Annual maintenance to keep your generator ready when you need it.' },
+      { title: 'Repair Service', description: 'Fast repair service — repair services limited to Generac generators.' },
+      { title: 'Fuel Options', description: 'Natural gas and propane generator options available.' },
+    ],
+    faqs: [
+      {
+        question: 'How much does a whole-home generator cost?',
+        answer: 'Whole-home Generac generators typically range from $5,000-$15,000 installed, depending on size and fuel type. We provide free in-home consultations and quotes.',
+      },
+      {
+        question: 'How long does generator installation take?',
+        answer: 'Most residential generator installations are completed in 1-2 days, plus time for permitting and utility coordination.',
+      },
+      {
+        question: 'Do generators need maintenance?',
+        answer: 'Yes, annual maintenance is recommended. Our maintenance plans include oil changes, filter replacement, and full system testing to ensure reliability.',
       },
     ],
   },
@@ -211,16 +211,18 @@ export const SERVICE_PAGES: ServicePage[] = [
     title: '24/7 Emergency Services',
     metaTitle: '24/7 Emergency Plumbing, Heating & Electrical | Hudson Valley',
     metaDescription:
-      '24/7 emergency plumbing, heating, cooling, and electrical services in the Hudson Valley. Fast response, expert repairs. Call (518) 678-1230 now.',
+      '24/7 emergency cooling, heating, electrical, and plumbing services in the Hudson Valley. Fast response, expert repairs. Call (518) 678-1230 now.',
     heroTitle: '24/7 Emergency Services',
     heroDescription:
-      'When emergencies strike, we\'re here. Our team is available around the clock for urgent plumbing, heating, cooling, and electrical repairs.',
+      'When emergencies strike, we\'re here. Our team is available around the clock for urgent cooling, heating, electrical, and plumbing repairs.',
     image: { src: '/images/services/emergency-24-7.avif', alt: '24/7 emergency plumbing, heating, and electrical services' },
     features: [
-      { title: 'Emergency Plumbing', description: 'Burst pipes, sewage backups, major leaks — we respond fast.' },
-      { title: 'No-Heat Calls', description: 'Furnace or boiler failures in winter demand immediate attention.' },
-      { title: 'No-AC Emergencies', description: 'AC breakdowns during heat waves — we\'ll get you cool fast.' },
-      { title: 'Electrical Emergencies', description: 'Power outages, sparking outlets, and electrical hazards.' },
+      { title: 'No-Heat Emergency', description: 'Furnace or boiler failures in winter demand immediate attention. We respond fast to restore your heat.' },
+      { title: 'No-AC Emergency', description: 'AC breakdowns during heat waves — we\'ll get you cool fast with emergency cooling repair.' },
+      { title: 'Electrical Emergency', description: 'Power outages, sparking outlets, and electrical hazards. Call us for immediate electrical repair.' },
+      { title: 'Emergency Plumbing', description: 'Burst pipes, sewage backups, major leaks — we respond fast to stop the damage.' },
+      { title: 'No Hot Water', description: 'Water heater failures leave you without hot water. We offer same-day emergency replacement.' },
+      { title: 'Generator Emergency', description: 'Generator not working during a power outage? We provide emergency Generac generator repair.' },
     ],
     faqs: [
       {

@@ -12,6 +12,14 @@ export const metadata = createMetadata({
 
 const promotions = [
   {
+    title: 'Referral Reward Program',
+    description: 'Refer a friend or neighbor to TZ Electric and you both save. Earn a credit toward your next service — no limit on referrals!',
+    discount: '$100 Credit',
+    details: 'Both you and your referral receive a $100 credit toward any TZ Electric service. Elite Signature Plan members receive $150.',
+    expires: 'Ongoing',
+    category: 'All Services',
+  },
+  {
     title: 'Spring HVAC Tune-Up Special',
     description: 'Get your heating and cooling system ready for the season with our comprehensive tune-up service.',
     discount: '$49',
@@ -21,7 +29,7 @@ const promotions = [
   },
   {
     title: 'Free Generator Estimate',
-    description: 'Thinking about a whole-home generator? Get a free in-home estimate and system sizing consultation.',
+    description: 'Storm season is here. Thinking about a whole-home generator? Get a free in-home estimate and system sizing consultation.',
     discount: 'FREE',
     details: 'Includes load analysis, placement planning, and detailed quote. No obligation.',
     expires: 'Ongoing',
@@ -34,14 +42,6 @@ const promotions = [
     details: 'Combine manufacturer rebates with utility incentives for maximum savings. Ask about NYSERDA rebates.',
     expires: 'While Funds Last',
     category: 'Mini Splits',
-  },
-  {
-    title: 'Referral Reward Program',
-    description: 'Refer a friend or neighbor and you both save. Earn a credit toward your next service.',
-    discount: '$50 Credit',
-    details: 'Both you and your referral receive a $50 credit toward any TZ Electric service. No limit on referrals.',
-    expires: 'Ongoing',
-    category: 'All Services',
   },
 ]
 

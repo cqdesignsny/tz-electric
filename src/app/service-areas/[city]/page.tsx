@@ -129,7 +129,7 @@ export default async function CityServiceAreaPage({ params }: PageProps) {
             Services Available in {area.city}
           </h2>
           <p className="text-gray-600 mb-8">
-            Full-service plumbing, HVAC, electrical, and generator solutions for {area.city} homeowners.
+            Full-service cooling, heating, electrical, plumbing, and generator solutions for {area.city} homeowners.
           </p>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {SERVICES.map((service) => (

@@ -2,7 +2,7 @@
 // TZ ELECTRIC INC - TEAM DATA
 // ============================================
 
-export type TeamCategory = 'founder' | 'leadership' | 'technician' | 'mascot'
+export type TeamCategory = 'founder' | 'leadership' | 'support' | 'technician' | 'mascot'
 
 export interface TeamMember {
   name: string
@@ -44,29 +44,30 @@ export const TEAM_MEMBERS: TeamMember[] = [
     bio: 'Meet our lead drummer… I mean Executive Assistant! When she isn\'t managing the office, Terry enjoys playing drums in a local band, gardening, and hiking. Luckily for us, she is also a very good baker! Birthday celebrations have never tasted so good.',
     category: 'leadership',
   },
+  // Support Staff
   {
     name: 'Molly Slater',
-    role: 'Team Member',
+    role: 'Office Support',
     photo: '/images/team/molly-slater.jpg',
     bio: 'Meet Molly! Compassionate and always ready to lend a helping hand, she puts care into everything she does. When she\'s not busy supporting those around her, you can find her sewing something new for her wardrobe or planning a quilt design. She also has a collection of fish-shaped purses that she\'s hoping to expand!',
-    category: 'leadership',
-  },
-  {
-    name: 'Summer Giovene',
-    role: 'Team Member',
-    photo: '/images/team/summer-giovene.jpeg',
-    bio: 'Meet Summer! She loves hiking and crocheting. Fun fact — she has dyed her hair every color of the rainbow! Her bright personality (and even brighter hair) makes a cheerful addition to the team.',
-    category: 'leadership',
+    category: 'support',
   },
   {
     name: 'Averie Handschuh',
     role: 'Customer Service',
     photo: '/images/team/averie-handschuh.webp',
     bio: 'When you are calling for a service provider, you want someone friendly and highly effective. That\'s Averie! Did you know that when she was little, she dreamt of being friends with Godzilla? Imagine the size of that friendship bracelet.',
-    category: 'leadership',
+    category: 'support',
   },
 
   // Technicians
+  {
+    name: 'Summer Giovene',
+    role: 'Apprentice',
+    photo: '/images/team/summer-giovene.jpeg',
+    bio: 'Meet Summer! She loves hiking and crocheting. Fun fact — she has dyed her hair every color of the rainbow! Her bright personality (and even brighter hair) makes a cheerful addition to the team.',
+    category: 'technician',
+  },
   {
     name: 'Nick Neville',
     role: 'Electrician',
@@ -128,13 +129,6 @@ export const TEAM_MEMBERS: TeamMember[] = [
     role: 'Electrician',
     photo: '/images/team/jonathan-vanderwerken.jpg',
     bio: 'Meet Jonathan, a man with plenty of miles behind the wheel who, after more than 25 years of driving, has somehow still managed to avoid mastering one skill: driving a stick. In his downtime, he enjoys golfing, camping, and listening to techno music. He has watched every episode of Law & Order and is pretty sure he could pass the Bar tomorrow with no prep or law school required (according to him, at least!).',
-    category: 'technician',
-  },
-  {
-    name: 'Damien Beecroft',
-    role: 'Electrician',
-    photo: '/images/team/damien-beecroft.jpg',
-    bio: 'Damien is the guy who can handle just about anything that comes his way. His superpower? The ability to adapt to any situation and not only thrive but EXCEL. When he\'s not tackling challenges head-on, he enjoys spending time with his kids, especially going out to watch some drag racing together. Fun fact: one summer, he shot up an entire 9 inches in a single growth spurt!',
     category: 'technician',
   },
   {

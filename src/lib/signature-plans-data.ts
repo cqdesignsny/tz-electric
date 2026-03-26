@@ -1,5 +1,5 @@
 // ============================================
-// TZ SIGNATURE PLANS DATA
+// TZ SIGNATURE PLANS DATA (Updated 2026-03-26)
 // ============================================
 
 export type Plan = {
@@ -59,46 +59,53 @@ export const SERVICE_DESCRIPTIONS = [
   {
     title: 'Annual Assessment',
     description:
-      'Visual inspection of main electrical panel, grounding and system safety check, inspection of visible wiring and connections, testing of key outlets and GFCI protection, plus smoke and carbon monoxide detector checks.',
+      'Visual inspection of the main electrical panel, check grounding and system safety, inspection of visible wiring and connections, testing of key outlets and GFCI protection, smoke detectors, and carbon monoxide detectors.',
     icon: 'clipboard-check',
   },
   {
     title: 'Preventative Maintenance',
     description:
-      'Everything in the annual assessment, plus tightening of accessible electrical connections, breaker performance check and minor adjustments, load balancing review, surge protection inspection, and inspection of HVAC system and Generac generator.',
+      'Everything included with an annual assessment plus tightening of accessible electrical connections (as needed), breaker performance check and minor adjustments, load balancing review (where applicable), surge protection inspection (existing devices), inspection of HVAC system and Generac generator.',
     icon: 'wrench',
   },
   {
     title: 'Priority Scheduling',
     description:
-      'Moves your service to the top of the queue. Available upon request so you get faster response times when you need help most.',
+      'When timing matters, priority scheduling ensures you\'re taken care of fast. This option is available upon request and moves your service to the top of our queue.',
     icon: 'clock',
   },
   {
     title: 'Extended Hours Scheduling',
     description:
-      'Appointments available in the evenings or on Saturdays. Exclusive to Elite members for maximum flexibility around your schedule.',
+      'For customers with full-time work schedules, getting service during the day isn\'t always practical. Extended hours scheduling allows you to request appointments in the evenings or on Saturdays, so essential service can be completed without taking time off work.',
     icon: 'calendar',
   },
+]
+
+export const CHOOSING_RIGHT_PLAN = [
+  'Consider your home\'s age, electrical demand, and how much protection you want year-round. Older homes or systems with higher electrical loads often benefit from preventive maintenance and deeper system checks.',
+  'Think about whether you prefer basic coverage or higher value protection. Higher-tier plans offer greater savings on repairs, service credits, and long-term value — especially if you plan home upgrades or anticipate service needs.',
+  'Extended hours scheduling offers added convenience for customers with busy schedules and full-time commitments.',
+  'Monthly plans offer flexibility, while prepaid options deliver the best overall savings.',
 ]
 
 export const WHY_JOIN_BENEFITS = [
   {
     title: 'Protect Your Home & Family',
     description:
-      'Prevent dangerous electrical issues, HVAC breakdowns, and small problems from becoming costly emergencies.',
+      'One inspection a year can prevent dangerous electrical issues, HVAC breakdowns, and small plumbing problems from turning into expensive emergencies. Peace of mind has never been easier.',
     icon: 'shield',
   },
   {
     title: 'Save Hundreds (or More!)',
     description:
-      'Exclusive member discounts and annual service credits add up to significant savings over time.',
+      'Membership gives you exclusive discounts and annual service credits. Repairs cost less, emergencies cost less, and you keep more money in your pocket.',
     icon: 'banknotes',
   },
   {
     title: 'Skip the Wait & Stress',
     description:
-      'Priority scheduling means faster response times. You jump to the front of the queue when you need us.',
+      'When you need help, you don\'t wait in line. Members get priority scheduling, fast response times, and peace of mind knowing we\'re on call for you.',
     icon: 'bolt',
   },
 ]
@@ -107,40 +114,36 @@ export const PLAN_TERMS = [
   {
     title: "What's Included",
     content:
-      'Assessments and maintenance visits as outlined in your plan tier. Repairs, parts, and upgrades are NOT included unless specifically stated.',
+      'Membership includes assessments and maintenance visits as outlined in your plan. Repairs, parts, or upgrades are not included unless specifically stated.',
   },
   {
-    title: 'Scope of Services',
+    title: 'Scope of Service',
     content:
-      'Focuses on electrical services. HVAC coverage limited to visual inspections and basic maintenance. Plumbing limited to light checks only.',
+      'This plan focuses on electrical services. HVAC coverage is limited to visual inspections, basic maintenance, and optional monitoring. Plumbing coverage is limited to light checks only.',
   },
   {
     title: 'Equipment Access',
     content:
-      'Safe, clear access to equipment is required. Unsafe or non-compliant systems may be excluded from service.',
+      'Safe, clear access to equipment is required. Systems that are unsafe, non-compliant, or beyond service may be excluded.',
   },
   {
-    title: 'Pricing & Changes',
+    title: 'Membership Changes',
     content:
-      'Pricing may update with 60-day written notice before renewal. A 2% annual rate increase applies.',
+      'TZ Electric may update pricing, benefits, and terms with written notice 60 days before renewal. Plan rates are subject to a 2% increase every year.',
   },
   {
     title: 'Priority Scheduling',
     content:
-      'Faster queue placement, not guaranteed same-day service. Weather and safety conditions may affect availability.',
+      'Membership gives faster placement in our service queue but does not guarantee same-day service. Weather, safety, and circumstances beyond our control such as extreme weather events may affect our availability.',
   },
   {
-    title: 'Benefit Limits',
+    title: 'Membership Feature Restrictions',
     content:
-      'Benefits are limited to one-time use per service visit and cannot be combined or stacked. One discount per job. Repair discounts capped at $5,000/invoice. Installation discounts capped at $1,000/project. Unused features roll over if membership stays active; they expire upon cancellation.',
+      'Membership benefits (Core, Preferred, and Elite) are limited to one-time use per service visit unless otherwise stated. Benefits may not be combined or stacked. Only one key membership feature or discount may be applied per job, at TZ Electric\'s discretion. Repair discounts are capped at a maximum of $5,000 per service invoice. New installation discounts are capped at a maximum of $1,000 per installation project. Unused membership features may roll over into the following year provided the Signature Plan membership remains active and uninterrupted. Rollover benefits expire if membership lapses or is canceled.',
   },
   {
-    title: 'Cancellation',
+    title: 'Cancellation Policy',
     content:
-      'Before inspection/maintenance: 25% of remaining balance + full retail value of used benefits. After inspection/maintenance: 15% of annual total + full retail value of used benefits. Monthly plans: remaining balance is due. Written or email cancellation required. Memberships are non-transferable.',
-  },
-  {
-    title: 'Billing',
-    content: 'All billing is managed through Housecall Pro.',
+      'Prior to Annual Inspection or Maintenance: Cancellation fee equal to 25% of the remaining balance of the contract term, plus the full retail value of any services, service credits, or discounts used. After Annual Inspection or Maintenance: Cancellation fee equal to 15% of that year\'s total membership charge, plus the full retail value of any services, credits, or discounts used. If on a monthly payment plan, the remaining term balance will be due upon contract termination. Any inspections, maintenance visits, service credits, discounts, or other membership benefits used prior to cancellation shall be billed at standard, non-member retail rates and deducted from any refund. All cancellation fees and outstanding balances are due immediately upon termination. All cancellation requests must be submitted in writing or by email. Verbal cancellation requests are not valid. TZ Electric reserves the right to terminate this agreement for non-payment, misuse of membership benefits, unsafe conditions, or violation of these terms. Memberships are non-transferable and apply only to the enrolled customer and service address.',
   },
 ]

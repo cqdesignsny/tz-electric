@@ -7,8 +7,8 @@ import CTASection from '@/components/sections/CTASection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
-  title: 'Service Areas | Hudson Valley Plumbing, HVAC & Electrical | TZ Electric',
-  description: `TZ Electric serves the entire Hudson Valley including ${COMPANY.counties.join(', ')} counties. Plumbing, HVAC, electrical, and generator services. ${COMPANY.reviews.count}+ 5-star reviews.`,
+  title: 'Service Areas | Hudson Valley Cooling, Heating & Electrical | TZ Electric',
+  description: `TZ Electric serves the entire Hudson Valley including ${COMPANY.counties.join(', ')} counties. Cooling, heating, electrical, plumbing, and generator services. ${COMPANY.reviews.count}+ 5-star reviews.`,
   path: '/service-areas',
 })
 
@@ -43,7 +43,7 @@ export default function ServiceAreasPage() {
             </h1>
             <p className="mt-4 text-gray-300 text-lg max-w-2xl">
               From Catskill to Rhinebeck, Kingston to Hunter — TZ Electric provides expert
-              plumbing, HVAC, electrical, and generator services across the Hudson Valley.
+              cooling, heating, electrical, plumbing, and generator services across the Hudson Valley.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
               <Button href={TYPEFORM_URL} external size="lg">
@@ -74,7 +74,7 @@ export default function ServiceAreasPage() {
             </h2>
             <p className="mt-3 text-gray-600 max-w-2xl mx-auto">
               We proudly serve homeowners throughout five Hudson Valley counties with expert
-              plumbing, HVAC, electrical, and generator services.
+              cooling, heating, electrical, plumbing, and generator services.
             </p>
           </div>
 
@@ -101,8 +101,11 @@ export default function ServiceAreasPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>
                 </div>
-                <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-4">
+                <p className="text-gray-600 text-sm leading-relaxed line-clamp-2 mb-3">
                   {county.description}
+                </p>
+                <p className="text-xs text-blue/60 italic mb-3">
+                  Primary service areas shown — we serve all communities in {county.county} County.
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {county.cities.slice(0, 5).map((city) => (

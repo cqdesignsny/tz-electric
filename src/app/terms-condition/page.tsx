@@ -39,7 +39,7 @@ export default function TermsPage() {
 
           <h2>Services</h2>
           <p>
-            {COMPANY.name} provides plumbing, HVAC, electrical, generator, and related home services
+            {COMPANY.name} provides cooling, heating, electrical, plumbing, generator, and related home services
             in the {COMPANY.serviceArea} area. All services are subject to availability and our standard
             service agreements.
           </p>

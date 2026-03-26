@@ -9,7 +9,7 @@ import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
   title: 'Our Services | Cooling, Heating, Electrical & More',
-  description: `TZ Electric offers complete home services in the Hudson Valley: mini splits, HVAC, electrical, plumbing, generators, and hot water heaters. ${COMPANY.reviews.count}+ 5-star reviews. Call ${COMPANY.phone}.`,
+  description: `TZ Electric offers complete home services in the Hudson Valley: cooling, heating, electrical, plumbing, generators, and hot water heaters. ${COMPANY.reviews.count}+ 5-star reviews. Call ${COMPANY.phone}.`,
   path: '/services',
 })
 
@@ -167,7 +167,7 @@ export default function ServicesPage() {
             24/7 Emergency Services Available
           </h2>
           <p className="mt-2 text-gray-300 max-w-xl mx-auto">
-            Emergencies don&apos;t wait — neither do we. Call us anytime for urgent plumbing, heating, cooling, or electrical repairs.
+            Emergencies don&apos;t wait — neither do we. Call us anytime for urgent cooling, heating, electrical, or plumbing repairs.
           </p>
           <div className="mt-6 flex flex-wrap gap-4 justify-center">
             <Button href="/emergency" variant="emergency" size="lg">

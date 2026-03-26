@@ -5,7 +5,7 @@ import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
   title: 'Contact TZ Electric Inc | Get a Free Quote | Hudson Valley',
-  description: `Contact TZ Electric for a free quote on plumbing, HVAC, electrical, and generator services in the Hudson Valley. Call ${COMPANY.phone} or request a quote online.`,
+  description: `Contact TZ Electric for a free quote on cooling, heating, electrical, plumbing, and generator services in the Hudson Valley. Call ${COMPANY.phone} or request a quote online.`,
   path: '/contact-us',
 })
 

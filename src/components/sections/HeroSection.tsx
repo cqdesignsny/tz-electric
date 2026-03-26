@@ -125,7 +125,7 @@ export default function HeroSection() {
             <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-8 text-center">
               <Image
                 src="/images/certifications/diamond-contractor.svg"
-                alt="Mitsubishi Diamond Contractor"
+                alt="Mitsubishi Diamond Elite Contractor"
                 width={280}
                 height={80}
                 className="mx-auto mb-6 brightness-0 invert"

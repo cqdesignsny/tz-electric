@@ -11,7 +11,7 @@ type CertLogo = {
 
 const CERTIFICATIONS: CertLogo[] = [
   {
-    name: 'Mitsubishi Diamond Contractor',
+    name: 'Mitsubishi Diamond Elite Contractor',
     src: '/images/certifications/diamond-contractor.svg',
     type: 'dc', // White SVG → brightness-0 for gray, stays brightness-0 on hover (black)
   },
