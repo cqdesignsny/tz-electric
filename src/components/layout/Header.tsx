@@ -705,23 +705,36 @@ export default function Header() {
                 {activeDropdown === 'About' && <AboutMegaPanel onClose={closeMega} />}
                 {activeDropdown === 'Plans' && (
                   <div className="container-site py-8">
-                    <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                    <div className="flex items-center justify-between mb-5">
+                      <h3 className="font-heading font-bold text-navy text-sm uppercase tracking-wider">
+                        TZ Signature &amp; Maintenance Plans
+                      </h3>
+                      <Link
+                        href="/signature-plans"
+                        onClick={closeMega}
+                        className="text-sm font-medium text-blue hover:text-blue-dark flex items-center gap-1 transition-colors"
+                      >
+                        View Signature Plans
+                        <ArrowRightIcon />
+                      </Link>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 max-w-2xl">
                       <Link href="/signature-plans" onClick={closeMega} className="group flex items-start gap-3 p-3 rounded-xl hover:bg-sky/50 transition-colors">
                         <span className="w-9 h-9 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                         </span>
-                        <div>
+                        <div className="min-w-0">
                           <span className="block font-heading font-semibold text-navy text-sm group-hover:text-blue transition-colors">Signature Plans</span>
-                          <span className="block text-xs text-gray-500 mt-0.5">Annual maintenance memberships</span>
+                          <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Annual assessments, priority scheduling, and exclusive member discounts</span>
                         </div>
                       </Link>
                       <Link href="/maintenance" onClick={closeMega} className="group flex items-start gap-3 p-3 rounded-xl hover:bg-sky/50 transition-colors">
                         <span className="w-9 h-9 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" /></svg>
                         </span>
-                        <div>
+                        <div className="min-w-0">
                           <span className="block font-heading font-semibold text-navy text-sm group-hover:text-blue transition-colors">Generator Maintenance</span>
-                          <span className="block text-xs text-gray-500 mt-0.5">Generator maintenance plans</span>
+                          <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Bronze, Silver &amp; Gold generator maintenance plans with flexible pricing</span>
                         </div>
                       </Link>
                     </div>
