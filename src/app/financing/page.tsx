@@ -190,6 +190,55 @@ export default function FinancingPage() {
         </div>
       </section>
 
+      {/* Incentives & Rebates */}
+      <section className="section-padding bg-navy">
+        <div className="container-site">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <span className="text-blue-light text-sm font-semibold uppercase tracking-wider">
+              Incentives &amp; Rebates
+            </span>
+            <h2 className="font-heading font-bold text-white text-3xl mt-2">
+              Save More with Available Rebates
+            </h2>
+            <p className="mt-3 text-gray-400">
+              Take advantage of local and federal rebates and energy-efficient incentives to lower your upgrade costs.
+              As a NYS Clean Heat Program participant, we handle permits, paperwork, and rebates for you.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            {[
+              { title: 'NYS Clean Heat Program', description: 'Rebates for heat pump installations through participating NY utilities.', href: 'https://cleanheat.ny.gov/' },
+              { title: 'NYSERDA Programs', description: 'New York State energy efficiency and clean energy programs.', href: 'https://www.nyserda.ny.gov/All-Programs' },
+              { title: 'Comfort Home Program', description: 'NYSERDA program for whole-home energy efficiency improvements.', href: 'https://www.nyserda.ny.gov/All-Programs/Comfort-Home-Program' },
+              { title: 'Home Electrification Rebates', description: 'Federal rebates for upgrading to energy-efficient electric appliances.', href: 'https://www.energy.gov/save' },
+              { title: 'Weatherization Assistance', description: 'DOE program to reduce energy costs for low-income households.', href: 'https://www.energy.gov/scep/wap/weatherization-assistance-program' },
+              { title: 'Inflation Reduction Act Credits', description: 'Federal tax credits for qualifying energy-efficient home improvements.', href: 'https://www.energy.gov/policy/articles/making-our-homes-more-efficient-clean-energy-tax-credits-consumers' },
+            ].map((rebate) => (
+              <a
+                key={rebate.title}
+                href={rebate.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group bg-white/5 border border-white/10 rounded-xl p-5 hover:bg-white/10 hover:border-blue/50 transition-all"
+              >
+                <h3 className="font-heading font-bold text-white text-sm group-hover:text-blue-light transition-colors">
+                  {rebate.title}
+                </h3>
+                <p className="mt-2 text-gray-400 text-xs leading-relaxed">
+                  {rebate.description}
+                </p>
+                <span className="mt-3 inline-flex items-center gap-1 text-blue-light text-xs font-semibold">
+                  Learn More
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </span>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FAQ-like section */}
       <section className="section-padding">
         <div className="container-site max-w-3xl">

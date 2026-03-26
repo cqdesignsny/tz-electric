@@ -13,22 +13,12 @@ import Button from '@/components/ui/Button'
 
 const MEGA_MENU_SERVICES = [
   {
-    title: 'Mitsubishi Electric',
+    title: 'Mitsubishi Mini Splits',
     href: '/mitsubishi',
-    description: 'Diamond Elite ductless mini split systems',
+    description: 'Diamond Elite ductless heating & cooling',
     icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Mini Splits',
-    href: '/mini-split',
-    description: 'Mitsubishi Diamond Elite ductless systems',
-    icon: (
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386l-1.591 1.591M21 12h-2.25m-.386 6.364l-1.591-1.591M12 18.75V21m-4.773-4.227l-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
       </svg>
     ),
   },
@@ -570,7 +560,7 @@ export default function Header() {
     setMobileOpen(false)
   }, [])
 
-  const dropdownItems = ['Services', 'Service Areas', 'About']
+  const dropdownItems = ['Services', 'Service Areas', 'About', 'Plans']
 
   return (
     <>
@@ -713,6 +703,30 @@ export default function Header() {
                 {activeDropdown === 'Services' && <ServicesMegaPanel onClose={closeMega} />}
                 {activeDropdown === 'Service Areas' && <ServiceAreasMegaPanel onClose={closeMega} />}
                 {activeDropdown === 'About' && <AboutMegaPanel onClose={closeMega} />}
+                {activeDropdown === 'Plans' && (
+                  <div className="p-6">
+                    <div className="grid grid-cols-2 gap-4 max-w-md">
+                      <Link href="/signature-plans" onClick={closeMega} className="group flex items-start gap-3 p-3 rounded-xl hover:bg-sky/50 transition-colors">
+                        <span className="w-9 h-9 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        </span>
+                        <div>
+                          <span className="block font-heading font-semibold text-navy text-sm group-hover:text-blue transition-colors">Signature Plans</span>
+                          <span className="block text-xs text-gray-500 mt-0.5">Annual maintenance memberships</span>
+                        </div>
+                      </Link>
+                      <Link href="/maintenance" onClick={closeMega} className="group flex items-start gap-3 p-3 rounded-xl hover:bg-sky/50 transition-colors">
+                        <span className="w-9 h-9 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" /></svg>
+                        </span>
+                        <div>
+                          <span className="block font-heading font-semibold text-navy text-sm group-hover:text-blue transition-colors">Generator Maintenance</span>
+                          <span className="block text-xs text-gray-500 mt-0.5">Generator maintenance plans</span>
+                        </div>
+                      </Link>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             </>
           )}

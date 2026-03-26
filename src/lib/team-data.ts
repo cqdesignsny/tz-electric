@@ -104,13 +104,6 @@ export const TEAM_MEMBERS: TeamMember[] = [
     category: 'technician',
   },
   {
-    name: 'Angus Guip',
-    role: 'Electrician',
-    photo: '/images/team/angus-guip.webp',
-    bio: 'Meet Angus! His first job was working as a drum tech for his father\'s band, Hot Tuna. Angus is really good at making people laugh. When he\'s not working, you might find him at a rock concert, skiing, or riding his motorcycle.',
-    category: 'technician',
-  },
-  {
     name: 'Tyler Plauger',
     role: 'Electrician',
     photo: '/images/team/tyler-plauger.png',

@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
 import type { ServicePage } from '@/lib/services-data'
 import { getBreadcrumbSchema, getFAQSchema } from '@/lib/metadata'
@@ -88,20 +89,43 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
             description={`Comprehensive ${service.title.toLowerCase()} for homeowners across the ${COMPANY.serviceArea} region.`}
           />
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {service.features.map((feature) => (
-              <div
-                key={feature.title}
-                className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-card-hover transition-shadow"
-              >
-                <div className="w-10 h-10 bg-blue/10 rounded-lg flex items-center justify-center text-blue mb-4">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+            {service.features.map((feature) => {
+              const content = (
+                <>
+                  <div className="w-10 h-10 bg-blue/10 rounded-lg flex items-center justify-center text-blue mb-4">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-heading font-bold text-navy mb-2 group-hover:text-blue transition-colors">{feature.title}</h3>
+                  <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
+                  {feature.href && (
+                    <span className="mt-3 inline-flex items-center gap-1 text-blue text-sm font-semibold group-hover:gap-2 transition-all">
+                      Learn More
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                      </svg>
+                    </span>
+                  )}
+                </>
+              )
+              return feature.href ? (
+                <Link
+                  key={feature.title}
+                  href={feature.href}
+                  className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-card-hover transition-all group hover:border-blue/30 hover:-translate-y-1"
+                >
+                  {content}
+                </Link>
+              ) : (
+                <div
+                  key={feature.title}
+                  className="bg-white rounded-xl border border-gray-100 p-6 hover:shadow-card-hover transition-shadow"
+                >
+                  {content}
                 </div>
-                <h3 className="font-heading font-bold text-navy mb-2">{feature.title}</h3>
-                <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>

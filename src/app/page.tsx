@@ -36,6 +36,41 @@ export default function HomePage() {
       <ReviewsSection />
       <ServiceAreaSection />
 
+      {/* Newsletter Signup */}
+      <section className="py-12 bg-gradient-to-r from-blue to-blue-dark">
+        <div className="container-site">
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="font-heading font-bold text-white text-2xl md:text-3xl">
+              Stay in the Loop
+            </h2>
+            <p className="mt-2 text-blue-100 text-sm md:text-base">
+              Get seasonal tips, exclusive promotions, and service reminders delivered to your inbox.
+            </p>
+            <form
+              action="#"
+              method="POST"
+              className="mt-6 flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+            >
+              <input
+                type="email"
+                placeholder="Enter your email"
+                required
+                className="flex-1 px-4 py-3 rounded-full text-navy text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/50"
+              />
+              <button
+                type="submit"
+                className="px-6 py-3 bg-white text-blue font-heading font-semibold text-sm rounded-full hover:bg-gray-100 transition-colors"
+              >
+                Subscribe
+              </button>
+            </form>
+            <p className="mt-3 text-blue-200 text-xs">
+              No spam, ever. Unsubscribe anytime.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Trust & Certifications Section (replaces repetitive CTA) */}
       <section className="section-padding bg-off-white">
         <div className="container-site text-center">

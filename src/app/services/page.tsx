@@ -20,7 +20,7 @@ const serviceDetails: Record<string, { features: string[] }> = {
   hvac: {
     features: ['Furnace Installation & Repair', 'Air Conditioning', 'Heat Pumps', 'Ductwork', 'Maintenance Plans'],
   },
-  'mini-split': {
+  mitsubishi: {
     features: ['Single-Zone Systems', 'Multi-Zone Systems', 'Hyper-Heating', 'Concealed Duct Units', 'Repair & Maintenance'],
   },
   generator: {

@@ -107,6 +107,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         <main className="flex-1">{children}</main>
         <Footer />
         <FloatingCTA />
+
+        {/* Podium Webchat Widget */}
+        <script
+          defer
+          src="https://connect.podium.com/widget.js#ORG_TOKEN=808a6fa7-3a5d-49f9-9c75-90a2a36a2565"
+          id="podium-widget"
+          data-organization-api-token="808a6fa7-3a5d-49f9-9c75-90a2a36a2565"
+        />
       </body>
     </html>
   )

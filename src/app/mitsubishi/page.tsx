@@ -8,14 +8,17 @@ import {
   BENEFITS,
   MITSUBISHI_FAQS,
 } from '@/lib/mitsubishi-data'
+import { getServiceBySlug } from '@/lib/services-data'
 import Button from '@/components/ui/Button'
 import SectionHeader from '@/components/ui/SectionHeader'
 import CTASection from '@/components/sections/CTASection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 
+const miniSplitService = getServiceBySlug('mini-split')
+
 export const metadata = createMetadata({
   title:
-    'Mitsubishi Electric Diamond Elite Contractor | Mini Split Installation Hudson Valley',
+    'Mitsubishi Mini Splits | Diamond Elite Ductless Systems | Hudson Valley',
   description:
     'TZ Electric is a Mitsubishi Electric Diamond Elite Contractor — the highest dealer tier. Expert ductless mini split installation, Hyper-Heating systems, and smart controls. Serving the Hudson Valley. Call (518) 678-1230.',
   path: '/mitsubishi',
@@ -55,7 +58,7 @@ export default function MitsubishiPage() {
   const breadcrumbSchema = getBreadcrumbSchema([
     { name: 'Home', url: '/' },
     { name: 'Services', url: '/services' },
-    { name: 'Mitsubishi Electric', url: '/mitsubishi' },
+    { name: 'Mitsubishi Mini Splits', url: '/mitsubishi' },
   ])
   const faqSchema = getFAQSchema(MITSUBISHI_FAQS)
 
@@ -104,8 +107,8 @@ export default function MitsubishiPage() {
 
               <h1 className="text-white text-4xl lg:text-5xl xl:text-6xl font-heading font-bold leading-[1.1]">
                 Hudson Valley&apos;s{' '}
-                <span className="text-blue-light">Mitsubishi Electric</span>{' '}
-                HVAC Experts
+                <span className="text-blue-light">Mitsubishi Mini Split</span>{' '}
+                Experts
               </h1>
 
               <p className="mt-6 text-gray-200 text-lg lg:text-xl max-w-2xl leading-relaxed">
@@ -338,8 +341,42 @@ export default function MitsubishiPage() {
         </div>
       </section>
 
+      {/* Mini Split Services */}
+      {miniSplitService && (
+        <section className="section-padding">
+          <div className="container-site">
+            <SectionHeader
+              label="Our Services"
+              title="Mini Split Installation & Service"
+              description="From single-zone additions to whole-home multi-zone systems, we handle every aspect of ductless mini split installation and maintenance."
+            />
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {miniSplitService.features.map((feature) => (
+                <div
+                  key={feature.title}
+                  className="bg-white rounded-xl border-2 border-gray-100 p-6 hover:border-blue/30 hover:shadow-card-hover transition-all duration-300 group"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-blue/10 text-blue flex items-center justify-center mb-4 group-hover:bg-blue group-hover:text-white transition-colors">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </div>
+                  <h3 className="font-heading font-bold text-navy text-lg">
+                    {feature.title}
+                  </h3>
+                  <p className="mt-2 text-gray-600 text-sm leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* FAQ */}
-      <section className="section-padding">
+      <section className="section-padding bg-off-white">
         <div className="container-site max-w-3xl">
           <SectionHeader
             label="FAQ"
@@ -347,7 +384,9 @@ export default function MitsubishiPage() {
             description="Answers to common questions about Mitsubishi Electric systems and our installation services."
           />
           <div className="space-y-3">
-            {MITSUBISHI_FAQS.map((faq) => (
+            {[...MITSUBISHI_FAQS, ...(miniSplitService?.faqs || []).filter(
+              (faq) => !MITSUBISHI_FAQS.some((mf) => mf.question === faq.question)
+            )].map((faq) => (
               <details
                 key={faq.question}
                 className="group bg-white rounded-xl border-2 border-gray-100 overflow-hidden hover:border-blue/20 transition-colors"

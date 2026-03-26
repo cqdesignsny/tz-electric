@@ -6,7 +6,7 @@ export interface ServicePage {
   heroTitle: string
   heroDescription: string
   image: { src: string; alt: string }
-  features: { title: string; description: string }[]
+  features: { title: string; description: string; href?: string }[]
   faqs: { question: string; answer: string }[]
 }
 
@@ -151,12 +151,12 @@ export const SERVICE_PAGES: ServicePage[] = [
       'As a Generac Authorized Dealer, we provide expert generator installation, maintenance, and repair to keep your home powered during any outage.',
     image: { src: '/images/services/generator.webp', alt: 'Generac whole-home standby generator installed by TZ Electric' },
     features: [
-      { title: 'Whole-Home Generators', description: 'Automatic standby generators that power your entire home.' },
-      { title: 'Generator Sizing', description: 'Expert load calculation to determine the right generator size.' },
-      { title: 'Automatic Transfer Switch', description: 'Seamless automatic power transfer during outages.' },
-      { title: 'Maintenance Plans', description: 'Annual maintenance to keep your generator ready when you need it.' },
+      { title: 'Standby Generators', description: 'Automatic detection and startup — powers essential circuits on natural gas or propane. Ideal for keeping your home running during outages.' },
+      { title: 'Whole-Home Generators', description: 'Powers your entire home\'s electrical load with fuel flexibility. Complete protection for larger homes with higher power demands.' },
+      { title: 'Generator Sizing', description: 'Expert load calculation to determine the right generator size for your home\'s specific needs.' },
+      { title: 'Hassle-Free Installation', description: 'We handle it all — free consultation, permitting, pad preparation, fuel line connection, electrical integration, and system testing.' },
+      { title: 'Maintenance Plans', description: 'Annual maintenance to keep your generator ready when you need it. Browse our generator maintenance plans.', href: '/maintenance' },
       { title: 'Repair Service', description: 'Fast repair service — repair services limited to Generac generators.' },
-      { title: 'Fuel Options', description: 'Natural gas and propane generator options available.' },
     ],
     faqs: [
       {
@@ -217,12 +217,12 @@ export const SERVICE_PAGES: ServicePage[] = [
       'When emergencies strike, we\'re here. Our team is available around the clock for urgent cooling, heating, electrical, and plumbing repairs.',
     image: { src: '/images/services/emergency-24-7.avif', alt: '24/7 emergency plumbing, heating, and electrical services' },
     features: [
-      { title: 'No-Heat Emergency', description: 'Furnace or boiler failures in winter demand immediate attention. We respond fast to restore your heat.' },
-      { title: 'No-AC Emergency', description: 'AC breakdowns during heat waves — we\'ll get you cool fast with emergency cooling repair.' },
-      { title: 'Electrical Emergency', description: 'Power outages, sparking outlets, and electrical hazards. Call us for immediate electrical repair.' },
-      { title: 'Emergency Plumbing', description: 'Burst pipes, sewage backups, major leaks — we respond fast to stop the damage.' },
-      { title: 'No Hot Water', description: 'Water heater failures leave you without hot water. We offer same-day emergency replacement.' },
-      { title: 'Generator Emergency', description: 'Generator not working during a power outage? We provide emergency Generac generator repair.' },
+      { title: 'No-Heat Emergency', description: 'Furnace or boiler failures in winter demand immediate attention. We respond fast to restore your heat.', href: '/hvac' },
+      { title: 'No-AC Emergency', description: 'AC breakdowns during heat waves — we\'ll get you cool fast with emergency cooling repair.', href: '/mitsubishi' },
+      { title: 'Electrical Emergency', description: 'Power outages, sparking outlets, and electrical hazards. Call us for immediate electrical repair.', href: '/electrical' },
+      { title: 'Emergency Plumbing', description: 'Burst pipes, sewage backups, major leaks — we respond fast to stop the damage.', href: '/plumbing' },
+      { title: 'No Hot Water', description: 'Water heater failures leave you without hot water. We offer same-day emergency replacement.', href: '/hot-water-heaters' },
+      { title: 'Generator Emergency', description: 'Generator not working during a power outage? We provide emergency Generac generator repair.', href: '/generator' },
     ],
     faqs: [
       {

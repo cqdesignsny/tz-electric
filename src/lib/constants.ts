@@ -35,6 +35,7 @@ export const COMPANY = {
     instagram: 'https://www.instagram.com/tzelectricinc',
     google: 'https://g.page/tzelectricinc',
     youtube: 'https://www.youtube.com/@tzelectricinc',
+    nextdoor: 'https://nextdoor.com/pages/tz-electric-inc-catskill-ny/',
   },
   hours: {
     weekday: '7:30 AM - 4:00 PM',
@@ -61,8 +62,7 @@ export const NAV_ITEMS = [
     label: 'Services',
     href: '/services',
     children: [
-      { label: 'Mitsubishi Electric', href: '/mitsubishi', description: 'Diamond Elite mini split systems' },
-      { label: 'Mini Splits', href: '/mini-split', description: 'Ductless heating & cooling systems' },
+      { label: 'Mitsubishi Mini Splits', href: '/mitsubishi', description: 'Diamond Elite ductless heating & cooling' },
       { label: 'HVAC', href: '/hvac', description: 'Ducted heating & air conditioning' },
       { label: 'Electrical', href: '/electrical', description: 'Panel upgrades, rewiring, lighting & more' },
       { label: 'Plumbing', href: '/plumbing', description: 'Full-service plumbing solutions' },
@@ -115,8 +115,8 @@ export const NAV_ITEMS = [
 // Services data (ordered: Cooling → Heating → Electrical → Plumbing → Generator)
 export const SERVICES = [
   {
-    title: 'Mini Splits',
-    slug: 'mini-split',
+    title: 'Mitsubishi Mini Splits',
+    slug: 'mitsubishi',
     caption: 'Ductless Cooling & Heating',
     description: 'Mitsubishi Diamond Elite mini split installation, repair, and maintenance.',
     image: '/images/services/minisplit-install.jpeg',

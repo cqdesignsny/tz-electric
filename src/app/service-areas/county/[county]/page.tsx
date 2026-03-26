@@ -67,7 +67,7 @@ const serviceHrefs: Record<string, string> = {
   Plumbing: '/plumbing',
   HVAC: '/hvac',
   Electrical: '/electrical',
-  'Mini Splits': '/mini-split',
+  'Mini Splits': '/mitsubishi',
   Generators: '/generator',
   'Hot Water Heaters': '/hot-water-heaters',
   'Emergency Services': '/emergency',
