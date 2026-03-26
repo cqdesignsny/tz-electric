@@ -53,10 +53,10 @@ const values = [
 ]
 
 const certifications = [
-  { name: 'Mitsubishi Diamond Elite Contractor', description: 'Highest-tier certification for ductless mini split installation and service', image: '/images/certifications/diamond-contractor.svg', isSvg: true },
-  { name: 'Mitsubishi Electric', description: 'Authorized Mitsubishi Electric heating & cooling dealer', image: '/images/certifications/mitsubishi-electric.svg', isSvg: true },
-  { name: 'Generac Authorized Dealer', description: 'Factory-trained and authorized for whole-home generator systems', image: '/images/certifications/generac.webp', isSvg: false },
-  { name: 'BBB Accredited Business', description: 'Maintaining the highest standards of trust and business ethics', image: '/images/certifications/bbb.webp', isSvg: false },
+  { name: 'Mitsubishi Diamond Elite Contractor', description: 'Highest-tier certification for ductless mini split installation and service', image: '/images/certifications/diamond-contractor.svg', makeBlack: true },
+  { name: 'Mitsubishi Electric', description: 'Authorized Mitsubishi Electric heating & cooling dealer', image: '/images/certifications/mitsubishi-electric-dark.svg', makeBlack: false },
+  { name: 'Generac Authorized Dealer', description: 'Factory-trained and authorized for whole-home generator systems', image: '/images/certifications/generac.webp', makeBlack: false },
+  { name: 'BBB Accredited Business', description: 'Maintaining the highest standards of trust and business ethics', image: '/images/certifications/bbb.webp', makeBlack: false },
 ]
 
 const founder = TEAM_MEMBERS.filter((m) => m.category === 'founder')
@@ -381,13 +381,14 @@ export default function AboutPage() {
           />
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {certifications.map((cert) => (
-              <div key={cert.name} className="bg-white border-2 border-blue/15 rounded-2xl p-6 text-center shadow-sm hover:border-blue/40 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+              <div key={cert.name} className="relative bg-white border-2 border-blue/30 rounded-2xl p-6 text-center shadow-md hover:border-blue hover:shadow-xl hover:-translate-y-2 transition-all duration-300 group overflow-hidden">
+                <div className="absolute top-0 left-6 right-6 h-1 bg-gradient-to-r from-blue to-blue-light rounded-b-full opacity-60 group-hover:opacity-100 group-hover:left-0 group-hover:right-0 transition-all duration-300" />
                 <div className="w-28 h-28 relative mx-auto flex items-center justify-center">
                   <Image
                     src={cert.image}
                     alt={cert.name}
                     fill
-                    className={`object-contain ${cert.isSvg ? '' : ''}`}
+                    className={`object-contain ${cert.makeBlack ? 'brightness-0' : ''}`}
                     sizes="112px"
                   />
                 </div>

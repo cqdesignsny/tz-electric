@@ -224,9 +224,10 @@ export default function SignaturePlansPage() {
             {SERVICE_DESCRIPTIONS.map((service) => (
               <div
                 key={service.title}
-                className="bg-white rounded-2xl border-2 border-blue/15 p-6 shadow-sm hover:border-blue/40 hover:shadow-lg hover:-translate-y-1 hover:scale-[1.01] transition-all duration-300"
+                className="relative group bg-white rounded-2xl border-2 border-blue/30 p-7 pt-8 shadow-md hover:border-blue hover:shadow-xl hover:-translate-y-2 hover:scale-[1.02] transition-all duration-300 overflow-hidden"
               >
-                <div className="w-12 h-12 rounded-xl bg-blue/10 text-blue flex items-center justify-center mb-4">
+                <div className="absolute top-0 left-6 right-6 h-1 bg-gradient-to-r from-blue to-blue-light rounded-b-full opacity-60 group-hover:opacity-100 group-hover:left-0 group-hover:right-0 transition-all duration-300" />
+                <div className="w-12 h-12 rounded-xl bg-blue/10 border-2 border-blue/30 text-blue flex items-center justify-center mb-5 group-hover:bg-blue group-hover:border-blue group-hover:text-white group-hover:scale-110 transition-all duration-300">
                   {icons[service.icon]}
                 </div>
                 <h3 className="font-heading font-bold text-navy text-lg">

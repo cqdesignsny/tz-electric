@@ -168,12 +168,13 @@ export default function MitsubishiPage() {
             {UNIT_TYPES.map((unit) => (
               <div
                 key={unit.name}
-                className="bg-white rounded-2xl border-2 border-blue/15 p-6 shadow-sm hover:border-blue/40 hover:shadow-lg hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 group"
+                className="relative bg-white rounded-2xl border-2 border-blue/30 p-7 pt-8 shadow-md hover:shadow-xl hover:border-blue hover:-translate-y-2 hover:scale-[1.03] transition-all duration-300 group overflow-hidden"
               >
-                <div className="w-12 h-12 rounded-xl bg-blue/10 text-blue flex items-center justify-center mb-4 group-hover:bg-blue group-hover:text-white transition-colors">
+                <div className="absolute top-0 left-6 right-6 h-1 bg-gradient-to-r from-blue to-blue-light rounded-b-full opacity-60 group-hover:opacity-100 group-hover:left-0 group-hover:right-0 transition-all duration-300" />
+                <div className="w-12 h-12 rounded-xl bg-blue/10 border-2 border-blue/30 text-blue flex items-center justify-center mb-5 group-hover:bg-blue group-hover:border-blue group-hover:text-white group-hover:scale-110 transition-all duration-300">
                   {unitIcons[unit.icon]}
                 </div>
-                <h3 className="font-heading font-bold text-navy text-lg">
+                <h3 className="font-heading font-bold text-navy text-lg group-hover:text-blue transition-colors">
                   {unit.name}
                 </h3>
                 <p className="mt-2 text-gray-600 text-sm leading-relaxed">
@@ -198,7 +199,7 @@ export default function MitsubishiPage() {
             {TECHNOLOGIES.map((tech) => (
               <div
                 key={tech.name}
-                className="bg-white rounded-2xl border-2 border-blue/15 p-6 flex gap-4 items-start shadow-sm hover:border-blue/30 hover:shadow-lg transition-all duration-300"
+                className="bg-white rounded-2xl border-2 border-blue/30 p-6 flex gap-4 items-start shadow-md hover:border-blue hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
               >
                 <div className="w-10 h-10 rounded-lg bg-blue text-white flex items-center justify-center flex-shrink-0 mt-0.5">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

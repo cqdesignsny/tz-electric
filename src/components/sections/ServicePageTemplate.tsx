@@ -92,15 +92,17 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
             {service.features.map((feature) => {
               const content = (
                 <>
-                  <div className="w-11 h-11 bg-gradient-to-br from-blue/10 to-blue/20 rounded-xl flex items-center justify-center text-blue mb-4 group-hover:from-blue group-hover:to-blue-dark group-hover:text-white transition-all duration-300">
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                  {/* Blue accent bar at top */}
+                  <div className="absolute top-0 left-6 right-6 h-1 bg-gradient-to-r from-blue to-blue-light rounded-b-full opacity-60 group-hover:opacity-100 group-hover:left-0 group-hover:right-0 transition-all duration-300" />
+                  <div className="w-12 h-12 bg-blue/10 border-2 border-blue/30 rounded-xl flex items-center justify-center text-blue mb-5 group-hover:bg-blue group-hover:border-blue group-hover:text-white group-hover:scale-110 transition-all duration-300">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
-                  <h3 className="font-heading font-bold text-navy mb-2 group-hover:text-blue transition-colors">{feature.title}</h3>
+                  <h3 className="font-heading font-bold text-navy text-lg mb-2 group-hover:text-blue transition-colors">{feature.title}</h3>
                   <p className="text-gray-600 text-sm leading-relaxed">{feature.description}</p>
                   {feature.href && (
-                    <span className="mt-3 inline-flex items-center gap-1 text-blue text-sm font-semibold group-hover:gap-2 transition-all">
+                    <span className="mt-4 inline-flex items-center gap-1.5 text-blue text-sm font-bold group-hover:gap-2.5 transition-all">
                       Learn More
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -109,19 +111,13 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
                   )}
                 </>
               )
+              const cardClass = "relative bg-white rounded-2xl border-2 border-blue/30 p-7 pt-8 shadow-md hover:shadow-xl hover:border-blue hover:-translate-y-2 hover:scale-[1.03] transition-all duration-300 group overflow-hidden"
               return feature.href ? (
-                <Link
-                  key={feature.title}
-                  href={feature.href}
-                  className="bg-white rounded-2xl border-2 border-blue/15 p-6 shadow-sm hover:shadow-lg hover:border-blue/40 hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 group"
-                >
+                <Link key={feature.title} href={feature.href} className={cardClass}>
                   {content}
                 </Link>
               ) : (
-                <div
-                  key={feature.title}
-                  className="bg-white rounded-2xl border-2 border-blue/15 p-6 shadow-sm hover:shadow-lg hover:border-blue/40 hover:-translate-y-1.5 hover:scale-[1.02] transition-all duration-300 group"
-                >
+                <div key={feature.title} className={cardClass}>
                   {content}
                 </div>
               )
