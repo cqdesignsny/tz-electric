@@ -704,8 +704,8 @@ export default function Header() {
                 {activeDropdown === 'Service Areas' && <ServiceAreasMegaPanel onClose={closeMega} />}
                 {activeDropdown === 'About' && <AboutMegaPanel onClose={closeMega} />}
                 {activeDropdown === 'Plans' && (
-                  <div className="p-6">
-                    <div className="grid grid-cols-2 gap-4 max-w-md">
+                  <div className="container-site py-8">
+                    <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
                       <Link href="/signature-plans" onClick={closeMega} className="group flex items-start gap-3 p-3 rounded-xl hover:bg-sky/50 transition-colors">
                         <span className="w-9 h-9 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
