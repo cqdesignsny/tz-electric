@@ -81,7 +81,7 @@ export default function HomePage() {
             Industry-Leading Certifications
           </h2>
           <p className="mt-4 text-gray-600 max-w-2xl mx-auto">
-            We hold the highest certifications in the industry, ensuring every job meets premium standards of quality and safety.
+            We hold the highest certifications in the industry, so every job meets premium standards of quality and safety.
           </p>
           <div className="mt-10 flex flex-wrap items-center justify-center gap-10 md:gap-16">
             <Image

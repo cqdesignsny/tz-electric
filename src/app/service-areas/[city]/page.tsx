@@ -170,7 +170,7 @@ export default async function CityServiceAreaPage({ params }: PageProps) {
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { title: `${COMPANY.reviews.count}+ 5-Star Reviews`, desc: 'The most trusted home service company in the Hudson Valley.' },
-              { title: '24/7 Emergency Service', desc: `${area.city} emergencies handled fast — call anytime, day or night.` },
+              { title: '24/7 Emergency Service', desc: `${area.city} emergencies handled fast. Call anytime, day or night.` },
               { title: 'Licensed & Insured', desc: 'Fully certified technicians you can trust in your home.' },
             ].map((item) => (
               <div key={item.title} className="bg-white rounded-xl p-6 border border-gray-200">

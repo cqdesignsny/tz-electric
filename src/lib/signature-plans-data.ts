@@ -84,7 +84,7 @@ export const SERVICE_DESCRIPTIONS = [
 
 export const CHOOSING_RIGHT_PLAN = [
   'Consider your home\'s age, electrical demand, and how much protection you want year-round. Older homes or systems with higher electrical loads often benefit from preventive maintenance and deeper system checks.',
-  'Think about whether you prefer basic coverage or higher value protection. Higher-tier plans offer greater savings on repairs, service credits, and long-term value — especially if you plan home upgrades or anticipate service needs.',
+  'Think about whether you prefer basic coverage or higher value protection. Higher-tier plans offer greater savings on repairs, service credits, and long-term value, especially if you plan home upgrades or anticipate service needs.',
   'Extended hours scheduling offers added convenience for customers with busy schedules and full-time commitments.',
   'Monthly plans offer flexibility, while prepaid options deliver the best overall savings.',
 ]

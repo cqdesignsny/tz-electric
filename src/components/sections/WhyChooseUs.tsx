@@ -22,7 +22,7 @@ const reasons = [
   },
   {
     title: '24/7 Emergency Service',
-    description: 'Emergencies don\'t wait — neither do we. Available around the clock when you need us most.',
+    description: 'Emergencies don\'t wait, and neither do we. Available around the clock when you need us most.',
     icon: (
       <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -49,7 +49,7 @@ const reasons = [
   },
   {
     title: 'One-Stop Shop',
-    description: 'Cooling, heating, electrical, plumbing, and more — all from one trusted team. Simplify your home services.',
+    description: 'Cooling, heating, electrical, plumbing, and more, all from one trusted team. Simplify your home services.',
     icon: (
       <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />

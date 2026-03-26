@@ -261,7 +261,7 @@ export default async function CountyPage({ params }: { params: Promise<{ county:
                 </svg>
               </div>
               <h3 className="font-heading font-bold text-navy">Local Experts</h3>
-              <p className="mt-2 text-gray-600 text-sm">Based right here in the Hudson Valley — we know {county.county} County inside and out.</p>
+              <p className="mt-2 text-gray-600 text-sm">Based right here in the Hudson Valley. We know {county.county} County inside and out.</p>
             </div>
             <div>
               <div className="w-14 h-14 bg-blue/10 rounded-2xl flex items-center justify-center mx-auto mb-4">

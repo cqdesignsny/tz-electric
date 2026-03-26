@@ -53,7 +53,7 @@ export default function ReviewsPage() {
               {COMPANY.reviews.count}+ Five-Star Reviews
             </h1>
             <p className="mt-4 text-gray-300 text-lg max-w-2xl">
-              Don&apos;t just take our word for it — hear from the Hudson Valley homeowners
+              Don&apos;t just take our word for it. Hear from the Hudson Valley homeowners
               who trust TZ Electric for all their home service needs.
             </p>
             <div className="mt-6 flex items-center gap-4">

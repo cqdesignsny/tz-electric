@@ -9,7 +9,7 @@ import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
   title: 'About TZ Electric Inc | Hudson Valley Trusted Home Service Experts',
-  description: `Learn about TZ Electric Inc — over 12 years of cooling, heating, electrical, and plumbing expertise in the Hudson Valley. ${COMPANY.reviews.count}+ 5-star reviews. Mitsubishi Diamond Elite Contractor & Generac Authorized Dealer.`,
+  description: `Learn about TZ Electric Inc. Over 12 years of cooling, heating, electrical, and plumbing expertise in the Hudson Valley. ${COMPANY.reviews.count}+ 5-star reviews. Mitsubishi Diamond Elite Contractor & Generac Authorized Dealer.`,
   path: '/about-us',
 })
 
@@ -134,7 +134,7 @@ export default function AboutPage() {
                   the region. We serve homeowners across {COMPANY.counties.join(', ')} counties.
                 </p>
                 <p>
-                  Our growth has always been driven by word of mouth — neighbors recommending us
+                  Our growth has always been driven by word of mouth, neighbors recommending us
                   to neighbors. That trust is something we never take for granted.
                 </p>
               </div>
@@ -473,7 +473,7 @@ export default function AboutPage() {
                 Serving the Entire Hudson Valley
               </h2>
               <p className="mt-4 text-gray-600 leading-relaxed">
-                From Catskill to Rhinebeck, Hudson to Woodstock — we proudly serve homeowners
+                From Catskill to Rhinebeck, Hudson to Woodstock, we proudly serve homeowners
                 across the Hudson Valley region.
               </p>
               <div className="mt-6">

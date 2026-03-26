@@ -42,7 +42,7 @@ export default function ServiceAreasPage() {
               Serving the Entire Hudson Valley
             </h1>
             <p className="mt-4 text-gray-300 text-lg max-w-2xl">
-              From Catskill to Rhinebeck, Kingston to Hunter — TZ Electric provides expert
+              From Catskill to Rhinebeck, Kingston to Hunter, TZ Electric provides expert
               cooling, heating, electrical, plumbing, and generator services across the Hudson Valley.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
@@ -105,7 +105,7 @@ export default function ServiceAreasPage() {
                   {county.description}
                 </p>
                 <p className="text-xs text-blue/60 italic mb-3">
-                  Primary service areas shown — we serve all communities in {county.county} County.
+                  Primary service areas shown. We serve all communities in {county.county} County.
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {county.cities.slice(0, 5).map((city) => (

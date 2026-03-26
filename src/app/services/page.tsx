@@ -64,7 +64,7 @@ export default function ServicesPage() {
               Complete Home Services Under One Roof
             </h1>
             <p className="mt-4 text-gray-300 text-lg max-w-2xl">
-              From plumbing to HVAC, electrical to generators — TZ Electric handles it all.
+              From plumbing to HVAC, electrical to generators, TZ Electric handles it all.
               One call, one company, total comfort for your Hudson Valley home.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
@@ -167,7 +167,7 @@ export default function ServicesPage() {
             24/7 Emergency Services Available
           </h2>
           <p className="mt-2 text-gray-300 max-w-xl mx-auto">
-            Emergencies don&apos;t wait — neither do we. Call us anytime for urgent cooling, heating, electrical, or plumbing repairs.
+            Emergencies don&apos;t wait, and neither do we. Call us anytime for urgent cooling, heating, electrical, or plumbing repairs.
           </p>
           <div className="mt-6 flex flex-wrap gap-4 justify-center">
             <Button href="/emergency" variant="emergency" size="lg">

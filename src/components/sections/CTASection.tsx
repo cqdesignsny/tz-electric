@@ -10,7 +10,7 @@ export default function CTASection() {
         </h2>
         <p className="mt-4 text-blue-100 text-lg">
           Get a free, no-obligation quote from our expert team. We&apos;ll assess your
-          needs and provide an upfront price — no surprises, no hidden fees.
+          needs and provide an upfront price. No surprises, no hidden fees.
         </p>
 
         <div className="mt-8 flex flex-wrap justify-center gap-4">

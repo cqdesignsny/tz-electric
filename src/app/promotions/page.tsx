@@ -13,7 +13,7 @@ export const metadata = createMetadata({
 const promotions = [
   {
     title: 'Referral Reward Program',
-    description: 'Refer a friend or neighbor to TZ Electric and you both save. Earn a credit toward your next service — no limit on referrals!',
+    description: 'Refer a friend or neighbor to TZ Electric and you both save. Earn a credit toward your next service with no limit on referrals!',
     discount: '$100 Credit',
     details: 'Both you and your referral receive a $100 credit toward any TZ Electric service. Elite Signature Plan members receive $150.',
     expires: 'Ongoing',
@@ -21,7 +21,7 @@ const promotions = [
   },
   {
     title: 'Single Zone Mini Split Installation',
-    description: 'Keep your space comfortable year-round — and save big! Perfect for individual rooms, home offices, or additions.',
+    description: 'Keep your space comfortable year-round and save big! Perfect for individual rooms, home offices, or additions.',
     discount: '$750 Off',
     details: 'Limited-time offer on any single zone Mitsubishi mini split installation.',
     expires: 'Limited Time',
@@ -37,7 +37,7 @@ const promotions = [
   },
   {
     title: 'Standard Hot Water Heater Replacement',
-    description: 'Hot water when you need it — now with extra savings! Limited-time pricing on standard water heater replacements.',
+    description: 'Hot water when you need it, now with extra savings! Limited-time pricing on standard water heater replacements.',
     discount: '$350 Off',
     details: 'Applies to standard tank water heater replacement.',
     expires: 'Limited Time',

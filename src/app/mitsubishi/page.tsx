@@ -20,7 +20,7 @@ export const metadata = createMetadata({
   title:
     'Mitsubishi Mini Splits | Diamond Elite Ductless Systems | Hudson Valley',
   description:
-    'TZ Electric is a Mitsubishi Electric Diamond Elite Contractor — the highest dealer tier. Expert ductless mini split installation, Hyper-Heating systems, and smart controls. Serving the Hudson Valley. Call (518) 678-1230.',
+    'TZ Electric is a Mitsubishi Electric Diamond Elite Contractor, the highest dealer tier. Expert ductless mini split installation, Hyper-Heating systems, and smart controls. Serving the Hudson Valley. Call (518) 678-1230.',
   path: '/mitsubishi',
 })
 
@@ -112,8 +112,8 @@ export default function MitsubishiPage() {
               </h1>
 
               <p className="mt-6 text-gray-200 text-lg lg:text-xl max-w-2xl leading-relaxed">
-                As a Mitsubishi Electric Diamond Elite Contractor &mdash; the
-                highest dealer certification &mdash; we deliver superior ductless
+                As a Mitsubishi Electric Diamond Elite Contractor, the
+                highest dealer certification available, we deliver superior ductless
                 mini split installation, Hyper-Heating systems, and smart climate
                 control for homes across the Hudson Valley.
               </p>
@@ -222,7 +222,7 @@ export default function MitsubishiPage() {
           <SectionHeader
             label="Why Mitsubishi"
             title="Benefits of Mitsubishi Mini Splits"
-            description="Energy-efficient, whisper-quiet, and built for extreme cold — here's why homeowners choose Mitsubishi."
+            description="Energy-efficient, whisper-quiet, and built for extreme cold. Here's why homeowners choose Mitsubishi."
           />
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">

@@ -14,7 +14,7 @@ import ElectricCursor from '@/components/effects/ElectricCursor'
 export const metadata = createMetadata({
   title: 'TZ Signature Plans | Comfort, Safety & Priority Service Year-Round',
   description:
-    'Join the TZ Signature Plan for annual electrical assessments, priority scheduling, exclusive discounts, and peace of mind. Three plans to fit your budget — Core, Preferred, and Elite.',
+    'Join the TZ Signature Plan for annual electrical assessments, priority scheduling, exclusive discounts, and peace of mind. Three plans to fit your budget: Core, Preferred, and Elite.',
   path: '/signature-plans',
 })
 
@@ -89,7 +89,7 @@ export default function SignaturePlansPage() {
             TZ Signature Plans
           </h1>
           <p className="mt-5 text-gray-300 text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed">
-            Comfort, safety, and priority service &mdash; all year long. Annual checkups,
+            Comfort, safety, and priority service, all year long. Annual checkups,
             built-in savings, and peace of mind so your home systems are cared for before
             problems become emergencies.
           </p>
@@ -276,7 +276,7 @@ export default function SignaturePlansPage() {
               Why Join the Signature Plan?
             </h2>
             <p className="mt-3 text-gray-400">
-              More than just maintenance &mdash; it&apos;s peace of mind for your entire home.
+              More than just maintenance. It&apos;s peace of mind for your entire home.
             </p>
           </div>
 

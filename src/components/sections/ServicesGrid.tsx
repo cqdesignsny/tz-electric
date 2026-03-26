@@ -44,7 +44,7 @@ export default function ServicesGrid() {
         <SectionHeader
           label="Our Services"
           title="Complete Home Services Under One Roof"
-          description="From plumbing to HVAC, electrical to generators — we handle it all. One call, one company, total comfort."
+          description="From plumbing to HVAC, electrical to generators, we handle it all. One call, one company, total comfort."
         />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

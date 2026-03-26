@@ -15,7 +15,7 @@ export type MaintenancePlan = {
 }
 
 export const GENERATOR_OVERVIEW =
-  'The TZ Electric Generator Maintenance Plan is designed to ensure your backup power system is always ready when you need it most. With routine maintenance, priority service, and proactive care, you can rely on your generator to perform when it matters — without the stress of unexpected failures.'
+  'The TZ Electric Generator Maintenance Plan keeps your backup power system ready when you need it most. With routine maintenance, priority service, and proactive care, you can count on your generator to perform when it matters, without the stress of unexpected failures.'
 
 export const GENERATOR_PLANS: MaintenancePlan[] = [
   {

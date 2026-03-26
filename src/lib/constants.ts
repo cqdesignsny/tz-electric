@@ -27,7 +27,7 @@ export const COMPANY = {
     'Mitsubishi Diamond Elite Contractor',
     'Generac Authorized Dealer',
     'BBB Accredited Business',
-    'Voted Best Electrician — Hudson Valley',
+    'Voted Best Electrician in the Hudson Valley',
   ],
   financing: ['Wisetack', 'Synchrony'],
   social: {
@@ -146,7 +146,7 @@ export const SERVICES = [
     title: 'Generators',
     slug: 'generator',
     caption: 'Backup Power',
-    description: 'Generac authorized dealer — whole-home generator installation and service. Repair services limited to Generac.',
+    description: 'Generac authorized dealer for whole-home generator installation and service. Repair services limited to Generac.',
     image: '/images/services/generator.webp',
   },
   {

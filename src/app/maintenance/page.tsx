@@ -53,7 +53,7 @@ export default function MaintenancePage() {
           </h1>
           <p className="mt-5 text-gray-300 text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed">
             Keep your home systems running at peak performance with scheduled maintenance,
-            priority service, and proactive care &mdash; so small issues never become big problems.
+            priority service, and proactive care. That way, small issues never become big problems.
           </p>
           <div className="mt-8">
             <Button
@@ -84,7 +84,7 @@ export default function MaintenancePage() {
               {COMING_SOON_PLANS.map((plan) => (
                 <div key={plan.name} className="flex items-center gap-2 text-sm text-gray-600">
                   <span className="w-2 h-2 rounded-full bg-blue/40 flex-shrink-0" />
-                  <span><strong className="text-navy">{plan.name}</strong> &mdash; {plan.description}</span>
+                  <span><strong className="text-navy">{plan.name}:</strong> {plan.description}</span>
                 </div>
               ))}
             </div>
