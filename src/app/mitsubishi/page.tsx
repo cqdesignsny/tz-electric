@@ -318,10 +318,10 @@ export default function MitsubishiPage() {
                   alt="Mitsubishi Diamond Elite Contractor certification"
                   width={320}
                   height={100}
-                  className="mx-auto object-contain mb-4"
+                  className="mx-auto object-contain mb-4 brightness-0"
                 />
                 <Image
-                  src="/images/certifications/mitsubishi-electric.svg"
+                  src="/images/certifications/mitsubishi-electric-dark.svg"
                   alt="Mitsubishi Electric"
                   width={200}
                   height={80}
