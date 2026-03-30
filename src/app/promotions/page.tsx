@@ -22,7 +22,7 @@ const promotions = [
   {
     title: 'Single Zone Mini Split Installation',
     description: 'Keep your space comfortable year-round and save big! Perfect for individual rooms, home offices, or additions.',
-    discount: '$750 Off',
+    discount: '$500 Off',
     details: 'Limited-time offer on any single zone Mitsubishi mini split installation.',
     expires: 'Limited Time',
     category: 'Mini Splits',
@@ -30,7 +30,7 @@ const promotions = [
   {
     title: 'Multi Zone Mini Split Installation',
     description: 'Upgrade your whole-home comfort and save! Personalized temperature control across multiple rooms.',
-    discount: '$1,000 Off',
+    discount: '$350 Off',
     details: 'Any multi-zone Mitsubishi mini split system installation.',
     expires: 'Limited Time',
     category: 'Mini Splits',
@@ -54,7 +54,7 @@ const promotions = [
   {
     title: 'Service Upgrade (100-200 Amp)',
     description: 'Upgrade your home\'s power capacity to handle modern energy demands with confidence.',
-    discount: '$450 Off',
+    discount: '$250 Off',
     details: 'Applies to 100-to-200 amp electrical service panel upgrades.',
     expires: 'Limited Time',
     category: 'Electrical',
@@ -62,7 +62,7 @@ const promotions = [
   {
     title: 'Generator Purchase',
     description: 'Power up your peace of mind and save on a whole-home Generac generator.',
-    discount: '$1,000 Off',
+    discount: '$100 Off',
     details: 'Seasonal promotion. Contact us for current availability.',
     expires: 'Seasonal',
     category: 'Generators',
@@ -114,11 +114,47 @@ export default function PromotionsPage() {
         </div>
       </section>
 
+      {/* Referral Program — Featured */}
+      <section className="section-padding pb-0">
+        <div className="container-site">
+          <div className="relative bg-gradient-to-br from-accent to-accent-dark rounded-2xl overflow-hidden shadow-xl p-8 md:p-10">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/5 rounded-full translate-y-1/3 -translate-x-1/3" />
+            <div className="relative z-10 md:flex items-center justify-between gap-8">
+              <div className="flex-1">
+                <span className="inline-flex items-center gap-2 bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider mb-4">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+                  </svg>
+                  Ongoing Program
+                </span>
+                <h2 className="font-heading font-bold text-white text-3xl md:text-4xl">
+                  Referral Reward Program
+                </h2>
+                <p className="mt-3 text-white/90 text-lg max-w-xl">
+                  Refer a friend or neighbor to TZ Electric and you both save. Earn a credit toward your next service with no limit on referrals!
+                </p>
+                <p className="mt-2 text-white/70 text-sm">
+                  Both you and your referral receive a $100 credit toward any TZ Electric service. Elite Signature Plan members receive $150.
+                </p>
+              </div>
+              <div className="mt-6 md:mt-0 flex-shrink-0 text-center">
+                <div className="text-5xl md:text-6xl font-heading font-bold text-white">$100</div>
+                <div className="text-white/80 text-sm font-medium mt-1">Credit Each</div>
+                <Button href={TYPEFORM_URL} external className="mt-4 !bg-white !text-accent hover:!bg-gray-100" size="md">
+                  Refer a Friend
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Promotions Grid */}
       <section className="section-padding">
         <div className="container-site">
           <div className="grid md:grid-cols-2 gap-8">
-            {promotions.map((promo) => (
+            {promotions.filter(p => p.title !== 'Referral Reward Program').map((promo) => (
               <div key={promo.title} className="bg-white border-2 border-blue/15 rounded-2xl overflow-hidden shadow-sm hover:border-blue/40 hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
                 <div className="bg-blue/5 px-6 py-3 flex items-center justify-between border-b border-gray-100">
                   <span className="text-blue text-sm font-semibold">{promo.category}</span>

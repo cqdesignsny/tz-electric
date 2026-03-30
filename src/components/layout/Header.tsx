@@ -123,6 +123,13 @@ const SERVICE_AREA_COUNTIES: { county: string; href: string; cities: { label: st
       { label: 'Albany', href: '/service-areas/albany-ny' },
     ],
   },
+  {
+    county: 'Delaware County',
+    href: '/service-areas/county/delaware-county',
+    cities: [
+      { label: 'Margaretville', href: '/service-areas/margaretville-ny' },
+    ],
+  },
 ]
 
 const ABOUT_LINKS = [
@@ -369,7 +376,7 @@ function ServiceAreasMegaPanel({ onClose }: { onClose: () => void }) {
         ))}
       </div>
       <div className="mt-5 pt-4 border-t border-gray-100 text-sm text-gray-500">
-        Serving the entire Hudson Valley, NY region including Dutchess, Ulster, Albany, Columbia & Greene counties.
+        Serving the entire Hudson Valley, NY region including Greene, Columbia, Ulster, Dutchess, Albany & Delaware counties.
       </div>
     </div>
   )
@@ -560,30 +567,30 @@ export default function Header() {
     setMobileOpen(false)
   }, [])
 
-  const dropdownItems = ['Services', 'Service Areas', 'About', 'Plans']
+  const dropdownItems = ['Services', 'Plans', 'About', 'Service Areas']
 
   return (
     <>
       {/* Top Bar */}
       <div className="bg-navy text-white text-sm">
         <div className="container-site flex items-center justify-between py-2">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <a
               href={`tel:${COMPANY.phoneRaw}`}
-              className="flex items-center gap-1.5 text-white hover:text-sky transition-colors"
+              className="flex items-center gap-1.5 text-white hover:text-sky transition-colors flex-shrink-0"
             >
               <PhoneIcon />
               <span className="font-semibold">{COMPANY.phone}</span>
             </a>
             <span className="hidden sm:inline text-gray-400">|</span>
-            <span className="hidden sm:inline text-gray-300">
+            <span className="hidden sm:inline text-gray-300 truncate">
               Serving the {COMPANY.serviceArea} Region
             </span>
           </div>
-          <div className="hidden md:flex items-center gap-4 text-gray-300">
-            <span>Mon-Fri: {COMPANY.hours.weekday}</span>
-            <span className="text-gray-500">|</span>
-            <span className="text-amber-400 font-medium">24/7 Emergency Service</span>
+          <div className="hidden sm:flex items-center gap-2 md:gap-4 text-gray-300 text-xs md:text-sm">
+            <span className="hidden md:inline">Mon-Fri: {COMPANY.hours.weekday}</span>
+            <span className="hidden md:inline text-gray-500">|</span>
+            <span className="text-accent font-bold">24/7 Emergency</span>
             <span className="text-gray-500">|</span>
             <div className="flex items-center gap-2">
               <a href={COMPANY.social.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
@@ -778,6 +785,55 @@ export default function Header() {
                   </div>
                 </MobileAccordion>
 
+                {/* Plans */}
+                <MobileAccordion label="Plans" href="/signature-plans" onClose={closeMobile}>
+                  <div className="space-y-0.5">
+                    <Link
+                      href="/signature-plans"
+                      onClick={closeMobile}
+                      className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-blue hover:bg-sky/40 rounded-lg transition-colors"
+                    >
+                      <span className="w-8 h-8 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      </span>
+                      <div>
+                        <span className="font-medium text-navy">Signature Plans</span>
+                        <span className="block text-xs text-gray-400">Annual maintenance memberships</span>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/maintenance"
+                      onClick={closeMobile}
+                      className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-blue hover:bg-sky/40 rounded-lg transition-colors"
+                    >
+                      <span className="w-8 h-8 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" /></svg>
+                      </span>
+                      <div>
+                        <span className="font-medium text-navy">Generator Maintenance</span>
+                        <span className="block text-xs text-gray-400">Generator maintenance plans</span>
+                      </div>
+                    </Link>
+                  </div>
+                </MobileAccordion>
+
+                {/* About */}
+                <MobileAccordion label="About" href="/about-us" onClose={closeMobile}>
+                  <div className="space-y-0.5">
+                    {ABOUT_LINKS.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        onClick={closeMobile}
+                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-blue hover:bg-sky/40 rounded-lg transition-colors"
+                      >
+                        <span className="w-8 h-8 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">{link.icon}</span>
+                        <span className="font-medium text-navy">{link.label}</span>
+                      </Link>
+                    ))}
+                  </div>
+                </MobileAccordion>
+
                 {/* Service Areas */}
                 <MobileAccordion label="Service Areas" href="/service-areas" onClose={closeMobile}>
                   <div className="space-y-3">
@@ -813,55 +869,6 @@ export default function Header() {
                   </div>
                 </MobileAccordion>
 
-                {/* About */}
-                <MobileAccordion label="About" href="/about-us" onClose={closeMobile}>
-                  <div className="space-y-0.5">
-                    {ABOUT_LINKS.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={closeMobile}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-blue hover:bg-sky/40 rounded-lg transition-colors"
-                      >
-                        <span className="w-8 h-8 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">{link.icon}</span>
-                        <span className="font-medium text-navy">{link.label}</span>
-                      </Link>
-                    ))}
-                  </div>
-                </MobileAccordion>
-
-                {/* Plans */}
-                <MobileAccordion label="Plans" href="/signature-plans" onClose={closeMobile}>
-                  <div className="space-y-0.5">
-                    <Link
-                      href="/signature-plans"
-                      onClick={closeMobile}
-                      className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-blue hover:bg-sky/40 rounded-lg transition-colors"
-                    >
-                      <span className="w-8 h-8 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      </span>
-                      <div>
-                        <span className="font-medium text-navy">Signature Plans</span>
-                        <span className="block text-xs text-gray-400">Annual maintenance memberships</span>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/maintenance"
-                      onClick={closeMobile}
-                      className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-blue hover:bg-sky/40 rounded-lg transition-colors"
-                    >
-                      <span className="w-8 h-8 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" /></svg>
-                      </span>
-                      <div>
-                        <span className="font-medium text-navy">Generator Maintenance</span>
-                        <span className="block text-xs text-gray-400">Generator maintenance plans</span>
-                      </div>
-                    </Link>
-                  </div>
-                </MobileAccordion>
-
                 {/* Direct Links */}
                 <Link
                   href="/financing"
@@ -882,7 +889,7 @@ export default function Header() {
                 <div className="pt-4 mt-4 border-t border-gray-100 space-y-3">
                   <a
                     href={`tel:${COMPANY.phoneRaw}`}
-                    className="flex items-center justify-center gap-2 w-full py-3.5 bg-navy text-white rounded-xl font-heading font-semibold text-base"
+                    className="flex items-center justify-center gap-2 w-full py-3.5 bg-navy text-white rounded-xl font-heading font-semibold text-base ring-2 ring-white/30"
                   >
                     <PhoneIcon />
                     Call {COMPANY.phone}

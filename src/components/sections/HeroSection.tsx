@@ -52,7 +52,7 @@ export default function HeroSection() {
             />
           </motion.div>
         </AnimatePresence>
-        {/* Navy overlay — 60% opacity for readability with luxury depth */}
+        {/* Navy overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-navy/90 via-navy/75 to-navy/60" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-navy/40" />
       </div>
@@ -68,11 +68,6 @@ export default function HeroSection() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            {/* Trust Index Badge */}
-            <div className="mb-4">
-              <TrustIndexBadge />
-            </div>
-
             <h1 className="text-white text-4xl lg:text-5xl xl:text-6xl font-heading font-bold leading-[1.1]">
               Your Trusted{' '}
               <span className="text-blue-light">Home Services</span>{' '}
@@ -115,7 +110,7 @@ export default function HeroSection() {
             </div>
           </motion.div>
 
-          {/* Right side — certification logos floating over the slider */}
+          {/* Right side — Google badge + Diamond Contractor card (desktop) */}
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -123,6 +118,10 @@ export default function HeroSection() {
             className="hidden lg:flex flex-col items-center justify-center"
           >
             <div className="bg-white/5 backdrop-blur-md rounded-2xl border border-white/10 p-8 text-center">
+              {/* Google Review Badge — inside card, above Diamond Contractor */}
+              <div className="mb-6 pb-6 border-b border-white/10 origin-center scale-125 hero-trust-badge">
+                <TrustIndexBadge />
+              </div>
               <Image
                 src="/images/certifications/diamond-contractor.svg"
                 alt="Mitsubishi Diamond Elite Contractor"
@@ -151,6 +150,44 @@ export default function HeroSection() {
                 <div className="text-center">
                   <div className="text-2xl font-heading font-bold text-white">24/7</div>
                   <div className="text-xs text-gray-400">Service</div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Diamond Contractor badge + Google badge — mobile/tablet */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="lg:hidden space-y-4 max-w-md mx-auto"
+          >
+            <div className="bg-white/5 backdrop-blur-md rounded-xl border border-white/10 p-4 text-center">
+              {/* Google badge inside card — top */}
+              <div className="mb-4 pb-4 border-b border-white/10 origin-center scale-110 hero-trust-badge">
+                <TrustIndexBadge />
+              </div>
+              <div className="flex items-center justify-center gap-4">
+                <Image
+                  src="/images/certifications/diamond-contractor.svg"
+                  alt="Mitsubishi Diamond Elite Contractor"
+                  width={120}
+                  height={36}
+                  className="brightness-0 invert flex-shrink-0"
+                />
+                <div className="flex items-center gap-3 text-xs text-gray-300 border-l border-white/10 pl-4">
+                  <div className="text-center">
+                    <div className="text-lg font-heading font-bold text-white">12+</div>
+                    <div className="text-gray-400">Years</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-heading font-bold text-white">330+</div>
+                    <div className="text-gray-400">Reviews</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-lg font-heading font-bold text-white">24/7</div>
+                    <div className="text-gray-400">Service</div>
+                  </div>
                 </div>
               </div>
             </div>

@@ -176,3 +176,19 @@
 .animate-fade-in {
   animation: fade-in 0.4s ease-out forwards;
 }
+
+/* Trust Index badge — strip white background when inside hero card */
+.hero-trust-badge .ti-widget,
+.hero-trust-badge .ti-widget *,
+.hero-trust-badge .ti-header,
+.hero-trust-badge [class*="ti-"] {
+  background-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+.hero-trust-badge .ti-widget .ti-stars .ti-star,
+.hero-trust-badge .ti-rating-text,
+.hero-trust-badge .ti-reviews-num {
+  color: #fff !important;
+}

@@ -42,12 +42,19 @@ export default function MaintenancePage() {
         </div>
         <ElectricCursor />
         <div className="container-site relative z-10 text-center max-w-4xl mx-auto">
-          <span className="inline-flex items-center gap-2 bg-blue/20 text-blue-light px-4 py-1.5 rounded-full text-sm font-semibold mb-6">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17l-5.1 5.1a2.121 2.121 0 01-3-3l5.1-5.1m0 0L4.16 8.91a2.122 2.122 0 010-3l.97-.97a2.122 2.122 0 013 0l3.26 3.26m0 0l1.41 1.41m-1.41-1.41l5.66-5.66a2.122 2.122 0 013 0l.97.97a2.122 2.122 0 010 3l-5.66 5.66" />
-            </svg>
-            Maintenance Plans
-          </span>
+          {/* Plan type tabs */}
+          <div className="flex items-center justify-center gap-3 mb-8">
+            <a
+              href="/signature-plans"
+              className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/10 text-white hover:bg-white/20 transition-colors border border-white/20"
+            >
+              TZ Signature Plans
+            </a>
+            <span className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/5 text-gray-400 border border-white/10 cursor-default">
+              Maintenance Plans
+              <span className="ml-2 text-xs bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Coming Soon</span>
+            </span>
+          </div>
           <h1 className="text-white text-4xl lg:text-5xl xl:text-6xl font-heading font-bold leading-tight">
             Maintenance Plans
           </h1>

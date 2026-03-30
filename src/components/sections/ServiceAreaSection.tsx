@@ -2,12 +2,13 @@ import Link from 'next/link'
 import { COMPANY } from '@/lib/constants'
 import SectionHeader from '@/components/ui/SectionHeader'
 
-const serviceAreas = [
-  { city: 'Catskill', slug: 'catskill-ny' },
-  { city: 'Hudson', slug: 'hudson-ny' },
-  { city: 'Woodstock', slug: 'woodstock-ny' },
-  { city: 'Rhinebeck', slug: 'rhinebeck-ny' },
-  { city: 'Hunter', slug: 'hunter-ny' },
+const serviceAreaCounties = [
+  { county: 'Greene', slug: 'greene-county' },
+  { county: 'Columbia', slug: 'columbia-county' },
+  { county: 'Ulster', slug: 'ulster-county' },
+  { county: 'Dutchess', slug: 'dutchess-county' },
+  { county: 'Albany', slug: 'albany-county' },
+  { county: 'Delaware', slug: 'delaware-county' },
 ]
 
 export default function ServiceAreaSection() {
@@ -18,14 +19,14 @@ export default function ServiceAreaSection() {
           light
           label="Service Areas"
           title="Proudly Serving the Hudson Valley"
-          description={`We serve homeowners and businesses across ${COMPANY.counties.join(', ')} counties. If you're in the Hudson Valley, we're in your neighborhood.`}
+          description="We serve homeowners and businesses across six counties in the Hudson Valley region. Click a county to explore the towns we cover."
         />
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {serviceAreas.map((area) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+          {serviceAreaCounties.map((area) => (
             <Link
               key={area.slug}
-              href={`/service-areas/${area.slug}`}
+              href={`/service-areas/county/${area.slug}`}
               className="group bg-navy-light rounded-xl p-5 text-center hover:bg-blue transition-colors"
             >
               <svg className="w-6 h-6 mx-auto mb-2 text-blue group-hover:text-white transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
@@ -33,7 +34,7 @@ export default function ServiceAreaSection() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
               </svg>
               <div className="font-heading font-bold text-white text-sm">
-                {area.city}, NY
+                {area.county} County
               </div>
             </Link>
           ))}

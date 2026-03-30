@@ -16,7 +16,7 @@ export const COMPANY = {
     full: '5079 NY-32, Catskill, NY 12414',
   },
   serviceArea: 'Hudson Valley, NY',
-  counties: ['Dutchess', 'Ulster', 'Albany', 'Columbia', 'Greene'],
+  counties: ['Greene', 'Columbia', 'Ulster', 'Dutchess', 'Albany', 'Delaware'],
   locations: ['Catskill', 'Hudson', 'Woodstock', 'Rhinebeck', 'Hunter', 'Ulster', 'Columbia'],
   reviews: {
     count: 330,
@@ -72,15 +72,11 @@ export const NAV_ITEMS = [
     ],
   },
   {
-    label: 'Service Areas',
-    href: '/service-areas',
+    label: 'Plans',
+    href: '/signature-plans',
     children: [
-      { label: 'Catskill, NY', href: '/service-areas/catskill-ny' },
-      { label: 'Hudson, NY', href: '/service-areas/hudson-ny' },
-      { label: 'Woodstock, NY', href: '/service-areas/woodstock-ny' },
-      { label: 'Rhinebeck, NY', href: '/service-areas/rhinebeck-ny' },
-      { label: 'Hunter, NY', href: '/service-areas/hunter-ny' },
-      { label: 'All Service Areas', href: '/service-areas' },
+      { label: 'Signature Plans', href: '/signature-plans', description: 'Annual maintenance memberships' },
+      { label: 'Generator Maintenance', href: '/maintenance', description: 'Generator maintenance plans' },
     ],
   },
   {
@@ -95,11 +91,15 @@ export const NAV_ITEMS = [
     ],
   },
   {
-    label: 'Plans',
-    href: '/signature-plans',
+    label: 'Service Areas',
+    href: '/service-areas',
     children: [
-      { label: 'Signature Plans', href: '/signature-plans', description: 'Annual maintenance memberships' },
-      { label: 'Generator Maintenance', href: '/maintenance', description: 'Generator maintenance plans' },
+      { label: 'Catskill, NY', href: '/service-areas/catskill-ny' },
+      { label: 'Hudson, NY', href: '/service-areas/hudson-ny' },
+      { label: 'Woodstock, NY', href: '/service-areas/woodstock-ny' },
+      { label: 'Rhinebeck, NY', href: '/service-areas/rhinebeck-ny' },
+      { label: 'Hunter, NY', href: '/service-areas/hunter-ny' },
+      { label: 'All Service Areas', href: '/service-areas' },
     ],
   },
   {

@@ -21,7 +21,7 @@ export default function FloatingCTA() {
       {/* Phone Button */}
       <a
         href={`tel:${COMPANY.phoneRaw}`}
-        className="flex items-center gap-2 bg-navy text-white px-5 py-3 rounded-full shadow-lg hover:bg-navy-light transition-all duration-300 hover:scale-105 font-heading font-semibold text-sm"
+        className="flex items-center gap-2 bg-navy text-white px-5 py-3 rounded-full shadow-lg hover:bg-navy-light transition-all duration-300 hover:scale-105 font-heading font-semibold text-sm ring-2 ring-white/40"
         aria-label={`Call ${COMPANY.phone}`}
       >
         <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">

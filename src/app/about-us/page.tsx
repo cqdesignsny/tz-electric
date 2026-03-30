@@ -229,73 +229,66 @@ export default function AboutPage() {
             </div>
           ))}
 
-          {/* Leadership, Management & Support Staff — single row */}
+          {/* Leadership & Management */}
           <div className="mb-8">
-            <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
-              {/* Leadership members with label on first card */}
-              {leadership.map((member, i) => (
-                <div key={member.name}>
-                  {i === 0 && (
-                    <h3 className="font-heading font-bold text-navy text-lg mb-4">
-                      Leadership &amp; Management
-                    </h3>
-                  )}
-                  {i !== 0 && <div className="hidden lg:block h-[28px]" />}
-                  <div className="group bg-white border-2 border-blue/20 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-blue/40 hover:-translate-y-1">
-                    <div className="relative aspect-[3/4] overflow-hidden">
-                      <Image
-                        src={member.photo}
-                        alt={`${member.name} — ${member.role}`}
-                        fill
-                        className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h4 className="font-heading font-bold text-navy">
-                        {member.name}
-                      </h4>
-                      <p className="text-blue text-sm font-medium">
-                        {member.role}
-                      </p>
-                      <p className="mt-2 text-gray-500 text-sm leading-relaxed">
-                        {member.bio}
-                      </p>
-                    </div>
+            <h3 className="font-heading font-bold text-navy text-lg mb-4">
+              Leadership &amp; Management
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {leadership.map((member) => (
+                <div key={member.name} className="group bg-white border-2 border-blue/20 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-blue/40 hover:-translate-y-1">
+                  <div className="relative aspect-[3/4] overflow-hidden">
+                    <Image
+                      src={member.photo}
+                      alt={`${member.name} — ${member.role}`}
+                      fill
+                      className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h4 className="font-heading font-bold text-navy">
+                      {member.name}
+                    </h4>
+                    <p className="text-blue text-sm font-medium">
+                      {member.role}
+                    </p>
+                    <p className="mt-2 text-gray-500 text-sm leading-relaxed">
+                      {member.bio}
+                    </p>
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
 
-              {/* Support Staff members with label on first card */}
-              {support.map((member, i) => (
-                <div key={member.name}>
-                  {i === 0 && (
-                    <h3 className="font-heading font-bold text-navy text-lg mb-4">
-                      Support Staff
-                    </h3>
-                  )}
-                  {i !== 0 && <div className="hidden lg:block h-[28px]" />}
-                  <div className="group bg-white border-2 border-blue/20 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-blue/40 hover:-translate-y-1">
-                    <div className="relative aspect-[3/4] overflow-hidden">
-                      <Image
-                        src={member.photo}
-                        alt={`${member.name} — ${member.role}`}
-                        fill
-                        className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
-                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
-                      />
-                    </div>
-                    <div className="p-4">
-                      <h4 className="font-heading font-bold text-navy">
-                        {member.name}
-                      </h4>
-                      <p className="text-blue text-sm font-medium">
-                        {member.role}
-                      </p>
-                      <p className="mt-2 text-gray-500 text-sm leading-relaxed">
-                        {member.bio}
-                      </p>
-                    </div>
+          {/* Support Staff */}
+          <div className="mb-8">
+            <h3 className="font-heading font-bold text-navy text-lg mb-4">
+              Support Staff
+            </h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {support.map((member) => (
+                <div key={member.name} className="group bg-white border-2 border-blue/20 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-blue/40 hover:-translate-y-1">
+                  <div className="relative aspect-[3/4] overflow-hidden">
+                    <Image
+                      src={member.photo}
+                      alt={`${member.name} — ${member.role}`}
+                      fill
+                      className="object-cover object-top transition-transform duration-300 group-hover:scale-105"
+                      sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <h4 className="font-heading font-bold text-navy">
+                      {member.name}
+                    </h4>
+                    <p className="text-blue text-sm font-medium">
+                      {member.role}
+                    </p>
+                    <p className="mt-2 text-gray-500 text-sm leading-relaxed">
+                      {member.bio}
+                    </p>
                   </div>
                 </div>
               ))}
