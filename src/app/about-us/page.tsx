@@ -231,10 +231,10 @@ export default function AboutPage() {
 
           {/* Leadership & Management */}
           <div className="mb-8">
-            <h3 className="font-heading font-bold text-navy text-lg mb-4">
+            <h3 className={`font-heading font-bold text-navy text-lg mb-4 ${leadership.length <= 3 ? 'lg:text-center' : ''}`}>
               Leadership &amp; Management
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className={`grid gap-6 ${leadership.length <= 3 ? 'grid-cols-2 md:grid-cols-3 max-w-3xl mx-auto' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
               {leadership.map((member) => (
                 <div key={member.name} className="group bg-white border-2 border-blue/20 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-blue/40 hover:-translate-y-1">
                   <div className="relative aspect-[3/4] overflow-hidden">
