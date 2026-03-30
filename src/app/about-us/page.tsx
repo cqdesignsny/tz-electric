@@ -267,7 +267,7 @@ export default function AboutPage() {
             <h3 className="font-heading font-bold text-navy text-lg mb-4">
               Support Staff
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className={`grid gap-6 ${support.length <= 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
               {support.map((member) => (
                 <div key={member.name} className="group bg-white border-2 border-blue/20 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-blue/40 hover:-translate-y-1">
                   <div className="relative aspect-[3/4] overflow-hidden">
