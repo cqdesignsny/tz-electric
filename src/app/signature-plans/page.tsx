@@ -84,13 +84,10 @@ export default function SignaturePlansPage() {
             <span className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/20 text-white border border-white/30 cursor-default">
               TZ Signature Plans
             </span>
-            <a
-              href="/maintenance"
-              className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/5 text-gray-400 hover:bg-white/10 transition-colors border border-white/10"
-            >
+            <span className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/5 text-gray-500 border border-white/10 cursor-default opacity-60">
               Maintenance Plans
               <span className="ml-2 text-xs bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Coming Soon</span>
-            </a>
+            </span>
           </div>
           <h1 className="text-white text-4xl lg:text-5xl xl:text-6xl font-heading font-bold leading-tight">
             TZ Signature Plans

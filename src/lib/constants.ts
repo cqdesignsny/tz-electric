@@ -76,7 +76,6 @@ export const NAV_ITEMS = [
     href: '/signature-plans',
     children: [
       { label: 'Signature Plans', href: '/signature-plans', description: 'Annual maintenance memberships' },
-      { label: 'Generator Maintenance', href: '/maintenance', description: 'Generator maintenance plans' },
     ],
   },
   {

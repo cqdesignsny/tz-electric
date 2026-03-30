@@ -54,16 +54,13 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
 
         <div className="container-site relative z-10 py-16 lg:py-20">
           <div className="max-w-3xl">
-            <div className="mb-4">
-              <TrustIndexBadge />
-            </div>
             <h1 className="text-white text-4xl lg:text-5xl font-heading font-bold leading-tight">
               {service.heroTitle}
             </h1>
             <p className="mt-4 text-gray-300 text-lg max-w-2xl">
               {service.heroDescription}
             </p>
-            <div className="mt-8 flex flex-wrap gap-4">
+            <div className="mt-8 flex flex-wrap items-center gap-4">
               <Button href={TYPEFORM_URL} external size="lg">
                 Get a Free Quote
               </Button>
@@ -75,6 +72,9 @@ export default function ServicePageTemplate({ service }: ServicePageTemplateProp
               >
                 Call {COMPANY.phone}
               </Button>
+              <div className="hero-trust-badge scale-90 origin-left">
+                <TrustIndexBadge />
+              </div>
             </div>
           </div>
         </div>
