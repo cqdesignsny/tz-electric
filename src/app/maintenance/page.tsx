@@ -43,15 +43,18 @@ export default function MaintenancePage() {
         <ElectricCursor />
         <div className="container-site relative z-10 text-center max-w-4xl mx-auto">
           {/* Plan type tabs */}
-          <div className="flex items-center justify-center gap-3 mb-8">
+          <div className="flex flex-wrap items-center justify-center gap-3 mb-8">
             <a
               href="/signature-plans"
               className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/10 text-white hover:bg-white/20 transition-colors border border-white/20"
             >
               TZ Signature Plans
             </a>
-            <span className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/5 text-gray-400 border border-white/10 cursor-default">
+            <span className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/20 text-white border border-white/30 cursor-default">
               Maintenance Plans
+            </span>
+            <span className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/5 text-gray-500 border border-white/10 cursor-default opacity-60">
+              Generator Plans
               <span className="ml-2 text-xs bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Coming Soon</span>
             </span>
           </div>

@@ -725,7 +725,7 @@ export default function Header() {
                         <ArrowRightIcon />
                       </Link>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 max-w-2xl">
+                    <div className="grid grid-cols-3 gap-3 max-w-3xl">
                       <Link href="/signature-plans" onClick={closeMega} className="group flex items-start gap-3 p-3 rounded-xl hover:bg-sky/50 transition-colors">
                         <span className="w-9 h-9 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
@@ -735,13 +735,22 @@ export default function Header() {
                           <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Annual assessments, priority scheduling, and exclusive member discounts</span>
                         </div>
                       </Link>
-                      <div className="flex items-start gap-3 p-3 rounded-xl opacity-50 cursor-default">
-                        <span className="w-9 h-9 flex-shrink-0 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center" aria-hidden="true">
+                      <Link href="/maintenance" onClick={closeMega} className="group flex items-start gap-3 p-3 rounded-xl hover:bg-sky/50 transition-colors">
+                        <span className="w-9 h-9 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" /></svg>
                         </span>
                         <div className="min-w-0">
-                          <span className="block font-heading font-semibold text-gray-400 text-sm">Maintenance Plans <span className="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full ml-1">Coming Soon</span></span>
-                          <span className="block text-xs text-gray-400 mt-0.5 leading-relaxed">Generator, mini split &amp; water heater maintenance plans</span>
+                          <span className="block font-heading font-semibold text-navy text-sm group-hover:text-blue transition-colors">Maintenance Plans</span>
+                          <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Generator, mini split &amp; water heater maintenance plans</span>
+                        </div>
+                      </Link>
+                      <div className="flex items-start gap-3 p-3 rounded-xl opacity-50 cursor-default">
+                        <span className="w-9 h-9 flex-shrink-0 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center" aria-hidden="true">
+                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+                        </span>
+                        <div className="min-w-0">
+                          <span className="block font-heading font-semibold text-gray-400 text-sm">Generator Plans <span className="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full ml-1">Coming Soon</span></span>
+                          <span className="block text-xs text-gray-400 mt-0.5 leading-relaxed">Dedicated generator service plans coming soon</span>
                         </div>
                       </div>
                     </div>
@@ -801,12 +810,25 @@ export default function Header() {
                         <span className="block text-xs text-gray-400">Annual maintenance memberships</span>
                       </div>
                     </Link>
-                    <div className="flex items-center gap-3 px-3 py-2.5 text-sm opacity-50 cursor-default">
-                      <span className="w-8 h-8 flex-shrink-0 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center" aria-hidden="true">
+                    <Link
+                      href="/maintenance"
+                      onClick={closeMobile}
+                      className="flex items-center gap-3 px-3 py-2.5 text-sm text-gray-600 hover:text-blue hover:bg-sky/40 rounded-lg transition-colors"
+                    >
+                      <span className="w-8 h-8 flex-shrink-0 rounded-lg bg-blue/10 text-blue flex items-center justify-center" aria-hidden="true">
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" /></svg>
                       </span>
                       <div>
-                        <span className="font-medium text-gray-400">Maintenance Plans <span className="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full ml-1">Soon</span></span>
+                        <span className="font-medium text-navy">Maintenance Plans</span>
+                        <span className="block text-xs text-gray-400">Generator, mini split &amp; water heater plans</span>
+                      </div>
+                    </Link>
+                    <div className="flex items-center gap-3 px-3 py-2.5 text-sm opacity-50 cursor-default">
+                      <span className="w-8 h-8 flex-shrink-0 rounded-lg bg-gray-100 text-gray-400 flex items-center justify-center" aria-hidden="true">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
+                      </span>
+                      <div>
+                        <span className="font-medium text-gray-400">Generator Plans <span className="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full ml-1">Soon</span></span>
                       </div>
                     </div>
                   </div>
