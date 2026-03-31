@@ -105,7 +105,7 @@ export const TEAM_MEMBERS: TeamMember[] = [
   },
   {
     name: 'Tyler Plauger',
-    role: 'Electrician',
+    role: 'HVAC Tech',
     photo: '/images/team/tyler-plauger.png',
     bio: 'Meet (the OTHER) Tyler! We have a couple Tylers on the team right now, but you\'ll be able to identify this one by his sarcasm. Fun fact — this one has no feeling in his fingertips! It\'s a gruesome story but feel free to ask him all about it if you catch him on a job site.',
     category: 'technician',
@@ -126,7 +126,7 @@ export const TEAM_MEMBERS: TeamMember[] = [
   },
   {
     name: 'Christopher Weiner',
-    role: 'Team Member',
+    role: 'HVAC Tech',
     photo: '/images/team/christopher-weiner.jpg',
     bio: 'Every team needs someone with a dream superpower, and Christopher\'s happens to be teleportation. If instant travel were possible, he\'d probably use it to squeeze in even more rounds of golf. His fiancée thinks he already has a superpower — the ability to fall asleep just about anywhere.',
     category: 'technician',
