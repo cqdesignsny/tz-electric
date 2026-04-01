@@ -42,12 +42,12 @@ export default function SubServicePageTemplate({ service }: SubServicePageTempla
         <ElectricCursor />
         <div className="container-site relative z-10 py-16 lg:py-24">
           <div className="max-w-3xl">
-            <nav className="mb-5 flex items-center gap-2 text-sm text-gray-400">
-              <Link href={`/${service.parent}`} className="hover:text-white transition-colors">{service.parentTitle}</Link>
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+            <nav className="mb-5 flex items-center gap-2 text-sm">
+              <Link href={`/${service.parent}`} className="text-blue-light font-medium hover:text-white transition-colors">{service.parentTitle}</Link>
+              <svg className="w-3.5 h-3.5 text-white/50" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
               </svg>
-              <span className="text-gray-300">{service.title}</span>
+              <span className="text-white/80">{service.title}</span>
             </nav>
             <h1 className="text-white text-4xl lg:text-5xl font-heading font-bold leading-tight">{service.heroTitle}</h1>
             <p className="mt-4 text-gray-300 text-lg max-w-2xl leading-relaxed">{service.heroDescription}</p>
