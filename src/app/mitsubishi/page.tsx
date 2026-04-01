@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema, getFAQSchema } from '@/lib/metadata'
 import {
@@ -9,10 +10,13 @@ import {
   MITSUBISHI_FAQS,
 } from '@/lib/mitsubishi-data'
 import { getServiceBySlug } from '@/lib/services-data'
+import { getSubServicesByParent } from '@/lib/sub-services-data'
 import Button from '@/components/ui/Button'
 import SectionHeader from '@/components/ui/SectionHeader'
 import CTASection from '@/components/sections/CTASection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
+
+const mitsubishiSubServices = getSubServicesByParent('mitsubishi')
 
 const miniSplitService = getServiceBySlug('mini-split')
 
@@ -151,6 +155,41 @@ export default function MitsubishiPage() {
                 </p>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Mini Split Services */}
+      <section className="section-padding bg-gray-50">
+        <div className="container-site">
+          <SectionHeader
+            label="Our Services"
+            title="Mitsubishi Mini Split Services"
+            description="From single-zone installs to whole-home multi-zone systems, we offer every Mitsubishi mini split service you need."
+          />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {mitsubishiSubServices.map((service) => (
+              <Link
+                key={service.slug}
+                href={`/mitsubishi/${service.slug}`}
+                className="relative bg-white rounded-2xl border-2 border-blue/30 p-7 pt-8 shadow-md hover:shadow-xl hover:border-blue hover:-translate-y-2 hover:scale-[1.03] transition-all duration-300 group overflow-hidden"
+              >
+                <div className="absolute top-0 left-6 right-6 h-1 bg-gradient-to-r from-blue to-blue-light rounded-b-full opacity-60 group-hover:opacity-100 group-hover:left-0 group-hover:right-0 transition-all duration-300" />
+                <div className="w-12 h-12 bg-blue/10 border-2 border-blue/30 rounded-xl flex items-center justify-center text-blue mb-5 group-hover:bg-blue group-hover:border-blue group-hover:text-white group-hover:scale-110 transition-all duration-300">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 className="font-heading font-bold text-navy text-lg mb-2 group-hover:text-blue transition-colors">{service.title}</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{service.heroDescription}</p>
+                <span className="mt-4 inline-flex items-center gap-1.5 text-blue text-sm font-bold group-hover:gap-2.5 transition-all">
+                  Learn More
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>

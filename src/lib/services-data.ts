@@ -55,11 +55,10 @@ export const SERVICE_PAGES: ServicePage[] = [
       'Keep your home comfortable year-round with our expert HVAC services. Installation, repair, and maintenance for all ducted heating and cooling systems.',
     image: { src: '/images/services/hvac-hero.png', alt: 'HVAC system installation and maintenance by TZ Electric' },
     features: [
-      { title: 'Furnace Installation & Repair', description: 'High-efficiency furnace installation, repair, and maintenance.' },
-      { title: 'Air Conditioning', description: 'Central AC installation, repair, and seasonal tune-ups.' },
-      { title: 'Heat Pumps', description: 'Energy-efficient heat pump systems for year-round comfort.' },
-      { title: 'Ductwork', description: 'Duct installation, repair, sealing, and cleaning.' },
-      { title: 'Maintenance Plans', description: 'Annual maintenance plans to extend system life and prevent breakdowns.' },
+      { title: 'Central Air Heating & Cooling', description: 'Central AC, furnace, and heat pump installation and service.', href: '/hvac/central-air' },
+      { title: 'Replacement of Ducted Systems', description: 'Replace aging HVAC equipment with modern, high-efficiency systems.', href: '/hvac/ducted-systems' },
+      { title: 'HVAC Installation', description: 'New HVAC for new construction, additions, and finished spaces.', href: '/hvac/installation' },
+      { title: 'HVAC Repair & Maintenance', description: 'Emergency repairs and annual tune-ups for all major HVAC brands.', href: '/hvac/repair' },
     ],
     faqs: [
       {
@@ -87,12 +86,11 @@ export const SERVICE_PAGES: ServicePage[] = [
       'From panel upgrades to whole-home rewiring, our licensed electricians deliver safe, code-compliant electrical work for your home.',
     image: { src: '/images/services/clean-panel.jpeg', alt: 'Professional electrical panel upgrade by TZ Electric' },
     features: [
-      { title: 'Panel Upgrades', description: '100A to 200A panel upgrades for modern electrical demands.' },
-      { title: 'Whole-Home Rewiring', description: 'Safe, code-compliant rewiring for older homes.' },
-      { title: 'Lighting Installation', description: 'Indoor, outdoor, recessed, and landscape lighting.' },
-      { title: 'EV Charger Installation', description: 'Level 2 home charging stations for electric vehicles.' },
-      { title: 'Surge Protection', description: 'Whole-home surge protection to safeguard your electronics.' },
-      { title: 'Ceiling Fan Installation', description: 'Professional installation and wiring for ceiling fans.' },
+      { title: 'EV Charger Installation', description: 'Level 2 home charging stations for all major electric vehicle brands.', href: '/electrical/ev-chargers' },
+      { title: 'Electrical Panel Upgrade', description: '100A to 200A panel upgrades for modern electrical demands.', href: '/electrical/panel-upgrade' },
+      { title: 'House Rewiring', description: 'Safe, code-compliant rewiring for older homes and knob-and-tube removal.', href: '/electrical/house-rewire' },
+      { title: 'Home Electrical Services', description: 'Outlets, lighting, circuits, fans, and surge protection throughout your home.', href: '/electrical/home-electrical-services' },
+      { title: 'Indoor Electrical', description: 'Wiring, recessed lighting, troubleshooting, and smoke detector installation.', href: '/electrical/indoor-electrical' },
     ],
     faqs: [
       {
@@ -151,12 +149,12 @@ export const SERVICE_PAGES: ServicePage[] = [
       'As a Generac Authorized Dealer, we provide expert generator installation, maintenance, and repair to keep your home powered during any outage.',
     image: { src: '/images/services/generator.webp', alt: 'Generac whole-home standby generator installed by TZ Electric' },
     features: [
-      { title: 'Standby Generators', description: 'Automatic detection and startup that powers essential circuits on natural gas or propane. Ideal for keeping your home running during outages.' },
-      { title: 'Whole-Home Generators', description: 'Powers your entire home\'s electrical load with fuel flexibility. Complete protection for larger homes with higher power demands.' },
-      { title: 'Generator Sizing', description: 'Expert load calculation to determine the right generator size for your home\'s specific needs.' },
-      { title: 'Hassle-Free Installation', description: 'We handle it all: free consultation, permitting, pad preparation, fuel line connection, electrical integration, and system testing.' },
-      { title: 'Maintenance Plans', description: 'Annual maintenance to keep your generator ready when you need it. Browse our generator maintenance plans.', href: '/maintenance' },
-      { title: 'Repair Service', description: 'Fast repair service for Generac generators.' },
+      { title: 'Whole Home Generator', description: 'Powers every circuit in your home automatically during outages.', href: '/generator/whole-home' },
+      { title: 'Generac Generators', description: 'Authorized Generac dealer — factory-trained installation with full warranty.', href: '/generator/generac' },
+      { title: 'Standby Generator', description: 'Automatic backup that starts within seconds of detecting an outage.', href: '/generator/standby' },
+      { title: 'Backup Generator', description: 'Protect your essential systems and appliances from power outages.', href: '/generator/backup' },
+      { title: 'Emergency Generator Service', description: 'Fast repair service when your generator fails during an outage.', href: '/generator/emergency-service' },
+      { title: 'Maintenance Plans', description: 'Annual maintenance to keep your generator ready when you need it.', href: '/maintenance' },
     ],
     faqs: [
       {
@@ -184,12 +182,10 @@ export const SERVICE_PAGES: ServicePage[] = [
       'Expert installation, repair, and replacement for tankless and traditional water heaters. Never run out of hot water again.',
     image: { src: '/images/services/water-heater.png', alt: 'Water heater installation and repair by TZ Electric' },
     features: [
-      { title: 'Tankless Water Heaters', description: 'Endless hot water with energy-efficient tankless systems.' },
-      { title: 'Traditional Tank Heaters', description: 'Reliable tank water heater installation and replacement.' },
-      { title: 'Hybrid Heat Pump Heaters', description: 'Ultra-efficient hybrid water heaters that cut energy costs.' },
-      { title: 'Water Heater Repair', description: 'Fast repair service for all brands and models.' },
-      { title: 'Annual Maintenance', description: 'Flush and inspect service to extend water heater life.' },
-      { title: 'Emergency Replacement', description: 'Same-day water heater replacement when yours fails.' },
+      { title: 'Tankless Water Heater Installation', description: 'Endless on-demand hot water with energy-efficient tankless systems.', href: '/hot-water-heaters/tankless' },
+      { title: 'Traditional Water Heater Replacement', description: 'Same-day tank water heater replacement — gas and electric models in stock.', href: '/hot-water-heaters/traditional' },
+      { title: 'Water Heater Repair', description: 'Fast diagnosis and repair for all water heater brands and types.', href: '/hot-water-heaters/repair' },
+      { title: 'Water Heater Maintenance', description: 'Annual flush and inspection to extend water heater life and maintain efficiency.', href: '/hot-water-heaters/maintenance' },
     ],
     faqs: [
       {

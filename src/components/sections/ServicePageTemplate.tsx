@@ -12,14 +12,24 @@ import { TrustIndexBadge } from '@/components/ui/TrustIndexWidget'
 
 interface ServicePageTemplateProps {
   service: ServicePage
+  parentService?: { slug: string; title: string }
 }
 
-export default function ServicePageTemplate({ service }: ServicePageTemplateProps) {
-  const breadcrumbSchema = getBreadcrumbSchema([
-    { name: 'Home', url: '/' },
-    { name: 'Services', url: '/services' },
-    { name: service.title, url: `/${service.slug}` },
-  ])
+export default function ServicePageTemplate({ service, parentService }: ServicePageTemplateProps) {
+  const breadcrumbSchema = getBreadcrumbSchema(
+    parentService
+      ? [
+          { name: 'Home', url: '/' },
+          { name: 'Services', url: '/services' },
+          { name: parentService.title, url: `/${parentService.slug}` },
+          { name: service.title, url: `/${parentService.slug}/${service.slug}` },
+        ]
+      : [
+          { name: 'Home', url: '/' },
+          { name: 'Services', url: '/services' },
+          { name: service.title, url: `/${service.slug}` },
+        ]
+  )
 
   const faqSchema = getFAQSchema(service.faqs)
 
