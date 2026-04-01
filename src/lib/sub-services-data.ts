@@ -5,6 +5,7 @@ export interface SubServicePage extends ServicePage {
   parentTitle: string
   overview?: string[]
   process?: { step: string; title: string; description: string }[]
+  signsList?: { title: string; description: string }[]
 }
 
 export const SUB_SERVICE_PAGES: SubServicePage[] = [
@@ -64,6 +65,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'Yes, in most municipalities a permit is required for a new 240V circuit. We handle permitting and the required inspection as part of every installation — never use an electrician who skips this step.',
       },
     ],
+    signsList: [
+      { title: 'You Rely on Public Charging Stations', description: 'If you\'re regularly stopping at public chargers or relying on a slow Level 1 trickle charge at home, a Level 2 home charger eliminates that entirely — wake up to a full battery every morning.' },
+      { title: 'You Drive Your EV Daily', description: 'Daily EV drivers need 20–30+ miles of range added each night. Only a Level 2 charger on a 240V circuit can reliably do that overnight for most vehicles.' },
+      { title: 'You\'re Getting a New EV', description: 'The best time to install a Level 2 charger is before the vehicle arrives — so your setup is ready on day one. We work with your delivery timeline.' },
+      { title: 'Your Current Outlet Is Too Slow', description: 'A standard 120V outlet adds 3–5 miles of range per hour — barely enough for plug-in hybrids, and impractical for full EVs that need 200+ miles replenished overnight.' },
+      { title: 'You\'re Adding a Second EV', description: 'Two EVs on one slow outlet creates a charging bottleneck. A dedicated Level 2 circuit — or two — handles both vehicles without compromise.' },
+      { title: 'You Want Smart Charging Features', description: 'Modern Level 2 chargers offer app control, usage monitoring, off-peak scheduling, and energy tracking. A proper 240V installation is required to use them.' },
+    ],
   },
 
   {
@@ -119,6 +128,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'Yes. A new 200A panel gives you significantly more capacity and open breaker slots. After the upgrade, adding new circuits for EV chargers, workshop equipment, home additions, or any other purpose is straightforward.',
       },
     ],
+    signsList: [
+      { title: 'Your Panel Is Over 20 Years Old', description: 'Panels from the 1990s and earlier weren\'t designed for today\'s electrical loads. Age alone isn\'t disqualifying, but combined with any other sign below, it\'s time to evaluate.' },
+      { title: 'You Have a Federal Pacific or Zinsco Panel', description: 'These panels have documented safety defects — breakers that fail to trip under overload. Replacement is strongly recommended regardless of age or condition.' },
+      { title: 'Breakers Trip Frequently', description: 'Occasional trips are normal. Frequent trips — especially on circuits that shouldn\'t be overloaded — indicate your panel is undersized for your current electrical demand.' },
+      { title: 'You\'re Adding High-Load Equipment', description: 'EV chargers, mini splits, electric dryers, whole-home generators, and hot tubs all require dedicated circuits. A 100A panel often can\'t support these additions.' },
+      { title: 'You Have Fewer Than 20 Breaker Slots', description: 'A crowded panel with tandem or double-tapped breakers is a code violation and a sign your electrical system has outgrown its capacity.' },
+      { title: 'Your Homeowners Insurance Flagged It', description: 'Insurers increasingly require panel upgrades or replacements as a condition of coverage — particularly for Federal Pacific and Zinsco panels. We provide documentation for insurance purposes.' },
+    ],
   },
 
   {
@@ -170,6 +187,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'A typical single-family home rewire takes 3–7 days depending on the size of the home and the extent of the work. We coordinate a timeline that minimizes how long you\'re without power to specific areas.',
       },
     ],
+    signsList: [
+      { title: 'Flickering or Dimming Lights', description: 'Lights that flicker when appliances turn on indicate loose connections, overloaded circuits, or deteriorating wiring — all signs your system needs professional attention.' },
+      { title: 'Outlets That Feel Warm or Spark', description: 'Warm outlets or visible sparking when plugging in devices are serious warning signs of wiring problems that can lead to electrical fires. Don\'t ignore them.' },
+      { title: 'Burning Smell From Outlets or Switches', description: 'A burning plastic or electrical smell near outlets, switches, or the panel is an immediate red flag. Turn off the circuit and call us.' },
+      { title: 'Buzzing Sounds From Walls or Outlets', description: 'Electrical systems should be silent. Buzzing or humming from outlets, switches, or the panel indicates arcing or loose connections — a fire risk.' },
+      { title: 'Your Home Has Only 2-Prong Outlets', description: 'Ungrounded 2-prong outlets are an indicator of outdated wiring. Modern electronics require 3-prong grounded outlets, and many devices won\'t perform correctly without them.' },
+      { title: 'You Have Knob-and-Tube or Aluminum Wiring', description: 'These older wiring types pose safety risks and are rejected by most homeowners insurance carriers. Rewiring eliminates the hazard and restores your insurability.' },
+    ],
   },
 
   {
@@ -214,6 +239,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         question: 'Do you do small jobs or only large projects?',
         answer: 'We handle both. No job is too small if you need a licensed electrician. We schedule efficiently and give you upfront pricing for single-visit service calls as well as larger projects.',
       },
+    ],
+    signsList: [
+      { title: 'Dead Outlets or Switches', description: 'An outlet or switch that stopped working usually points to a tripped GFCI upstream, a failed breaker, or a loose wire — all requiring a licensed electrician to diagnose and fix.' },
+      { title: 'Breakers That Trip Repeatedly', description: 'A breaker that trips on the same circuit repeatedly means that circuit is overloaded or has a fault. Adding more outlets or a dedicated circuit is usually the solution.' },
+      { title: 'Not Enough Outlets', description: 'If you\'re using power strips everywhere or running extension cords across rooms, your home needs additional outlets — a simple job that eliminates a real fire hazard.' },
+      { title: 'You\'re Remodeling or Finishing a Space', description: 'Any renovation that involves new walls, a finished basement, or a home addition needs new wiring, circuits, and outlet placement from a licensed electrician.' },
+      { title: 'Outdated Light Fixtures', description: 'Old fixtures may be wired without ground, use outdated lamp types, or simply not support modern LED bulbs correctly. Upgrading to new fixtures also updates the wiring connections.' },
+      { title: 'No Surge Protection', description: 'A single power surge from a nearby lightning strike can destroy appliances and electronics throughout your home. A panel-mounted whole-home surge protector solves this for every circuit at once.' },
     ],
   },
 
@@ -261,6 +294,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         question: 'Can you add circuits to a finished room without opening walls?',
         answer: 'Often yes — we use a "fishing" technique to route wire through existing wall cavities. The viability depends on your home\'s construction type and the routing path. We\'ll give you an honest assessment during the initial visit.',
       },
+    ],
+    signsList: [
+      { title: 'You\'re Finishing a Basement or Attic', description: 'Converting unfinished space into livable area requires new circuits, outlets, lighting, and often a dedicated HVAC connection — all requiring a licensed electrician.' },
+      { title: 'Your Remodel Involves Moving Walls', description: 'Structural changes almost always mean relocating outlets, switches, and lighting. We coordinate with your contractor to keep the project on schedule.' },
+      { title: 'You\'re Adding a Home Office', description: 'A proper home office needs dedicated circuits for computers, monitors, and networking equipment — not shared circuits that trip when other appliances run.' },
+      { title: 'Your Lighting Is Outdated or Inadequate', description: 'Old surface-mount fixtures, yellowed covers, or simply not enough light in a room — recessed LED retrofits and new fixture wiring are clean one-visit jobs.' },
+      { title: 'You\'re Installing Ceiling Fans', description: 'Ceiling fans require a specific fan-rated electrical box and often a separate switched circuit. Existing light fixture boxes usually aren\'t rated for fan weight and movement.' },
+      { title: 'You Need More Outlets in a Room', description: 'Running extension cords to reach devices across a room is both inconvenient and a fire risk. Adding outlets where you actually need them is a straightforward licensed electrical job.' },
     ],
   },
 
@@ -315,6 +356,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'Yes — Mitsubishi Hyper-Heat (H2i) systems are designed specifically for cold climates. They deliver full rated heating capacity at 5°F and continue operating all the way down to -13°F. Many of our customers use mini splits as their primary heating source year-round.',
       },
     ],
+    signsList: [
+      { title: 'You Have No Ductwork', description: 'Homes with radiators, baseboard heat, or no central HVAC system are ideal candidates for ductless mini splits — no ductwork required, installation is clean and fast.' },
+      { title: 'You Have a Room That\'s Always Too Hot or Cold', description: 'Sunrooms, finished attics, home additions, and bonus rooms that the central system can\'t reach are perfect for a single-zone mini split installation.' },
+      { title: 'You\'re Replacing Window AC Units', description: 'Window units are noisy, inefficient, block views, and require seasonal installation and removal. A mini split replaces all of that permanently and runs quieter and cheaper.' },
+      { title: 'You Want Zoned Temperature Control', description: 'Mini splits let you set different temperatures in different rooms. If household members disagree on comfort levels, zoned control solves the problem permanently.' },
+      { title: 'Your Energy Bills Keep Rising', description: 'Older HVAC systems lose efficiency every year. A new Mitsubishi mini split with inverter technology operates at a fraction of the energy cost of aging equipment.' },
+      { title: 'Your Current Heating System Is Failing', description: 'Rather than replacing a failing oil furnace or baseboard system with the same technology, a Mitsubishi heat pump can provide both heating and cooling with better efficiency.' },
+    ],
   },
 
   {
@@ -362,6 +411,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'Mitsubishi\'s top heat pump models achieve SEER2 ratings up to 33 (cooling) and HSPF2 ratings up to 14 (heating). For comparison, a minimum-efficiency system is SEER2 15 / HSPF2 7.5. The efficiency difference translates directly into lower utility bills.',
       },
     ],
+    signsList: [
+      { title: 'You\'re Paying Too Much for Heat', description: 'Electric baseboard, oil, or propane heating costs far more per BTU than a heat pump. Switching can reduce heating bills by 30–50% in many Hudson Valley homes.' },
+      { title: 'Your Heating and Cooling Are Separate Systems', description: 'Maintaining two separate systems — a furnace and a central AC — means two maintenance contracts, two potential failures, and two utility bills. A heat pump does both.' },
+      { title: 'Your Home Has No Cooling at All', description: 'Many older homes in the Hudson Valley have heating but no cooling. A mini split heat pump adds both in one installation.' },
+      { title: 'You Want to Reduce Your Carbon Footprint', description: 'Heat pumps produce no direct combustion emissions. Paired with renewable electricity, they\'re the most environmentally responsible heating and cooling option available.' },
+      { title: 'Your Current System Is 10+ Years Old', description: 'Equipment over a decade old is dramatically less efficient than today\'s models. Replacement pays for itself faster than most homeowners expect through energy savings alone.' },
+      { title: 'You\'re Interested in NYSERDA or IRA Incentives', description: 'Federal tax credits (up to 30%) and NYSERDA rebates are available for qualifying heat pump installations. Now is one of the best times financially to make the switch.' },
+    ],
   },
 
   {
@@ -402,6 +459,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         question: 'How much does ductless heat pump installation cost?',
         answer: 'A single-zone ductless heat pump typically runs $3,500–$5,500 installed, depending on system capacity and installation complexity. Federal tax credits and NYSERDA rebates can offset a significant portion of the cost.',
       },
+    ],
+    signsList: [
+      { title: 'Rooms That Central Systems Can\'t Reach', description: 'Home additions, sunrooms, finished attics, and bonus rooms are chronically uncomfortable because the central system wasn\'t designed to reach them. A ductless unit solves this permanently.' },
+      { title: 'You\'re Relying on Window AC or Space Heaters', description: 'Window units and space heaters are stopgap solutions — inefficient, uncomfortable, and often unsafe for long-term use. A ductless system replaces them properly.' },
+      { title: 'Your Home Has No Central Ductwork', description: 'Homes with radiators or baseboard heat have no duct infrastructure. Adding ductwork for central AC is invasive and expensive — a ductless system avoids that entirely.' },
+      { title: 'You Want Independent Room Control', description: 'A dedicated ductless unit in a bedroom, home office, or guest room means each person controls their own temperature without affecting the rest of the house.' },
+      { title: 'Your Garage or Workshop Gets Unbearable', description: 'Detached garages and workshops are easy candidates for ductless installation — one outdoor unit, one indoor head, and you have year-round comfort in a space that had none.' },
+      { title: 'You\'re Converting Unfinished Space', description: 'Finishing a basement or attic is much more livable — and valuable — when you have proper heating and cooling. A ductless system handles both without requiring ductwork.' },
     ],
   },
 
@@ -444,6 +509,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'It depends on your floor plan, insulation, window area, and how open the layout is. An open-plan main floor might be adequately cooled by one head; a multi-story home with bedrooms might need one per floor or one per room. We size the system properly during the initial consultation.',
       },
     ],
+    signsList: [
+      { title: 'You Have Window Units in Every Room', description: 'If every room has its own window unit, a multi-zone mini split system consolidates all of that into one efficient outdoor unit — quieter, more effective, and no blocked windows.' },
+      { title: 'You\'re Cooling Multiple Floors', description: 'A single-zone mini split may not reach upstairs bedrooms effectively. A multi-zone system with dedicated heads on each floor gives you consistent cooling everywhere.' },
+      { title: 'Uneven Temperatures Throughout the House', description: 'If some rooms are always warmer or cooler than others despite the central system running, a mini split with per-room control solves the problem definitively.' },
+      { title: 'You Want Everyone to Control Their Own Zone', description: 'With independent remotes or app control per zone, no more household disagreements about the thermostat — each person sets their own room to their preference.' },
+      { title: 'You\'re Replacing Aging Central AC', description: 'When a central AC system reaches end of life in a home with accessible wall space, a multi-zone mini split is often a better replacement — more efficient and no duct losses.' },
+      { title: 'You Have Multiple Problematic Rooms', description: 'If 3 or more rooms in your home are uncomfortable, a multi-zone system is more cost-effective than multiple single-zone installations — one outdoor unit serves all of them.' },
+    ],
   },
 
   {
@@ -484,6 +557,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         question: 'Is a multi-zone system more expensive than multiple single-zone units?',
         answer: 'Not necessarily. For 3 or more zones, a properly designed multi-zone system often costs less than installing multiple single-zone systems because you only need one outdoor unit and one refrigerant line connection to the house exterior. Operating costs are also typically lower.',
       },
+    ],
+    signsList: [
+      { title: 'You Need Comfort in 3 or More Rooms', description: 'Once you need three or more zones, a multi-zone system becomes more cost-effective than separate single-zone units — one outdoor compressor instead of three.' },
+      { title: 'Different Family Members Need Different Temperatures', description: 'Multi-zone gives everyone independent control — the bedroom can be cold while the living room stays warm, simultaneously, from one system.' },
+      { title: 'You Have a Multi-Story Home Without Ductwork', description: 'Multi-story homes without ducts are ideal multi-zone candidates. Run refrigerant lines to heads on each floor for whole-home comfort from a single outdoor unit.' },
+      { title: 'Your Central System Leaves Some Rooms Behind', description: 'If your central system handles most of the house fine but 2–3 rooms are always wrong, adding a multi-zone mini split for those specific zones is a clean solution.' },
+      { title: 'You\'re Building a New Home or Addition', description: 'New construction is the ideal time to plan a multi-zone system. Routes are clean, installations are easier, and you can design the system around how you actually live.' },
+      { title: 'You Want Smart Zone Scheduling', description: 'With Mitsubishi\'s kumo cloud app, you can set different schedules per zone — bedrooms cool overnight, office zone on during work hours, common areas in the evening.' },
     ],
   },
 
@@ -534,6 +615,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'Current minimum efficiency is SEER2 15.2 (in the Northeast). High-efficiency units run SEER2 18–22+. The higher the SEER2, the lower the operating cost — but there\'s a diminishing return at the top end. We help you find the right balance of upfront cost vs. long-term savings based on your usage.',
       },
     ],
+    signsList: [
+      { title: 'Your System Is 10+ Years Old', description: 'Equipment over a decade old operates at a fraction of the efficiency of modern systems. Even a system that\'s still running may cost significantly more to operate than a replacement.' },
+      { title: 'Uneven Heating or Cooling Between Rooms', description: 'If some rooms are always too hot and others too cold while the system runs continuously, it\'s a sign of an aging, undersized, or duct-leaking system that needs evaluation.' },
+      { title: 'Energy Bills Keep Climbing', description: 'Rising utility bills without changes in usage are a classic sign of degrading HVAC efficiency. Modern high-efficiency systems can reduce heating and cooling costs by 20–40%.' },
+      { title: 'Strange Noises or Smells', description: 'Rattling, banging, grinding, or a burning smell from vents are warning signs of failing components. These issues worsen quickly and often result in complete system failure at the worst time.' },
+      { title: 'Repairs Are Becoming Frequent', description: 'If you\'re calling for HVAC service multiple times per year, you\'re paying more in repair costs than a new system\'s payments would cost. We give you an honest repair-vs-replace analysis.' },
+      { title: 'Your System Uses R-22 Refrigerant', description: 'R-22 (Freon) is no longer manufactured and is extremely expensive to recharge. If your AC uses R-22 and loses refrigerant, replacement is almost always more cost-effective than a recharge.' },
+    ],
   },
 
   {
@@ -581,6 +670,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'Yes. The Inflation Reduction Act provides federal tax credits up to $600 for high-efficiency AC and furnaces, and up to $2,000 for heat pumps. NYSERDA and utility rebates add additional savings. We help identify and apply for all available incentives.',
       },
     ],
+    signsList: [
+      { title: 'Your System Is 12–15+ Years Old', description: 'Most ducted HVAC equipment is designed for a 15-year lifespan with proper maintenance. Equipment at or past this threshold is a replacement candidate even if it\'s still running.' },
+      { title: 'You\'ve Had Multiple Repairs Recently', description: 'Frequent repair calls on aging equipment signal that other components are nearing failure. At some point, the next repair costs more than a replacement would.' },
+      { title: 'The System Can\'t Maintain Temperature', description: 'A system that runs continuously but can\'t reach the thermostat setpoint on hot or cold days has lost capacity — a sure sign it\'s time to evaluate replacement.' },
+      { title: 'Your Ductwork Is Leaking or Damaged', description: 'A replacement is the best opportunity to inspect and address ductwork. Leaking ducts waste 20–30% of conditioned air and drive up utility bills significantly.' },
+      { title: 'Your Home Feels Dusty or Humid', description: 'Poor indoor air quality, excessive dust, or high indoor humidity despite the AC running are signs the system is no longer moving and filtering air effectively.' },
+      { title: 'You\'re Planning a Major Renovation', description: 'Home additions and layout changes affect HVAC load significantly. A renovation is the right time to evaluate whether your existing system is still properly sized.' },
+    ],
   },
 
   {
@@ -622,6 +719,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'New construction HVAC involves multiple phases. Rough-in (ductwork and equipment platform) happens during framing and takes 1–3 days. Equipment installation and final connections occur after drywall — typically another 1–2 days. Total timeline depends on project scope.',
       },
     ],
+    signsList: [
+      { title: 'You\'re Building a New Home', description: 'New construction requires HVAC design before framing is complete — ductwork routes, equipment locations, and utility connections all need to be coordinated early in the build.' },
+      { title: 'You\'re Adding a Room or Converting Space', description: 'Home additions and converted spaces (basements, attics, garages) need dedicated HVAC solutions. The existing system is rarely sized to handle new square footage.' },
+      { title: 'Your Addition Has No Heat or Cooling', description: 'A finished addition that lacks proper climate control is uncomfortable and potentially unsafe in Hudson Valley winters. We design the right system for the space.' },
+      { title: 'You\'re Replacing an Entire System in an Older Home', description: 'When replacing aging equipment in a home that hasn\'t had HVAC evaluated in years, we recalculate the load — your needs may have changed significantly since the original system was installed.' },
+      { title: 'Your Current System Is Chronically Oversized or Undersized', description: 'Short-cycling (turns on and off too quickly) means oversized equipment. Continuous running without reaching setpoint means undersized. Both shorten equipment life and waste energy.' },
+      { title: 'You\'re Upgrading to All-Electric HVAC', description: 'Transitioning from gas or oil to an all-electric heat pump system requires a comprehensive HVAC design review to ensure the new equipment is properly sized for your home\'s heat loss.' },
+    ],
   },
 
   {
@@ -662,6 +767,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         question: 'Should I repair or replace my old furnace?',
         answer: 'If your furnace is 15+ years old and requires a significant repair (heat exchanger, inducer motor), replacement is usually more cost-effective — especially since a new high-efficiency unit will dramatically lower your fuel bills. We provide honest repair-vs-replace guidance based on your specific situation.',
       },
+    ],
+    signsList: [
+      { title: 'Weak or Uneven Airflow', description: 'Vents barely pushing air indicate a blocked filter, clogged coil, or blower motor issue. Left unaddressed, weak airflow strains the system and accelerates component failure.' },
+      { title: 'System Turns On and Off Too Frequently', description: 'Short cycling — where the system turns on, runs briefly, and shuts off repeatedly — is a sign of an oversized system, low refrigerant, or a failing component.' },
+      { title: 'Unusual Noises From the System', description: 'Rattling, banging, squealing, or grinding from your HVAC equipment are signs of loose or failing components. These noises almost always get worse if ignored.' },
+      { title: 'No Heating or No Cooling', description: 'A system that runs but doesn\'t heat or cool, or won\'t start at all, needs professional diagnosis. The cause could range from a simple thermostat issue to a failed compressor.' },
+      { title: 'Skipped Annual Maintenance', description: 'If your system hasn\'t been serviced in more than a year, dirty coils, low refrigerant, and worn components may already be reducing efficiency and shortening equipment life.' },
+      { title: 'Higher Energy Bills Without Explanation', description: 'A sudden increase in your utility bills without changes in usage is a clear sign your HVAC system is working harder than it should — typically due to a dirty coil, low refrigerant, or a failing component.' },
     ],
   },
 
@@ -712,6 +825,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'Whole home generator installations typically range from $8,000 to $18,000 depending on generator size, fuel type, and site conditions. We provide free in-home estimates with no obligation.',
       },
     ],
+    signsList: [
+      { title: 'You\'ve Lost Power for Days at a Time', description: 'Hudson Valley ice storms and nor\'easters can knock power out for 3–7 days. If you\'ve lived through that once without backup power, you know exactly why a whole-home generator matters.' },
+      { title: 'You Have a Sump Pump', description: 'The most dangerous time to lose power is during the heavy rain that often accompanies outages. A failed sump pump during a storm can mean thousands in flood damage.' },
+      { title: 'You Have a Well Pump', description: 'No electricity means no water in homes on well systems. A whole-home generator keeps your water running throughout any outage.' },
+      { title: 'Someone in Your Home Depends on Medical Equipment', description: 'CPAP machines, oxygen concentrators, refrigerated medications, and other medical devices require uninterrupted power. A standby generator removes any dependency on the grid.' },
+      { title: 'You Travel or Are Away from Home Regularly', description: 'A whole-home generator protects your home automatically when you\'re away — pipes don\'t freeze, sump pumps keep running, and security systems stay active.' },
+      { title: 'You Work from Home', description: 'A power outage means lost productivity, missed calls, and potential data loss. Standby power keeps your home office running without any interruption.' },
+    ],
   },
 
   {
@@ -752,6 +873,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         question: 'Does Generac work with natural gas?',
         answer: 'Yes. Generac Guardian units are available in natural gas and liquid propane configurations. Natural gas is the most convenient option where available — no fuel storage required. Propane is used where natural gas service isn\'t available.',
       },
+    ],
+    signsList: [
+      { title: 'You Want the Most Trusted Generator Brand', description: 'Generac is the #1 selling home standby generator brand in the US. Their residential lineup has the widest parts availability, best dealer network, and most extensive warranty support.' },
+      { title: 'You Need Remote Monitoring', description: 'Generac\'s Mobile Link app gives you real-time status, outage alerts, weekly test confirmations, and maintenance reminders from anywhere — critical when you travel.' },
+      { title: 'You Want Factory Warranty Protection', description: 'Only authorized Generac dealer installations qualify for the full factory warranty. We install to Generac\'s specifications and register your system for complete coverage.' },
+      { title: 'You Want Quiet Operation', description: 'Generac Guardian units include advanced sound-dampening enclosures, making them significantly quieter than older generator designs or portable units.' },
+      { title: 'You Have Natural Gas Service', description: 'Generac Guardian generators run on natural gas, giving you unlimited runtime during extended outages without fuel storage or delivery concerns.' },
+      { title: 'You Need Year-Round Reliability', description: 'Generac generators are engineered for operation in extreme conditions — cold starts, summer heat, and everything the Hudson Valley weather delivers. Weekly self-tests confirm readiness automatically.' },
     ],
   },
 
@@ -794,6 +923,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'Yes, if the generator is sized appropriately. A Level 2 EV charger draws 6–12kW. A whole-home generator (18–26kW) can handle the charger along with the rest of your home\'s load. We account for EV charging in load calculations when it\'s a priority for you.',
       },
     ],
+    signsList: [
+      { title: 'You\'re Tired of Manual Generator Setup', description: 'Dragging a portable generator out of the garage, adding gasoline, and running extension cords in the dark during a storm is exactly what a standby generator eliminates permanently.' },
+      { title: 'Your Outages Are Frequent or Long', description: 'If you\'ve experienced multiple multi-day outages in recent years, the inconvenience and cost of being without power adds up fast compared to the one-time cost of standby protection.' },
+      { title: 'You Have Critical Loads That Can\'t Wait', description: 'Sump pumps, well pumps, CPAP machines, refrigerated medications, and medical devices can\'t wait 30 minutes for you to set up a portable generator. Standby acts in seconds.' },
+      { title: 'You Want Protection When You\'re Away', description: 'A portable generator only helps when someone is home to set it up. A standby generator protects your home automatically while you\'re at work, traveling, or sleeping.' },
+      { title: 'Your Propane or Gas Line Is Already There', description: 'If your home already has natural gas service or a propane tank, a standby generator can be connected to your existing fuel supply — no fuel storage required.' },
+      { title: 'You\'re Ready to Stop Worrying About Outages', description: 'The value of a standby generator is largely peace of mind. Knowing that any outage is handled automatically — regardless of timing, weather, or whether you\'re home — is significant.' },
+    ],
   },
 
   {
@@ -835,6 +972,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'Essential-load backup generator installations (7kW–12kW) typically range from $5,000–$10,000 installed. Whole-home systems run higher. We provide free estimates after the in-home assessment.',
       },
     ],
+    signsList: [
+      { title: 'You Want Protection But Whole-Home Is Too Much', description: 'A properly sized essential-load generator protects what actually matters — sump pump, refrigerator, heating, and key lighting — at a lower cost than full whole-home coverage.' },
+      { title: 'You Have a Tight Budget for Generator Installation', description: 'A 7–12kW essential-load backup generator delivers meaningful protection at a significantly lower price point than a full 20–26kW whole-home system.' },
+      { title: 'You\'ve Experienced Flooding From Lost Sump Power', description: 'One failed sump pump during a rainstorm can cause tens of thousands in water damage. Backup power for just that circuit alone justifies the investment.' },
+      { title: 'You\'re Not Sure What Size You Need', description: 'If you\'re unsure whether to cover essentials or the whole home, start with our free in-home assessment. We calculate your actual load and show you both options with honest cost comparisons.' },
+      { title: 'You Want Automatic Protection Without Hassle', description: 'Even a modest essential-load system with an automatic transfer switch means no manual intervention during an outage — the generator handles everything on its own.' },
+      { title: 'You\'re on a Propane or Gas System Already', description: 'If your home already has propane for a furnace or range, we can tie into your existing tank to power a backup generator — no new fuel infrastructure required.' },
+    ],
   },
 
   {
@@ -875,6 +1020,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         question: 'Do you work on generators you didn\'t install?',
         answer: 'Yes. We service all Generac models and other major brands regardless of who installed them. If you have a generator that hasn\'t been serviced or that failed, call us.',
       },
+    ],
+    signsList: [
+      { title: 'Your Generator Didn\'t Start During the Last Outage', description: 'A generator that fails when you actually need it is the worst outcome. This is almost always preventable with annual maintenance — and repairable with a service call.' },
+      { title: 'Your Generator Is Showing Error Codes', description: 'Generac and other brands display fault codes on the control panel. If your generator is showing a code or alarm, it needs diagnosis before the next outage occurs.' },
+      { title: 'Your Generator Hasn\'t Run in Over a Year', description: 'Gasoline and oil degrade, batteries discharge, and internal components corrode when generators sit unused. A service call before the next storm season is essential.' },
+      { title: 'Your Generator Runs But Then Shuts Off', description: 'A generator that starts and then shuts down under load has a fuel delivery issue, a low oil pressure fault, or a governor problem. All are diagnosable and repairable.' },
+      { title: 'You Hear Unusual Noises When It Runs', description: 'Knocking, rattling, or rough running during the weekly self-test are signs of mechanical issues developing. Catching them early prevents a larger failure during an actual outage.' },
+      { title: 'It\'s Been More Than a Year Since Service', description: 'Annual maintenance is required to maintain your generator\'s warranty and ensure reliability. Oil, filters, spark plugs, and the battery all have scheduled service intervals.' },
     ],
   },
 
@@ -929,6 +1082,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'Yes — annual descaling is recommended in areas with hard water to prevent mineral buildup inside the heat exchanger. This is a simple service visit that maintains efficiency and extends the unit\'s life. Ignoring it is the most common reason tankless units fail prematurely.',
       },
     ],
+    signsList: [
+      { title: 'You Run Out of Hot Water Regularly', description: 'If your household frequently exhausts the hot water tank — especially with multiple showers back to back — a tankless unit delivers continuous hot water without limits.' },
+      { title: 'Your Water Heater Is Nearing End of Life', description: 'When your tank is 8–12 years old and due for replacement, it\'s the ideal time to upgrade to tankless rather than replace like-for-like. The long-term savings justify the additional upfront cost.' },
+      { title: 'You Want Lower Energy Bills', description: 'A tankless water heater eliminates standby heat loss — the energy wasted keeping a tank hot 24 hours a day. Gas tankless units are 24–34% more efficient than tank alternatives.' },
+      { title: 'You\'re Remodeling or Adding Space', description: 'A remodel is the right time to reconsider your water heating approach. Tankless units are wall-mounted and take a fraction of the space, freeing up your mechanical room or utility closet.' },
+      { title: 'You Have Hard Water Issues', description: 'Hard water accelerates sediment buildup in tank heaters and scale buildup in tankless heat exchangers. Annual descaling on a tankless unit is easier and less damaging than sediment in a tank.' },
+      { title: 'You Want a 20-Year Water Heater', description: 'Tank water heaters last 8–12 years. Properly maintained tankless units routinely last 20–25 years — making them a more cost-effective long-term investment despite the higher upfront price.' },
+    ],
   },
 
   {
@@ -970,6 +1131,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         answer: 'If your current replacement is gas, switching to a heat pump (hybrid electric) water heater isn\'t always straightforward. But if you\'re replacing an electric tank unit, a heat pump water heater uses 60–70% less electricity and is often eligible for the federal $300 tax credit. We\'ll help you evaluate the options.',
       },
     ],
+    signsList: [
+      { title: 'No Hot Water at All', description: 'A complete loss of hot water is the most obvious sign — usually caused by a failed heating element (electric), pilot outage, gas valve failure, or tripped high-limit switch.' },
+      { title: 'Water Takes Forever to Reheat', description: 'If your tank takes much longer than it used to for hot water to recover after use, a failing lower heating element or heavy sediment buildup is usually the cause.' },
+      { title: 'Water Is Lukewarm, Not Hot', description: 'Consistently lukewarm water often points to a failed upper heating element (electric) or an issue with the gas burner assembly. Both are repairable without replacing the tank.' },
+      { title: 'Your Tank Is Leaking From Connections', description: 'Leaking from the inlet/outlet connections or the pressure relief valve is often repairable. Leaking from the tank body itself is a sign the tank needs replacement.' },
+      { title: 'Discolored or Rusty Hot Water', description: 'Brown or rusty-looking hot water indicates internal tank corrosion — usually caused by a depleted anode rod. Replacing the anode rod early enough can extend the tank\'s life.' },
+      { title: 'Rumbling or Popping Sounds', description: 'Sediment buildup on the bottom of the tank causes water trapped underneath to superheat and pop through it. This is inefficient and stressful to the tank — a flush or replacement may be needed.' },
+    ],
   },
 
   {
@@ -1010,6 +1179,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         question: 'How do I know whether to repair or replace my water heater?',
         answer: 'If the unit is less than 6–7 years old and the repair is straightforward (element, thermostat, valve), repair usually makes sense. If it\'s 10+ years old, has had multiple issues, or the repair involves the tank itself (corrosion, leaking body), replacement is usually the better investment. We give you an honest assessment.',
       },
+    ],
+    signsList: [
+      { title: 'No Hot Water or Hot Water Has Stopped', description: 'Complete loss of hot water is the most urgent sign — call us. The cause is usually a failed heating element, thermostat, gas valve, or pilot — all repairable in one visit.' },
+      { title: 'Inconsistent Water Temperature', description: 'Water that fluctuates between scalding and cool suggests a faulty thermostat or a failing element that works intermittently. Both are straightforward diagnostic and repair jobs.' },
+      { title: 'Strange Noises From the Unit', description: 'Popping, rumbling, or banging from your water heater during the heating cycle is sediment buildup. A flush can help; if buildup is severe, we assess whether repair or replacement makes sense.' },
+      { title: 'Visible Rust or Corrosion', description: 'Rust on the tank exterior or at fittings indicates moisture exposure and potential internal corrosion. Combined with age or discolored water, this often means replacement is the right call.' },
+      { title: 'You Can Smell Gas Near the Unit', description: 'If you smell gas near your water heater, leave the home and call us immediately. A gas valve or connection issue is a serious safety concern that requires immediate professional attention.' },
+      { title: 'Your Unit Is Under 10 Years Old and Underperforming', description: 'A water heater under 10 years old that\'s not performing correctly almost always has a repairable component issue — element, thermostat, anode, or gas valve. Replacement isn\'t necessary yet.' },
     ],
   },
 
@@ -1057,6 +1234,14 @@ export const SUB_SERVICE_PAGES: SubServicePage[] = [
         question: 'Can I flush my own water heater?',
         answer: 'A basic tank flush (connecting a hose and draining the tank) is a DIY-possible task, but many homeowners skip it because of the effort involved. For tankless descaling, the process requires a submersible pump and descaling solution — it\'s more involved. We recommend having a professional handle the annual service to ensure all components are inspected at the same time.',
       },
+    ],
+    signsList: [
+      { title: 'Your Water Heater Has Never Been Serviced', description: 'Most water heaters are installed and forgotten until they fail. If yours has never been flushed or inspected, you\'re likely already past the point where sediment and anode depletion are reducing its life.' },
+      { title: 'Your Water Heater Is 5+ Years Old', description: 'Annual service should begin in the first year and continue throughout the unit\'s life. By year 5 without maintenance, sediment buildup in a tank unit is typically significant.' },
+      { title: 'You Have Hard Water', description: 'Hudson Valley water tends toward the harder side of the spectrum. Hard water accelerates both sediment buildup in tanks and scale buildup in tankless heat exchangers — making annual maintenance even more important.' },
+      { title: 'Your Hot Water Doesn\'t Last as Long as It Used To', description: 'Reduced hot water capacity is often caused by sediment taking up volume at the bottom of the tank. A flush typically restores some lost capacity if the tank is otherwise sound.' },
+      { title: 'You Hear Popping or Rumbling Sounds', description: 'Sediment-related noise during heating cycles is your tank\'s way of telling you it needs a flush. The longer you wait, the more stress is placed on the tank lining.' },
+      { title: 'Your Tankless Unit Has Lower Flow Than It Used To', description: 'Reduced hot water flow rate from a tankless unit is almost always scale buildup in the heat exchanger. Annual descaling restores full flow and efficiency before permanent damage occurs.' },
     ],
   },
 ]
