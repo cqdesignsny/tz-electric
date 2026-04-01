@@ -4,7 +4,6 @@ import {
   GENERATOR_PLANS,
   GENERATOR_OVERVIEW,
   CANCELLATION_TERMS,
-  COMING_SOON_PLANS,
 } from '@/lib/maintenance-data'
 import Button from '@/components/ui/Button'
 import ElectricCursor from '@/components/effects/ElectricCursor'
@@ -80,28 +79,6 @@ export default function MaintenancePage() {
               </svg>
               Call to Enroll: {COMPANY.phone}
             </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Coming Soon Notice */}
-      <section className="py-8 bg-blue/5 border-b border-blue/10">
-        <div className="container-site">
-          <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-8">
-            <div className="flex items-center gap-2 text-blue font-heading font-semibold text-sm whitespace-nowrap">
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Coming Soon
-            </div>
-            <div className="flex flex-wrap gap-4">
-              {COMING_SOON_PLANS.map((plan) => (
-                <div key={plan.name} className="flex items-center gap-2 text-sm text-gray-600">
-                  <span className="w-2 h-2 rounded-full bg-blue/40 flex-shrink-0" />
-                  <span><strong className="text-navy">{plan.name}:</strong> {plan.description}</span>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
