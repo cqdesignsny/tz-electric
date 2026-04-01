@@ -85,10 +85,14 @@ export default function SignaturePlansPage() {
               TZ Signature Plans
             </span>
             <a href="/maintenance" className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/10 text-white hover:bg-white/20 transition-colors border border-white/20">
-              Maintenance Plans
+              Generator Maintenance Plans
             </a>
             <span className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/5 text-gray-500 border border-white/10 cursor-default opacity-60">
-              Generator Plans
+              Mini Split Maintenance
+              <span className="ml-2 text-xs bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Coming Soon</span>
+            </span>
+            <span className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/5 text-gray-500 border border-white/10 cursor-default opacity-60">
+              Hot Water Heater Maintenance
               <span className="ml-2 text-xs bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Coming Soon</span>
             </span>
           </div>

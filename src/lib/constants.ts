@@ -76,7 +76,7 @@ export const NAV_ITEMS = [
     href: '/signature-plans',
     children: [
       { label: 'Signature Plans', href: '/signature-plans', description: 'Annual maintenance memberships' },
-      { label: 'Maintenance Plans', href: '/maintenance', description: 'Generator, mini split & water heater maintenance' },
+      { label: 'Generator Maintenance Plans', href: '/maintenance', description: 'Bronze, Silver & Gold generator service plans' },
     ],
   },
   {

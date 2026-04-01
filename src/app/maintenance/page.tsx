@@ -51,15 +51,19 @@ export default function MaintenancePage() {
               TZ Signature Plans
             </a>
             <span className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/20 text-white border border-white/30 cursor-default">
-              Maintenance Plans
+              Generator Maintenance Plans
             </span>
             <span className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/5 text-gray-500 border border-white/10 cursor-default opacity-60">
-              Generator Plans
+              Mini Split Maintenance
+              <span className="ml-2 text-xs bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Coming Soon</span>
+            </span>
+            <span className="px-5 py-2.5 rounded-full text-sm font-heading font-semibold bg-white/5 text-gray-500 border border-white/10 cursor-default opacity-60">
+              Hot Water Heater Maintenance
               <span className="ml-2 text-xs bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full">Coming Soon</span>
             </span>
           </div>
           <h1 className="text-white text-4xl lg:text-5xl xl:text-6xl font-heading font-bold leading-tight">
-            Maintenance Plans
+            Generator Maintenance Plans
           </h1>
           <p className="mt-5 text-gray-300 text-lg lg:text-xl max-w-3xl mx-auto leading-relaxed">
             Keep your home systems running at peak performance with scheduled maintenance,

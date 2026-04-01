@@ -740,8 +740,8 @@ export default function Header() {
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" /></svg>
                         </span>
                         <div className="min-w-0">
-                          <span className="block font-heading font-semibold text-navy text-sm group-hover:text-blue transition-colors">Maintenance Plans</span>
-                          <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Generator, mini split &amp; water heater maintenance plans</span>
+                          <span className="block font-heading font-semibold text-navy text-sm group-hover:text-blue transition-colors">Generator Maintenance Plans</span>
+                          <span className="block text-xs text-gray-500 mt-0.5 leading-relaxed">Bronze, Silver &amp; Gold generator service plans</span>
                         </div>
                       </Link>
                       <div className="flex items-start gap-3 p-3 rounded-xl opacity-50 cursor-default">
@@ -749,8 +749,8 @@ export default function Header() {
                           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
                         </span>
                         <div className="min-w-0">
-                          <span className="block font-heading font-semibold text-gray-400 text-sm">Generator Plans <span className="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full ml-1">Coming Soon</span></span>
-                          <span className="block text-xs text-gray-400 mt-0.5 leading-relaxed">Dedicated generator service plans coming soon</span>
+                          <span className="block font-heading font-semibold text-gray-400 text-sm">More Maintenance Plans <span className="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full ml-1">Coming Soon</span></span>
+                          <span className="block text-xs text-gray-400 mt-0.5 leading-relaxed">Mini split &amp; hot water heater plans coming soon</span>
                         </div>
                       </div>
                     </div>
@@ -819,8 +819,8 @@ export default function Header() {
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M21 10.5h.375c.621 0 1.125.504 1.125 1.125v2.25c0 .621-.504 1.125-1.125 1.125H21M3.75 18h15A2.25 2.25 0 0021 15.75v-6a2.25 2.25 0 00-2.25-2.25h-15A2.25 2.25 0 001.5 9.75v6A2.25 2.25 0 003.75 18z" /></svg>
                       </span>
                       <div>
-                        <span className="font-medium text-navy">Maintenance Plans</span>
-                        <span className="block text-xs text-gray-400">Generator, mini split &amp; water heater plans</span>
+                        <span className="font-medium text-navy">Generator Maintenance Plans</span>
+                        <span className="block text-xs text-gray-400">Bronze, Silver &amp; Gold generator service plans</span>
                       </div>
                     </Link>
                     <div className="flex items-center gap-3 px-3 py-2.5 text-sm opacity-50 cursor-default">
@@ -828,7 +828,7 @@ export default function Header() {
                         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" /></svg>
                       </span>
                       <div>
-                        <span className="font-medium text-gray-400">Generator Plans <span className="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full ml-1">Soon</span></span>
+                        <span className="font-medium text-gray-400">More Maintenance Plans <span className="text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded-full ml-1">Soon</span></span>
                       </div>
                     </div>
                   </div>
