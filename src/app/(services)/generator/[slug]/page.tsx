@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getSubServicePage, getSubServicesByParent } from '@/lib/sub-services-data'
 import { createMetadata } from '@/lib/metadata'
-import ServicePageTemplate from '@/components/sections/ServicePageTemplate'
+import SubServicePageTemplate from '@/components/sections/SubServicePageTemplate'
 
 type Props = { params: Promise<{ slug: string }> }
 
@@ -24,10 +24,5 @@ export default async function Page({ params }: Props) {
   const { slug } = await params
   const service = getSubServicePage('generator', slug)
   if (!service) notFound()
-  return (
-    <ServicePageTemplate
-      service={service}
-      parentService={{ slug: 'generator', title: 'Generator Installation' }}
-    />
-  )
+  return <SubServicePageTemplate service={service} />
 }
