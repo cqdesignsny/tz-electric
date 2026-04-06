@@ -1,9 +1,14 @@
 import { getStripe } from '@/lib/stripe'
-import { searchCustomer, createCustomer, assignServicePlan } from '@/lib/housecall-pro'
+import {
+  searchCustomer,
+  createCustomer,
+  tagExistingCustomer,
+  sendInternalNotification,
+  type PlanInfo,
+} from '@/lib/housecall-pro'
 
 export const runtime = 'nodejs'
 
-// Track processed sessions to ensure idempotency
 const processedSessions = new Set<string>()
 
 export async function POST(request: Request) {
@@ -30,56 +35,64 @@ export async function POST(request: Request) {
     const session = event.data.object
     const sessionId = session.id
 
-    // Idempotency check
     if (processedSessions.has(sessionId)) {
       return new Response('Already processed', { status: 200 })
     }
     processedSessions.add(sessionId)
 
-    // Extract customer data from metadata
     const meta = session.metadata || {}
-    const { firstName, lastName, phone, street, city, state, zip, hcpTemplateName, hcpBillingCycle } = meta
+    const {
+      firstName, lastName, phone, street, city, state, zip,
+      planName, planSlug, frequency, hcpTemplateName, hcpBillingCycle,
+    } = meta
 
     if (!firstName || !lastName || !phone) {
       console.error('[Webhook] Missing customer metadata:', meta)
       return new Response('OK', { status: 200 })
     }
 
-    try {
-      // Search for existing customer in HCP
-      const existingCustomer = await searchCustomer(phone, firstName, lastName)
+    const planInfo: PlanInfo = {
+      planName: planName || planSlug || 'Unknown',
+      templateName: hcpTemplateName || 'Unknown Plan',
+      billingCycle: (hcpBillingCycle as 'Monthly' | 'Yearly') || 'Monthly',
+      frequency: frequency || 'monthly',
+      amount: (session.amount_total || 0) / 100,
+    }
 
+    const customerData = {
+      firstName,
+      lastName,
+      phone,
+      street: street || '',
+      city: city || '',
+      state: state || '',
+      zip: zip || '',
+    }
+
+    try {
+      const existingCustomer = await searchCustomer(phone, firstName, lastName)
       let customerId: string
+      let isExisting = false
 
       if (existingCustomer) {
         console.log(`[HCP] Found existing customer: ${existingCustomer.id} (${firstName} ${lastName})`)
         customerId = existingCustomer.id
+        isExisting = true
+
+        // Tag existing customer with the new plan
+        await tagExistingCustomer(customerId, planInfo)
+        console.log(`[HCP] Tagged existing customer ${customerId} with plan: ${planInfo.templateName}`)
       } else {
         console.log(`[HCP] Creating new customer: ${firstName} ${lastName}`)
-        const newCustomer = await createCustomer({
-          firstName,
-          lastName,
-          phone,
-          street: street || '',
-          city: city || '',
-          state: state || '',
-          zip: zip || '',
-        })
+        const newCustomer = await createCustomer(customerData, planInfo)
         customerId = newCustomer.id
-        console.log(`[HCP] Created customer: ${customerId}`)
+        console.log(`[HCP] Created customer ${customerId} with tag and note`)
       }
 
-      // Assign service plan
-      if (hcpTemplateName && hcpBillingCycle) {
-        await assignServicePlan(
-          customerId,
-          hcpTemplateName,
-          hcpBillingCycle as 'Monthly' | 'Yearly'
-        )
-        console.log(`[HCP] Plan assigned: ${hcpTemplateName} (${hcpBillingCycle}) to customer ${customerId}`)
-      }
+      // Send internal email notification
+      await sendInternalNotification(customerData, planInfo, customerId, isExisting)
+
     } catch (error) {
-      // Log but don't fail — payment is already collected
       console.error('[HCP] Sync failed (payment was still collected):', {
         error,
         sessionId,

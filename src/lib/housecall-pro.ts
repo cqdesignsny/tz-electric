@@ -1,4 +1,4 @@
-const HCP_BASE = 'https://api.housecallpro.com/v1'
+const HCP_BASE = 'https://api.housecallpro.com'
 
 function getApiKey(): string {
   const key = process.env.HOUSECALL_PRO_API_KEY
@@ -32,10 +32,17 @@ export type HCPCustomer = {
   id: string
   first_name: string
   last_name: string
-  phone_number: string
   email: string
+  mobile_number: string
+  home_number: string | null
+  work_number: string | null
+  notes: string | null
+  tags: string[]
   addresses: Array<{
+    id: string
+    type: string
     street: string
+    street_line_2: string | null
     city: string
     state: string
     zip: string
@@ -52,6 +59,14 @@ export type CustomerData = {
   zip: string
 }
 
+export type PlanInfo = {
+  planName: string
+  templateName: string
+  billingCycle: 'Monthly' | 'Yearly'
+  frequency: string
+  amount: number
+}
+
 export async function searchCustomer(phone: string, firstName: string, lastName: string): Promise<HCPCustomer | null> {
   const normalized = normalizePhone(phone)
 
@@ -59,7 +74,6 @@ export async function searchCustomer(phone: string, firstName: string, lastName:
     const data = await hcpFetch(`/customers?phone_number=${encodeURIComponent(normalized)}`)
     const customers: HCPCustomer[] = data.customers || []
 
-    // Match by name (case-insensitive)
     const fullNameLower = `${firstName} ${lastName}`.toLowerCase()
     const match = customers.find((c) => {
       const hcpName = `${c.first_name} ${c.last_name}`.toLowerCase()
@@ -73,46 +87,69 @@ export async function searchCustomer(phone: string, firstName: string, lastName:
   }
 }
 
-export async function createCustomer(data: CustomerData): Promise<HCPCustomer> {
+export async function createCustomer(data: CustomerData, planInfo: PlanInfo): Promise<HCPCustomer> {
+  const tag = `${planInfo.planName}-${planInfo.billingCycle}`
+  const note = `ONLINE SIGNUP: ${planInfo.templateName} (${planInfo.billingCycle}, $${planInfo.amount}${planInfo.frequency === 'monthly' || planInfo.frequency === '3year' ? '/mo' : '/yr'}). Paid via Stripe on ${new Date().toISOString().split('T')[0]}. Needs manual plan assignment in HCP.`
+
   return hcpFetch('/customers', {
     method: 'POST',
     body: JSON.stringify({
       first_name: data.firstName,
       last_name: data.lastName,
-      phone_number: normalizePhone(data.phone),
+      mobile_number: normalizePhone(data.phone),
       addresses: [
         {
           street: data.street,
           city: data.city,
           state: data.state,
           zip: data.zip,
+          type: 'service',
         },
       ],
+      tags: [tag],
+      notes: note,
     }),
   })
 }
 
-export async function assignServicePlan(
-  customerId: string,
-  planTemplateName: string,
-  billingCycle: 'Monthly' | 'Yearly'
-): Promise<void> {
-  // TODO: Implement once exact HCP service_agreements endpoint is confirmed.
-  // Based on HCP URL pattern (pro.housecallpro.com/app/service_agreements),
-  // the endpoint is likely POST /v1/service_agreements or similar.
-  //
-  // Expected payload:
-  // {
-  //   customer_id: customerId,
-  //   plan_template_name: planTemplateName,
-  //   billing_cycle: billingCycle,
-  // }
-  //
-  // For now, log the assignment for manual processing.
-  console.log('[HCP] Service plan assignment pending manual setup:', {
-    customerId,
-    planTemplateName,
-    billingCycle,
-    timestamp: new Date().toISOString(),
+export async function tagExistingCustomer(customerId: string, planInfo: PlanInfo): Promise<void> {
+  const tag = `${planInfo.planName}-${planInfo.billingCycle}`
+  const note = `ONLINE SIGNUP: ${planInfo.templateName} (${planInfo.billingCycle}, $${planInfo.amount}${planInfo.frequency === 'monthly' || planInfo.frequency === '3year' ? '/mo' : '/yr'}). Paid via Stripe on ${new Date().toISOString().split('T')[0]}. Needs manual plan assignment in HCP.`
+
+  await hcpFetch(`/customers/${customerId}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      tags: [tag],
+      notes: note,
+    }),
   })
+}
+
+export async function sendInternalNotification(
+  customerData: CustomerData,
+  planInfo: PlanInfo,
+  customerId: string,
+  isExisting: boolean
+): Promise<void> {
+  const subject = `New Plan Signup: ${planInfo.templateName} - ${customerData.firstName} ${customerData.lastName}`
+  const body = [
+    `A new plan signup was received via the website.`,
+    ``,
+    `Customer: ${customerData.firstName} ${customerData.lastName}`,
+    `Phone: ${customerData.phone}`,
+    `Address: ${customerData.street}, ${customerData.city}, ${customerData.state} ${customerData.zip}`,
+    `HCP Customer ID: ${customerId}`,
+    `Existing Customer: ${isExisting ? 'Yes' : 'No (new customer created)'}`,
+    ``,
+    `Plan: ${planInfo.templateName}`,
+    `Billing: ${planInfo.billingCycle} - $${planInfo.amount}${planInfo.frequency === 'monthly' || planInfo.frequency === '3year' ? '/mo' : '/yr'}`,
+    ``,
+    `ACTION REQUIRED: Please assign the service plan to this customer in Housecall Pro.`,
+    `https://pro.housecallpro.com/app/service_agreements`,
+  ].join('\n')
+
+  // Send via a simple fetch to our own API route that handles email
+  // For now, log it — email sending will be added when an email service is configured
+  console.log('[NOTIFICATION]', subject)
+  console.log(body)
 }

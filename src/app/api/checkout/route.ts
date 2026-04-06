@@ -16,9 +16,26 @@ type CheckoutBody = {
   returnPath?: string
 }
 
+// Test plan for verifying signup flow — remove after testing
+const TEST_PLAN = {
+  name: 'Test Plan',
+  slug: 'test-plan',
+  pricing: [{
+    frequency: 'monthly' as BillingFrequency,
+    label: 'Test ($1)',
+    suffix: '',
+    amount: 1,
+    stripePriceId: 'price_1TJGh6GstwohZtDfcsm9n6Wa',
+    isRecurring: false,
+    hcpTemplateName: 'TEST - Plan Signup Test',
+    hcpBillingCycle: 'Monthly' as const,
+  }],
+}
+
 const ALL_PLANS: Array<{ name: string; slug: string; pricing: PlanPricing[] }> = [
   ...SIGNATURE_PLANS,
   ...GENERATOR_PLANS,
+  TEST_PLAN,
 ]
 
 export async function POST(request: Request) {
