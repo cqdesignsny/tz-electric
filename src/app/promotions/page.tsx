@@ -62,7 +62,7 @@ const promotions = [
   {
     title: 'Generator Purchase',
     description: 'Power up your peace of mind and save on a whole-home Generac generator.',
-    discount: '$100 Off',
+    discount: '$1000 Off',
     details: 'Seasonal promotion. Contact us for current availability.',
     expires: 'Seasonal',
     category: 'Generators',
