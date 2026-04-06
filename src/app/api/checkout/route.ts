@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { stripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/stripe'
 import { SIGNATURE_PLANS, type BillingFrequency, type PlanPricing } from '@/lib/signature-plans-data'
 import { GENERATOR_PLANS } from '@/lib/maintenance-data'
 
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     const returnPath = body.returnPath || '/signature-plans'
 
     // Create Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: pricing.isRecurring ? 'subscription' : 'payment',
       line_items: [
         {
