@@ -1,6 +1,19 @@
 // ============================================
-// TZ SIGNATURE PLANS DATA (Updated 2026-03-26)
+// TZ SIGNATURE PLANS DATA (Updated 2026-04-06)
 // ============================================
+
+export type BillingFrequency = 'monthly' | 'yearly' | '3year'
+
+export type PlanPricing = {
+  frequency: BillingFrequency
+  label: string
+  suffix: string
+  amount: number
+  stripePriceId: string
+  isRecurring: boolean
+  hcpTemplateName: string
+  hcpBillingCycle: 'Monthly' | 'Yearly'
+}
 
 export type Plan = {
   name: string
@@ -11,6 +24,7 @@ export type Plan = {
   features: string[]
   highlighted?: boolean
   badge?: string
+  pricing: PlanPricing[]
 }
 
 export const SIGNATURE_PLANS: Plan[] = [
@@ -24,6 +38,38 @@ export const SIGNATURE_PLANS: Plan[] = [
       '1 annual assessment',
       'Priority scheduling',
       '5% off a repair',
+    ],
+    pricing: [
+      {
+        frequency: 'monthly',
+        label: 'Monthly',
+        suffix: '/mo',
+        amount: 35,
+        stripePriceId: 'price_1TJFwdGstwohZtDfTrAWjmfI',
+        isRecurring: true,
+        hcpTemplateName: 'TZ Signature Plan - Core (One Year Contract)',
+        hcpBillingCycle: 'Monthly',
+      },
+      {
+        frequency: 'yearly',
+        label: 'Prepaid Yearly',
+        suffix: '/yr',
+        amount: 399,
+        stripePriceId: 'price_1TJFweGstwohZtDfAVLEWP55',
+        isRecurring: false,
+        hcpTemplateName: 'TZ Signature Plan - Core (One Year Contract)',
+        hcpBillingCycle: 'Yearly',
+      },
+      {
+        frequency: '3year',
+        label: 'Prepaid 3-Year',
+        suffix: '/3yr',
+        amount: 1071,
+        stripePriceId: 'price_1TJFweGstwohZtDfOvesmMKE',
+        isRecurring: false,
+        hcpTemplateName: 'TZ Signature Plan - Core (Three Year Contract)',
+        hcpBillingCycle: 'Yearly',
+      },
     ],
   },
   {
@@ -39,6 +85,38 @@ export const SIGNATURE_PLANS: Plan[] = [
       '1 annual preventative maintenance',
       '10% off a repair',
     ],
+    pricing: [
+      {
+        frequency: 'monthly',
+        label: 'Monthly',
+        suffix: '/mo',
+        amount: 45,
+        stripePriceId: 'price_1TJFweGstwohZtDfEw7yqSnb',
+        isRecurring: true,
+        hcpTemplateName: 'TZ Signature Plan - Preferred (One Year Contract)',
+        hcpBillingCycle: 'Monthly',
+      },
+      {
+        frequency: 'yearly',
+        label: 'Prepaid Yearly',
+        suffix: '/yr',
+        amount: 513,
+        stripePriceId: 'price_1TJFwfGstwohZtDfPlHYKUPn',
+        isRecurring: false,
+        hcpTemplateName: 'TZ Signature Plan - Preferred (One Year Contract)',
+        hcpBillingCycle: 'Yearly',
+      },
+      {
+        frequency: '3year',
+        label: 'Prepaid 3-Year',
+        suffix: '/3yr',
+        amount: 1377,
+        stripePriceId: 'price_1TJFwfGstwohZtDfN0arI58P',
+        isRecurring: false,
+        hcpTemplateName: 'TZ Signature Plan - Preferred (Three Year Contract)',
+        hcpBillingCycle: 'Yearly',
+      },
+    ],
   },
   {
     name: 'Elite',
@@ -51,6 +129,38 @@ export const SIGNATURE_PLANS: Plan[] = [
       '10% off any new installation',
       '$100 service credit',
       'Extended hours scheduling',
+    ],
+    pricing: [
+      {
+        frequency: 'monthly',
+        label: 'Monthly',
+        suffix: '/mo',
+        amount: 60,
+        stripePriceId: 'price_1TJFwfGstwohZtDf7EM0CDh6',
+        isRecurring: true,
+        hcpTemplateName: 'TZ Signature Plan - Elite (One Year Contract)',
+        hcpBillingCycle: 'Monthly',
+      },
+      {
+        frequency: 'yearly',
+        label: 'Prepaid Yearly',
+        suffix: '/yr',
+        amount: 684,
+        stripePriceId: 'price_1TJFwgGstwohZtDfAu5HOCHk',
+        isRecurring: false,
+        hcpTemplateName: 'TZ Signature Plan - Elite (One Year Contract)',
+        hcpBillingCycle: 'Yearly',
+      },
+      {
+        frequency: '3year',
+        label: 'Prepaid 3-Year',
+        suffix: '/3yr',
+        amount: 1836,
+        stripePriceId: 'price_1TJFwgGstwohZtDftkn5O1Db',
+        isRecurring: false,
+        hcpTemplateName: 'TZ Signature Plan - Elite (Three Year Contract)',
+        hcpBillingCycle: 'Yearly',
+      },
     ],
   },
 ]

@@ -2,6 +2,8 @@
 // TZ ELECTRIC - MAINTENANCE PLANS DATA
 // ============================================
 
+import type { PlanPricing } from '@/lib/signature-plans-data'
+
 export type MaintenancePlan = {
   name: string
   slug: string
@@ -12,6 +14,7 @@ export type MaintenancePlan = {
   features: string[]
   highlighted?: boolean
   badge?: string
+  pricing: PlanPricing[]
 }
 
 export const GENERATOR_OVERVIEW =
@@ -32,6 +35,38 @@ export const GENERATOR_PLANS: MaintenancePlan[] = [
       'Exercise test',
       'Service documentation',
     ],
+    pricing: [
+      {
+        frequency: '3year',
+        label: '3-Year Monthly',
+        suffix: '/mo',
+        amount: 23,
+        stripePriceId: 'price_1TJG1jGstwohZtDfaDADiNBe',
+        isRecurring: true,
+        hcpTemplateName: '3 Year Contract - Bronze',
+        hcpBillingCycle: 'Monthly',
+      },
+      {
+        frequency: 'yearly',
+        label: '3-Year Annual',
+        suffix: '/yr',
+        amount: 269,
+        stripePriceId: 'price_1TJG1iGstwohZtDf3bpHVwhL',
+        isRecurring: true,
+        hcpTemplateName: '3 Year Contract - Bronze',
+        hcpBillingCycle: 'Yearly',
+      },
+      {
+        frequency: 'monthly',
+        label: '1-Year Prepay',
+        suffix: '/yr',
+        amount: 299,
+        stripePriceId: 'price_1TJG1iGstwohZtDfweGEOebd',
+        isRecurring: false,
+        hcpTemplateName: '3 Year Contract - Bronze',
+        hcpBillingCycle: 'Yearly',
+      },
+    ],
   },
   {
     name: 'Silver',
@@ -51,6 +86,38 @@ export const GENERATOR_PLANS: MaintenancePlan[] = [
       'Proactive scheduling',
       'Service documentation',
     ],
+    pricing: [
+      {
+        frequency: '3year',
+        label: '3-Year Monthly',
+        suffix: '/mo',
+        amount: 25,
+        stripePriceId: 'price_1TJG1kGstwohZtDfwJq7Ubpj',
+        isRecurring: true,
+        hcpTemplateName: '3 Year Contract - Silver',
+        hcpBillingCycle: 'Monthly',
+      },
+      {
+        frequency: 'yearly',
+        label: '3-Year Annual',
+        suffix: '/yr',
+        amount: 299,
+        stripePriceId: 'price_1TJG1jGstwohZtDfbNRqk7yk',
+        isRecurring: true,
+        hcpTemplateName: '3 Year Contract - Silver',
+        hcpBillingCycle: 'Yearly',
+      },
+      {
+        frequency: 'monthly',
+        label: '1-Year Prepay',
+        suffix: '/yr',
+        amount: 328.90,
+        stripePriceId: 'price_1TJG1jGstwohZtDfahAwlTRn',
+        isRecurring: false,
+        hcpTemplateName: '3 Year Contract - Silver',
+        hcpBillingCycle: 'Yearly',
+      },
+    ],
   },
   {
     name: 'Gold',
@@ -69,6 +136,38 @@ export const GENERATOR_PLANS: MaintenancePlan[] = [
       'Full fuel system check for gas/propane/diesel models',
       'Exercise cycle test',
       'Remote monitoring',
+    ],
+    pricing: [
+      {
+        frequency: '3year',
+        label: '3-Year Monthly',
+        suffix: '/mo',
+        amount: 34,
+        stripePriceId: 'price_1TJG1lGstwohZtDf3ZzE2Me6',
+        isRecurring: true,
+        hcpTemplateName: '3 Year Contract - Gold',
+        hcpBillingCycle: 'Monthly',
+      },
+      {
+        frequency: 'yearly',
+        label: '3-Year Annual',
+        suffix: '/yr',
+        amount: 399,
+        stripePriceId: 'price_1TJG1lGstwohZtDfFgyhLFUw',
+        isRecurring: true,
+        hcpTemplateName: '3 Year Contract - Gold',
+        hcpBillingCycle: 'Yearly',
+      },
+      {
+        frequency: 'monthly',
+        label: '1-Year Prepay',
+        suffix: '/yr',
+        amount: 438.90,
+        stripePriceId: 'price_1TJG1kGstwohZtDfwTi6hMZ8',
+        isRecurring: false,
+        hcpTemplateName: '3 Year Contract - Gold',
+        hcpBillingCycle: 'Yearly',
+      },
     ],
   },
 ]
