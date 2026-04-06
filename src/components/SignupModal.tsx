@@ -312,6 +312,15 @@ export default function SignupModal({ isOpen, onClose, plan, title = 'TZ SIGNATU
                 )}
               </button>
 
+              {selectedPricing?.isRecurring && (
+                <p className="text-center text-xs text-gray-500 leading-relaxed">
+                  By continuing, you authorize TZ Electric, Inc. to charge your payment
+                  method on a recurring {selectedPricing.frequency === 'monthly' || selectedPricing.frequency === '3year' ? 'monthly' : 'yearly'} basis
+                  at the rate shown above. Your plan renews automatically until canceled.
+                  You may cancel at any time by contacting us. <a href="/signature-plans#terms" className="underline hover:text-navy">Cancellation terms</a> apply.
+                </p>
+              )}
+
               <p className="text-center text-xs text-gray-400">
                 Secure payment powered by Stripe. Your card information never touches our servers.
               </p>
