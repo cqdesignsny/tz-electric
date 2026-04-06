@@ -155,12 +155,12 @@ export default function Footer() {
             <h4 className="font-heading font-bold text-white text-sm uppercase tracking-wider mb-4">
               Services
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-1">
               {footerServices.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="text-gray-400 hover:text-white text-sm transition-colors"
+                    className="text-gray-400 hover:text-white text-sm transition-colors inline-block py-1.5"
                   >
                     {item.label}
                   </Link>
@@ -174,12 +174,12 @@ export default function Footer() {
             <h4 className="font-heading font-bold text-white text-sm uppercase tracking-wider mb-4">
               Company
             </h4>
-            <ul className="space-y-2.5">
+            <ul className="space-y-1">
               {footerCompany.map((item) => (
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    className="text-gray-400 hover:text-white text-sm transition-colors"
+                    className="text-gray-400 hover:text-white text-sm transition-colors inline-block py-1.5"
                   >
                     {item.label}
                   </Link>

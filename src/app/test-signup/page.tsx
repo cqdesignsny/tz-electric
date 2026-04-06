@@ -47,7 +47,7 @@ export default function TestSignupPage() {
         onClose={() => setIsOpen(false)}
         plan={TEST_PLAN}
         title="TEST SIGNUP"
-        returnPath="/test-signup"
+        returnPath="/signature-plans"
       />
     </div>
   )

@@ -11,7 +11,7 @@ interface CardProps {
 export default function Card({ children, href, className, hover = true }: CardProps) {
   const styles = cn(
     'bg-white rounded-xl border border-gray-100 overflow-hidden',
-    hover && 'transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1',
+    hover && 'transition-all duration-300 hover:shadow-card-hover hover:-translate-y-1 active:scale-[0.98]',
     className,
   )
 

@@ -42,6 +42,12 @@ export default function ElectricCursor() {
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
+
+    // Disable on mobile (no hover) and when reduced motion is preferred
+    const isMobile = window.matchMedia('(hover: none)').matches
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    if (isMobile || prefersReducedMotion) return
+
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
