@@ -18,19 +18,19 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - **CMS Collections:** 9 (Services, Blog Posts, Locations, Electricals, Generators, Mini Splits, HVACs, Reference Locations, Hot Water Heaters)
 - **Components:** 25 (Header, Navbar, Footer, various section types, spacing utilities)
 
-## Analytics & Tracking IDs (MUST PRESERVE)
-- GA4: G-X55X1YSD10
-- Google Ads: AW-16641031492
-- GTM: GTM-MGWW87JT
-- Facebook Pixel: 489773923452243
-- Hotjar: 5144458
+## Analytics & Tracking IDs (ALL DIRECT IN layout.tsx)
+- GA4: G-X55X1YSD10 (gtag.js direct)
+- Google Ads: AW-16641031492 (gtag.js direct)
+- GTM: GTM-WV326JN8 (direct — corrected from old GTM-MGWW87JT on 2026-04-12)
+- Facebook Pixel: 489773923452243 (fbevents.js direct)
+- Hotjar: 5144458 (direct snippet)
 
 ## Current Integrations
 - Typeform for lead capture (ghfs29y37tj.typeform.com/to/HDLXmnob)
 - Trust Index for Google reviews widget
-- Swiper.js for carousels
-- Google Maps embed
 - Wisetack & Synchrony financing
+- Stripe for maintenance plan subscriptions
+- HousecallPro for customer tagging
 
 ## Design Specs
 - Fonts: Montserrat (headings), Manrope (body)
@@ -48,8 +48,11 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 
 ## Planned Integrations
 - Housecall Pro API (scheduling)
-- Podium (messaging/reviews)
 - Native form handling (replace Typeform)
+- Sanity.io CMS (blog, dynamic content)
+
+## Removed Integrations
+- Podium webchat widget (removed 2026-04-12 — no longer in use)
 
 ## SEO Critical Notes
 - All 43 pages have custom SEO titles/descriptions - MUST preserve
@@ -126,7 +129,9 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 ## Build Status
 - **Last build:** Successful — 38 static pages (homepage, 7 services, mitsubishi, about, contact, reviews, financing, gallery, promotions, careers, services landing, signature-plans, 5 legal pages, service-areas main + 7 city pages + 5 county pages)
 - **Build verified:** 2026-03-17 Session 8
-- **Vercel deployment:** https://tz-electric.vercel.app/
+- **Production domain:** https://tzelectricinc.com (live as of 2026-04-12, Cloudflare DNS → Vercel)
+- **Vercel preview:** https://tz-electric.vercel.app/
+- **Local SSD copy:** /Volumes/CQ-PRO-4TB/CQ Marketing/TZ-Electric/TZ-Site-2026/tz-site
 
 ## Completed
 - [x] Project setup (Next.js, Tailwind 4, TypeScript, Framer Motion)
@@ -174,15 +179,16 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - [x] TrustIndexWidget.tsx component created (useRef+useEffect script injection pattern)
 
 ## Remaining
-- [ ] Blog system (listing + individual posts)
+- [ ] Blog content migration from old Webflow site (nav hidden, code ready)
 - [ ] Individual career/job posting pages
-- [ ] Download & integrate high-res images from Webflow
 - [ ] Sanity.io CMS setup
 - [ ] Google Maps embeds (placeholders in contact & service-areas)
 - [ ] Interactive gallery filtering
 - [ ] Housecall Pro API integration (future)
 - [ ] Replace Typeform with native forms (future)
-- [ ] Performance optimization & testing
+- [ ] Performance optimization & Lighthouse testing
+- [ ] Bing Webmaster Tools setup
+- [ ] Google Search Console verification meta tag (field empty in layout.tsx)
 
 ## Session Log
 - **2026-03-12 (Session 1):** Research — analyzed live site, Webflow backend, extracted tracking IDs, documented SEO, mapped site structure. Created README.md and MEMORY.md.
@@ -193,3 +199,4 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - **2026-03-12 (Session 6):** Design polish & new features — Built ElectricCursor canvas particle effect (electric sparks on mouse hover) and added to ALL hero sections across every page. Created CertificationSlider infinite-scroll logo bar (Mitsubishi Diamond Elite, Generac, BBB, Nextdoor, Chronogrammy) and added below homepage hero. Built dedicated Mitsubishi Electric landing page with Diamond Elite content, benefits grid, system models, FAQ. Added hero background images with gradient overlays to all 7 service pages via ServicePageTemplate. Fixed Signature Plans: redesigned prepaid pricing as legible card-style rows, restyled Terms accordion with blue-branded icons/chevrons/hover effects. Fixed FAQ styling across service pages with same blue-branded treatment. Fixed plumbing image bug (was showing outlet photo in both constants.ts and services-data.ts). Added Mitsubishi Electric to nav dropdown. Increased certification logo sizing across the site: slider logos from 72px to 96px, about-us logos from 80px to 112px for better readability. Created README.md with full project documentation. Build verified: 33 static pages.
 - **2026-03-16 (Session 7):** Luxury redesign & expansion — GitHub repo initialized and pushed (3 commits). Vercel deployment connected at tz-electric.vercel.app. Major luxury redesign: rounded-full buttons with scale hover, deeper navy/royal blue color palette, hero image slider with 6 cycling photos and navy gradient overlay. Added official Diamond Contractor + Mitsubishi Electric SVG logos throughout site (hero, Mitsubishi page, footer, certification slider, about page). Certification slider 2x faster with grayscale→color hover. Footer refined with navy gradient CTA and certification logo bar. Built 5 county landing pages (Greene, Columbia, Ulster, Dutchess, Albany) with SSG, towns grid, services, and county-level SEO meta. Added social media (YouTube) to constants, header top bar social icons, and footer "Follow Us" section. Fixed plumbing image, about page team photo, Tyler crop. Added Mitsubishi to mega menu. Build: 38 static pages.
 - **2026-03-17 (Session 8):** Trust Index integration & visual polish — Integrated Trust Index premium Google reviews widget on reviews page and homepage (replacing static review cards). Created TrustIndexWidget.tsx with useRef+useEffect script injection pattern (Trust Index scripts must be inline in DOM). Added Trust Index Badge to homepage hero and all service page heroes (replaced static "330+ 5-Star Reviews" pill). Updated plumbing image to real copper parts/tools photo (plumbing.jpg). Fixed Tyler Zitz founder card sizing on about page (6+ iterations to match leadership card proportions: max-w-4xl, grid-cols-[2fr_3fr], aspect-[3/4]). Reduced homepage hero height from 700/750px to 500/550px. Redesigned services page: 2-column grid with blue outline cards, real service images, hover effects (border, shadow, translate-y, scale, gradient overlay, accent bar), 95% viewport width. Build: 38 static pages.
+- **2026-04-12 (Session 9):** Domain launch & SEO setup — Site went live on tzelectricinc.com (Cloudflare DNS → Vercel). Created robots.ts and dynamic sitemap.ts (50+ URLs). Added favicon (favicon.ico + icon.png + apple-icon.png) from uploaded Favicon.png. Created OG default image (white logo on navy, 1200x630). Added 2 new team members: Franklin Ruballos (Apprentice) and April Walcott (Office Support) with photos and bios. Replaced all team photos with new Team-2026.jpg across hero slider, About Us, and Careers pages. Fixed Careers page placeholder with actual team photo. Widened team photo container from 4:3 to 16:9 to prevent side cropping. Hidden blog from header nav, footer, and constants (code ready, awaiting content migration). Fixed GTM container ID from GTM-MGWW87JT to correct GTM-WV326JN8. Added GA4, Google Ads, Facebook Pixel, and Hotjar scripts directly to layout.tsx (previously only IDs stored in constants, not loaded). Removed Podium webchat widget (no longer in use). Submitted sitemap to Google Search Console. Confirmed www redirect via Vercel. Cloned repo to local SSD at /Volumes/CQ-PRO-4TB/CQ Marketing/TZ-Electric/TZ-Site-2026/tz-site.

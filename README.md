@@ -13,7 +13,7 @@ Full-stack website redesign migrating from Webflow to Next.js. Built for **TZ El
 | Animations | Framer Motion 12.35.2 |
 | Bundler | Turbopack (default) |
 | CMS | Sanity.io (planned) |
-| Deployment | Vercel ([tz-electric.vercel.app](https://tz-electric.vercel.app/)) |
+| Deployment | Vercel — **[tzelectricinc.com](https://tzelectricinc.com)** (production) |
 
 ## Getting Started
 
@@ -116,13 +116,15 @@ Defined in `globals.css` using Tailwind CSS 4 `@theme`:
 
 ## Analytics & Tracking
 
-All preserved from the original Webflow site:
+All scripts loaded directly in `layout.tsx`:
 
-- GA4: `G-X55X1YSD10`
-- Google Ads: `AW-16641031492`
-- GTM: `GTM-MGWW87JT`
-- Facebook Pixel: `489773923452243`
-- Hotjar: `5144458`
+| Script | ID | Method |
+|---|---|---|
+| GA4 | `G-X55X1YSD10` | gtag.js (direct) |
+| Google Ads | `AW-16641031492` | gtag.js (direct) |
+| GTM | `GTM-WV326JN8` | GTM script (direct) |
+| Facebook Pixel | `489773923452243` | fbevents.js (direct) |
+| Hotjar | `5144458` | Hotjar snippet (direct) |
 
 ## Business Info
 
@@ -130,18 +132,30 @@ All preserved from the original Webflow site:
 - **Phone**: (518) 678-1230
 - **Email**: service@tzelectricinc.com
 - **Address**: 5079 NY-32, Catskill, NY 12414
-- **Service Area**: Hudson Valley, NY (Dutchess, Ulster, Albany, Columbia, Greene counties)
+- **Service Area**: Hudson Valley, NY (Greene, Columbia, Ulster, Dutchess, Albany, Delaware counties)
 - **Certifications**: Mitsubishi Diamond Elite, Generac Authorized Dealer, BBB Accredited
+- **Local Copy**: `/Volumes/CQ-PRO-4TB/CQ Marketing/TZ-Electric/TZ-Site-2026/tz-site`
+
+## SEO & Infrastructure
+
+- **Domain**: `tzelectricinc.com` (Cloudflare DNS → Vercel)
+- **robots.txt**: `src/app/robots.ts` — allows all, blocks `/api/` and `/test-signup`
+- **sitemap.xml**: `src/app/sitemap.ts` — dynamic, 50+ URLs (all pages, services, sub-services, cities, counties)
+- **Favicon**: `src/app/favicon.ico` + `src/app/icon.png` + `src/app/apple-icon.png`
+- **OG Image**: `public/images/og-default.jpg` (1200x630, white logo on navy)
+- **Google Search Console**: Verified, sitemap submitted
+- **JSON-LD**: LocalBusiness + BreadcrumbList + FAQ schemas
+- **www redirect**: Configured via Vercel
+- **Blog**: Hidden from nav until content migrated (code ready at `/blog`)
 
 ## Remaining Work
 
-- [ ] Blog system (listing + individual posts)
+- [ ] Blog content migration from old Webflow site
 - [ ] Individual career/job posting pages
-- [ ] Download & integrate high-res images from Webflow
 - [ ] Sanity.io CMS setup
 - [ ] Google Maps embeds (placeholders in contact & service-areas)
-- [x] ~~Real review widget integration (Trust Index)~~ ✓ Done
 - [ ] Interactive gallery filtering (client component)
 - [ ] Housecall Pro API integration (scheduling)
 - [ ] Replace Typeform with native forms
 - [ ] Performance optimization & Lighthouse testing
+- [ ] Bing Webmaster Tools setup
