@@ -125,7 +125,7 @@ export default function CareersPage() {
                 ))}
               </div>
             </div>
-            <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
+            <div className="relative rounded-2xl overflow-hidden aspect-[16/9] shadow-xl">
               <Image
                 src="/images/team/Team-2026.jpg"
                 alt="The TZ Electric team — join our growing Hudson Valley team"
