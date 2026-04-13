@@ -105,6 +105,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'monthly' as const,
   }))
 
+  // Career / job listing pages
+  const careerPages = [
+    'lead-electrician',
+    'hvac-project-manager',
+    'hvac-installer',
+    'estimator',
+    'apprentice',
+    'office-assistant',
+  ].map((slug) => ({
+    url: `/careers/${slug}`,
+    priority: 0.6,
+    changeFrequency: 'monthly' as const,
+  }))
+
   // Service area city pages
   const cityPages = [
     'catskill-ny',
@@ -141,6 +155,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...mitsubishiSubs,
     ...generatorSubs,
     ...hotWaterSubs,
+    ...careerPages,
     ...cityPages,
     ...countyPages,
   ]

@@ -1,8 +1,9 @@
 import { COMPANY } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
+import { JOB_LISTINGS, CAREERS_APPLICATION_URL } from '@/lib/careers-data'
 import Image from 'next/image'
+import Link from 'next/link'
 import Button from '@/components/ui/Button'
-import Card from '@/components/ui/Card'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
@@ -10,45 +11,6 @@ export const metadata = createMetadata({
   description: 'Join the TZ Electric team! We are hiring skilled electricians, HVAC technicians, plumbers, and support staff in the Hudson Valley. Competitive pay, benefits, and growth opportunities.',
   path: '/careers',
 })
-
-const openings = [
-  {
-    title: 'Lead Electrician',
-    slug: 'lead-electrician',
-    type: 'Full-Time',
-    description: 'Experienced electrician to lead residential projects including panel upgrades, rewiring, and EV charger installations.',
-  },
-  {
-    title: 'HVAC Project Manager',
-    slug: 'hvac-project-manager',
-    type: 'Full-Time',
-    description: 'Manage and execute HVAC installation projects from start to finish. Experience with Mitsubishi systems a plus.',
-  },
-  {
-    title: 'HVAC Installer',
-    slug: 'hvac-installer',
-    type: 'Full-Time',
-    description: 'Install and service HVAC systems including ductless mini splits, furnaces, and air conditioners.',
-  },
-  {
-    title: 'Estimator',
-    slug: 'estimator',
-    type: 'Full-Time',
-    description: 'Prepare accurate estimates and build relationships with customers. Technical knowledge and customer-facing experience required.',
-  },
-  {
-    title: 'Apprentice',
-    slug: 'apprentice',
-    type: 'Full-Time',
-    description: 'Entry-level position with hands-on training in electrical, HVAC, and plumbing trades. Great career starter.',
-  },
-  {
-    title: 'Office Assistant',
-    slug: 'office-assistant',
-    type: 'Full-Time',
-    description: 'Manage front office operations, customer communications, and scheduling. Organized and friendly personality required.',
-  },
-]
 
 const benefits = [
   'Competitive Pay',
@@ -153,23 +115,35 @@ export default function CareersPage() {
             </p>
           </div>
           <div className="space-y-4 max-w-3xl mx-auto">
-            {openings.map((job) => (
-              <Card key={job.slug} href={`/${job.slug}`} className="group">
+            {JOB_LISTINGS.map((job) => (
+              <Link
+                key={job.slug}
+                href={`/careers/${job.slug}`}
+                className="group block bg-white border-2 border-gray-200 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-blue/40 hover:-translate-y-0.5"
+              >
                 <div className="p-6 flex items-center justify-between gap-4">
                   <div>
                     <h3 className="font-heading font-bold text-navy group-hover:text-blue transition-colors">
                       {job.title}
                     </h3>
                     <p className="mt-1 text-gray-600 text-sm">{job.description}</p>
-                    <span className="inline-block mt-2 bg-blue/10 text-blue text-xs font-medium px-2 py-0.5 rounded-full">
-                      {job.type}
-                    </span>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="bg-blue/10 text-blue text-xs font-medium px-2 py-0.5 rounded-full">
+                        {job.type}
+                      </span>
+                      <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2 py-0.5 rounded-full">
+                        {job.location}
+                      </span>
+                      <span className="bg-success/10 text-success text-xs font-medium px-2 py-0.5 rounded-full">
+                        {job.pay}
+                      </span>
+                    </div>
                   </div>
                   <svg className="w-5 h-5 text-gray-400 group-hover:text-blue flex-shrink-0 transition-colors" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                   </svg>
                 </div>
-              </Card>
+              </Link>
             ))}
           </div>
 
@@ -177,8 +151,8 @@ export default function CareersPage() {
             <p className="text-gray-600">
               Don&apos;t see the right fit? We&apos;re always looking for great people.
             </p>
-            <Button href={`mailto:${COMPANY.email}?subject=Career Inquiry`} variant="secondary" className="mt-4">
-              Send Us Your Resume
+            <Button href={CAREERS_APPLICATION_URL} external className="mt-4">
+              Submit Your Application
             </Button>
           </div>
         </div>
