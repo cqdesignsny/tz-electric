@@ -60,6 +60,14 @@ export const TEAM_MEMBERS: TeamMember[] = [
     category: 'support',
   },
 
+  {
+    name: 'April Walcott',
+    role: 'Office Support',
+    photo: '/images/team/April-Walcott.jpg',
+    bio: 'April thrives in the sunshine and is happiest when she\'s out paddle-boarding or spending time with her family. With six siblings, she definitely knows how to go with the flow! Her superpower might be her ability to step outside a situation and see every angle, or her ability to eat her weight in food. Honestly, it just depends on whatever the situation calls for!',
+    category: 'support',
+  },
+
   // Technicians
   {
     name: 'Summer Giovene',
@@ -129,6 +137,14 @@ export const TEAM_MEMBERS: TeamMember[] = [
     role: 'HVAC Tech',
     photo: '/images/team/christopher-weiner.jpg',
     bio: 'Every team needs someone with a dream superpower, and Christopher\'s happens to be teleportation. If instant travel were possible, he\'d probably use it to squeeze in even more rounds of golf. His fiancée thinks he already has a superpower — the ability to fall asleep just about anywhere.',
+    category: 'technician',
+  },
+
+  {
+    name: 'Franklin Ruballos',
+    role: 'Apprentice',
+    photo: '/images/team/Franklin-Ruballos.jpg',
+    bio: 'This is Franklin! When he\'s not on the clock, you can find him out riding his dirt bike or honing his photography skills. He\'s had the chance to work on film sets in the city, taking some awesome behind-the-scenes photos with actors. Franklin might not claim a superpower, but we\'re not convinced. He\'s always able to capture the perfect moment and we don\'t think that\'s a coincidence.',
     category: 'technician',
   },
 

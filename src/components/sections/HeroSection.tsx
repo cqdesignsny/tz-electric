@@ -9,7 +9,7 @@ import ElectricCursor from '@/components/effects/ElectricCursor'
 import { TrustIndexBadge } from '@/components/ui/TrustIndexWidget'
 
 const HERO_SLIDES = [
-  { src: '/images/hero/tz-team-2025.avif', alt: 'TZ Electric team of professionals' },
+  { src: '/images/team/Team-2026.jpg', alt: 'TZ Electric team of professionals' },
   { src: '/images/services/clean-panel.jpeg', alt: 'Electrical panel upgrade service' },
   { src: '/images/services/hvac-hero.png', alt: 'HVAC installation and repair' },
   { src: '/images/services/minisplit-install.jpeg', alt: 'Mitsubishi ductless mini split system' },

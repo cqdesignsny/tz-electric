@@ -86,7 +86,7 @@ export const NAV_ITEMS = [
       { label: 'About Us', href: '/about-us' },
       { label: 'Reviews', href: '/reviews' },
       { label: 'Gallery', href: '/gallery' },
-      { label: 'Blog', href: '/blog' },
+      // { label: 'Blog', href: '/blog' }, // Hidden until blog content is migrated
       { label: 'Careers', href: '/careers' },
     ],
   },

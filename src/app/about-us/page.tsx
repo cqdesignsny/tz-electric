@@ -82,7 +82,7 @@ export default function AboutPage() {
       <section className="relative bg-navy overflow-hidden py-16 lg:py-20">
         {/* Background Image */}
         <Image
-          src="/images/hero/tz-team-2025.avif"
+          src="/images/team/Team-2026.jpg"
           alt=""
           fill
           className="object-cover opacity-15"
@@ -149,7 +149,7 @@ export default function AboutPage() {
             </div>
             <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
               <Image
-                src="/images/hero/tz-team-2025.avif"
+                src="/images/team/Team-2026.jpg"
                 alt="The TZ Electric team — Hudson Valley's trusted home service professionals"
                 fill
                 className="object-cover"
@@ -267,7 +267,7 @@ export default function AboutPage() {
             <h3 className="font-heading font-bold text-navy text-lg mb-4 lg:text-center">
               Support Staff
             </h3>
-            <div className={`grid gap-6 ${support.length <= 2 ? 'grid-cols-2 max-w-lg md:max-w-xl lg:max-w-2xl mx-auto' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
+            <div className={`grid gap-6 ${support.length <= 3 ? 'grid-cols-2 md:grid-cols-3 max-w-4xl mx-auto' : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-4'}`}>
               {support.map((member) => (
                 <div key={member.name} className="group bg-white border-2 border-blue/20 rounded-xl overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-blue/40 hover:-translate-y-1">
                   <div className="relative aspect-[3/4] overflow-hidden">

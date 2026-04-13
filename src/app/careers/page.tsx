@@ -1,5 +1,6 @@
 import { COMPANY } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
+import Image from 'next/image'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import ElectricCursor from '@/components/effects/ElectricCursor'
@@ -124,8 +125,14 @@ export default function CareersPage() {
                 ))}
               </div>
             </div>
-            <div className="bg-gray-200 rounded-xl aspect-[4/3] flex items-center justify-center">
-              <span className="text-gray-400 text-sm">Team Photo</span>
+            <div className="relative rounded-2xl overflow-hidden aspect-[4/3] shadow-xl">
+              <Image
+                src="/images/team/Team-2026.jpg"
+                alt="The TZ Electric team — join our growing Hudson Valley team"
+                fill
+                className="object-cover"
+                sizes="(max-width: 1024px) 100vw, 50vw"
+              />
             </div>
           </div>
         </div>
