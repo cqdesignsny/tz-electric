@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/api/', '/test-signup'],
+        disallow: ['/api/', '/test-signup', '/thank-you'],
       },
     ],
     sitemap: 'https://tzelectricinc.com/sitemap.xml',
