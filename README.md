@@ -139,7 +139,7 @@ All scripts loaded directly in `layout.tsx`:
 ## SEO & Infrastructure
 
 - **Domain**: `tzelectricinc.com` (Cloudflare DNS → Vercel)
-- **robots.txt**: `src/app/robots.ts` — allows all, blocks `/api/` and `/test-signup`
+- **robots.txt**: `src/app/robots.ts` — allows all, blocks `/api/`, `/test-signup`, `/thank-you`
 - **sitemap.xml**: `src/app/sitemap.ts` — dynamic, 50+ URLs (all pages, services, sub-services, cities, counties)
 - **Favicon**: `src/app/favicon.ico` + `src/app/icon.png` + `src/app/apple-icon.png`
 - **OG Image**: `public/images/og-default.jpg` (1200x630, white logo on navy)
@@ -147,15 +147,36 @@ All scripts loaded directly in `layout.tsx`:
 - **JSON-LD**: LocalBusiness + BreadcrumbList + FAQ schemas
 - **www redirect**: Configured via Vercel
 - **Blog**: Hidden from nav until content migrated (code ready at `/blog`)
+- **Thank You page**: `/thank-you` — hidden conversion tracking page (noIndex, blocked in robots.txt)
+
+## Integrations
+
+| Service | Status | Details |
+|---|---|---|
+| Stripe | Live | Payment processing for maintenance plan signups |
+| Housecall Pro | Live | Customer creation/tagging on plan signup via API |
+| Typeform (lead form) | Active | `ghfs29y37tj.typeform.com/to/HDLXmnob` — to be replaced with native form |
+| Typeform (job app) | Active | `ghfs29y37tj.typeform.com/to/hsBm2HUf` — to be replaced with native form |
+| Trust Index | Live | Google reviews widget on homepage + reviews page |
+
+## Career Pages
+
+6 individual job listing pages at `/careers/[slug]` with SSG:
+- Lead Electrician, HVAC Project Manager, HVAC Installer, Estimator, Apprentice, Office Assistant
+- Each has: overview, responsibilities, qualifications, benefits, schedule, JobPosting JSON-LD
+- Apply buttons link to Typeform (will be replaced with native form)
+- Data source: `src/lib/careers-data.ts`
 
 ## Remaining Work
 
+### Priority
+- [ ] **Native forms to replace Typeform** — Build multi-step lead capture + job application forms directly on the site. Wire to Housecall Pro CRM for instant lead delivery. Include GCLID tracking (Google Click ID) for Smart Bidding optimization. Eliminates Typeform subscription and improves ad conversion tracking.
+
+### Backlog
 - [ ] Blog content migration from old Webflow site
-- [ ] Individual career/job posting pages
 - [ ] Sanity.io CMS setup
 - [ ] Google Maps embeds (placeholders in contact & service-areas)
 - [ ] Interactive gallery filtering (client component)
-- [ ] Housecall Pro API integration (scheduling)
-- [ ] Replace Typeform with native forms
 - [ ] Performance optimization & Lighthouse testing
 - [ ] Bing Webmaster Tools setup
+- [ ] Google Search Console verification meta tag
