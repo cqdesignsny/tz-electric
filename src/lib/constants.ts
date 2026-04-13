@@ -51,7 +51,7 @@ export const TYPEFORM_URL = 'https://ghfs29y37tj.typeform.com/to/HDLXmnob'
 export const ANALYTICS = {
   ga4: 'G-X55X1YSD10',
   googleAds: 'AW-16641031492',
-  gtm: 'GTM-MGWW87JT',
+  gtm: 'GTM-WV326JN8',
   facebookPixel: '489773923452243',
   hotjar: '5144458',
 } as const
