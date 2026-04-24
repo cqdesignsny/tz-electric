@@ -1,10 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+
+const HIDDEN_PATHS = ['/agent-training', '/internal']
 
 export default function FloatingCTA() {
   const [visible, setVisible] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     function handleScroll() {
@@ -14,6 +18,7 @@ export default function FloatingCTA() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
+  if (HIDDEN_PATHS.some((p) => pathname?.startsWith(p))) return null
   if (!visible) return null
 
   return (

@@ -3,9 +3,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { COMPANY, NAV_ITEMS, TYPEFORM_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
+
+const HIDDEN_PATHS = ['/agent-training', '/internal']
 
 // ============================================
 // MEGA MENU DATA
@@ -508,6 +511,7 @@ function MobileAccordion({
 // ============================================
 
 export default function Header() {
+  const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null)
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -569,6 +573,8 @@ export default function Header() {
   }, [])
 
   const dropdownItems = ['Services', 'Plans', 'About', 'Service Areas']
+
+  if (HIDDEN_PATHS.some((p) => pathname?.startsWith(p))) return null
 
   return (
     <>
