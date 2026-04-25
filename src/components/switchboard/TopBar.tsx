@@ -70,12 +70,12 @@ export default function TopBar({ onMobileToggle, mobileOpen }: TopBarProps) {
               Internal
             </div>
             <div className="text-sm font-semibold leading-tight">
-              Switchboard
+              TZ Switchboard
             </div>
           </div>
         </Link>
 
-        {/* Page title — hidden on small, visible on lg */}
+        {/* Page title, hidden on small, visible on lg */}
         <div className="flex-1 min-w-0 ml-4 hidden lg:block">
           <div className="text-[10px] uppercase tracking-wider text-gray-400 font-mono">
             Section

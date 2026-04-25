@@ -88,7 +88,7 @@ export default function ModuleInfoPage({ slug }: { slug: string }) {
       {/* Footer note */}
       <div className="mt-12 pt-6 border-t border-gray-200 dark:border-navy-light/40 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
         This module isn&apos;t live yet. When it ships, this page becomes
-        the working interface — the description above is the plan.
+        the working interface. The description above is the plan.
       </div>
     </div>
   )

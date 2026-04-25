@@ -122,7 +122,7 @@ export const SECTIONS: Section[] = [
         type: 'long_text',
         label: 'Manufacturer warranties',
         placeholder:
-          'Who registers them — TZ or the customer? Typical lengths? Anything different for Mitsubishi vs Generac vs other brands?',
+          'Who registers them, TZ or the customer? Typical lengths? Anything different for Mitsubishi vs Generac vs other brands?',
       },
       {
         id: 'plan_member_warranty',
@@ -173,7 +173,7 @@ export const SECTIONS: Section[] = [
     id: 'emergency_triage',
     title: 'Emergency Triage & On-Call',
     intro:
-      'How the agents decide between true emergency, urgent same-day, and normal scheduling — plus who they wake up.',
+      'How the agents decide between true emergency, urgent same-day, and normal scheduling, plus who they wake up.',
     questions: [
       {
         id: 'true_emergencies',
@@ -282,7 +282,7 @@ export const SECTIONS: Section[] = [
       {
         id: 'rental_policy',
         type: 'single_select',
-        label: 'Renter / tenant calls — policy?',
+        label: 'Renter or tenant calls, what is the policy?',
         options: [
           { value: 'book_under_tenant', label: 'Book under the tenant, no extra check' },
           { value: 'require_landlord', label: 'Require landlord approval before booking' },
@@ -307,7 +307,7 @@ export const SECTIONS: Section[] = [
         id: 'hcp_required_fields',
         type: 'long_text',
         label: 'Minimum required fields to create a customer record in HCP',
-        placeholder: 'Name, address, phone, email — confirm these are it. Any custom fields?',
+        placeholder: 'Name, address, phone, email. Confirm these are the basics. Any custom fields?',
       },
       {
         id: 'lead_source_tag',
@@ -426,7 +426,7 @@ export const SECTIONS: Section[] = [
       {
         id: 'voice_opening_line',
         type: 'long_text',
-        label: 'Opening line — exact preferred wording',
+        label: 'Opening line, exact preferred wording',
         placeholder: 'e.g. "Thanks for calling TZ Electric, how can I help?"',
       },
       {
@@ -451,7 +451,7 @@ export const SECTIONS: Section[] = [
         type: 'long_text',
         label: 'Confirmation text after call',
         placeholder:
-          'Enabled? What does it say? e.g. "Thanks for calling — your appointment is booked for Tuesday between 9-11am. Reply STOP to opt out."',
+          'Enabled? What does it say? e.g. "Thanks for calling. Your appointment is booked for Tuesday between 9 to 11am. Reply STOP to opt out."',
       },
       {
         id: 'sms_first_reply',
@@ -515,7 +515,7 @@ export const SECTIONS: Section[] = [
       {
         id: 'delaware_county',
         type: 'yes_no_detail',
-        label: 'Delaware County — covered or not?',
+        label: 'Delaware County, covered or not?',
         hint:
           'Homepage lists it. Service-areas page does not. Which is correct?',
       },
@@ -546,7 +546,7 @@ export const SECTIONS: Section[] = [
       {
         id: 'best_electrician_source',
         type: 'short_text',
-        label: '"Voted Best Electrician in the Hudson Valley" — by whom?',
+        label: '"Voted Best Electrician in the Hudson Valley", by whom?',
         placeholder:
           'Chronogrammies? Year? So AI can cite the source if a customer presses.',
       },

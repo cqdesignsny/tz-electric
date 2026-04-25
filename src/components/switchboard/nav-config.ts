@@ -35,7 +35,7 @@ export const NAV_SECTIONS: NavSection[] = [
         status: 'soon',
         tagline: 'Every lead, end to end.',
         overview:
-          "A live view of every lead the AI captured — voice calls, SMS, web chat, and form fills — with where it came from and where it ended up. Tyler can see the funnel in real time without logging into HCP.",
+          "A live view of every lead the AI captured across voice calls, SMS, web chat, and form fills, plus where it came from and where it ended up. Tyler sees the funnel in real time without logging into HCP.",
         willDo: [
           'Capture from voice, SMS, web chat, and the native lead form',
           'Tag source (paid, organic, referral, manual)',
@@ -65,7 +65,7 @@ export const NAV_SECTIONS: NavSection[] = [
         status: 'planned',
         tagline: 'Staff onboarding, powered by Trainual.',
         overview:
-          "TZ uses Trainual for staff onboarding and ongoing training. The Switchboard ties it in so Tyler can see who's caught up, who's behind, and assign new tracks without bouncing between apps.",
+          "TZ uses Trainual for staff onboarding and ongoing training. The TZ Switchboard ties it in so Tyler can see who's caught up, who's behind, and assign new tracks without bouncing between apps.",
         willDo: [
           'Single sign-on or one-click link out to Trainual',
           'Track completion rates per role',
@@ -136,7 +136,7 @@ export const NAV_SECTIONS: NavSection[] = [
         status: 'soon',
         tagline: 'Chatbot conversations from tzelectricinc.com.',
         overview:
-          'Live chat sessions from the public site. Same takeover-by-human flow as SMS. Replaces the old Podium webchat with a CQ-built version that integrates with the rest of the Switchboard.',
+          'Live chat sessions from the public site. Same takeover-by-human flow as SMS. Replaces the old Podium webchat with a CQ-built version that integrates with the rest of the TZ Switchboard.',
         willDo: [
           'Live thread view with visitor context',
           'See what page they came from and what services they viewed',
@@ -201,7 +201,7 @@ export const NAV_SECTIONS: NavSection[] = [
         status: 'planned',
         tagline: 'Outbound sequences, review requests, follow-ups.',
         overview:
-          "AI-driven outbound. Service follow-ups, review requests, seasonal reminders, re-engagement campaigns — all running automatically without manual work.",
+          'AI-driven outbound. Service follow-ups, review requests, seasonal reminders, re-engagement campaigns. All running automatically without manual work.',
         willDo: [
           'Auto-trigger review requests after a job closes',
           'Seasonal campaigns (AC tune-up in spring, generator service in fall)',

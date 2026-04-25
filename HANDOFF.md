@@ -1,4 +1,4 @@
-# TZ Electric Switchboard — Handoff
+# TZ Switchboard Handoff
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
@@ -51,7 +51,7 @@ The TZ Switchboard is live at `tzelectricinc.com/switchboard` behind an admin lo
 ### What's built
 
 - **Site URL:** https://tzelectricinc.com
-- **Switchboard URL:** https://tzelectricinc.com/switchboard (gated)
+- **TZ Switchboard URL:** https://tzelectricinc.com/switchboard (gated)
 - **Login URL:** https://tzelectricinc.com/switchboard/login
 - **Questionnaire URL:** https://tzelectricinc.com/switchboard/agent-training
 - **Old `/agent-training`:** redirects to `/switchboard/agent-training`
@@ -67,7 +67,7 @@ The TZ Switchboard is live at `tzelectricinc.com/switchboard` behind an admin lo
 
 ### Working today
 
-- [x] Switchboard layout, sidebar, topbar
+- [x] TZ Switchboard layout, sidebar, topbar
 - [x] Dashboard home with stats placeholders + active/soon/planned modules
 - [x] Login flow (login form, set cookie, middleware redirect, logout button in sidebar)
 - [x] Agent training questionnaire (~70 questions, autosave, submit via Resend)
@@ -78,7 +78,7 @@ The TZ Switchboard is live at `tzelectricinc.com/switchboard` behind an admin lo
 
 ### 1. Set Vercel environment variables
 
-The site deploys but the Switchboard will not work until these are set on Vercel:
+The site deploys but the TZ Switchboard will not work until these are set on Vercel:
 
 | Name | Value | Where to get it |
 |---|---|---|
@@ -125,12 +125,12 @@ The endgame: **Tyler owns every paid service under his own logins and his own ca
 | **Anthropic API** | Claude API powering chat, SMS, voice agents | Tyler signs up at console.anthropic.com → adds his card → generates `ANTHROPIC_API_KEY` → we set it on his Vercel project |
 | **Twilio** | Phone number + SMS messaging for AI SMS agent | Tyler signs up at twilio.com → buys a local NY number → completes A2P 10DLC business registration → we set Twilio env vars on his Vercel |
 | **Vapi** | Voice agent (handles inbound calls, books jobs) | Tyler signs up at vapi.ai → connects his Twilio number → assistant configured against our `/api/vapi/*` tool endpoints |
-| **Resend** | Outbound email (Switchboard submits, lead alerts) | Tyler signs up at resend.com → verifies `tzelectricinc.com` domain → generates `RESEND_API_KEY` → we set it on his Vercel |
+| **Resend** | Outbound email (TZ Switchboard submits, lead alerts) | Tyler signs up at resend.com → verifies `tzelectricinc.com` domain → generates `RESEND_API_KEY` → we set it on his Vercel |
 | **Stripe** | Plan signup payments | Already on TZ's account — no migration needed |
 | **Housecall Pro** | CRM, scheduling, customer tagging | Already on TZ's account — no migration needed |
 
 ### Order of operations
-1. **Now → migration day:** finish building Switchboard modules + AI agents under our Vercel/Resend/Anthropic accounts. Tyler fills out the questionnaire; we build the agent knowledge base.
+1. **Now → migration day:** finish building TZ Switchboard modules + AI agents under our Vercel/Resend/Anthropic accounts. Tyler fills out the questionnaire; we build the agent knowledge base.
 2. **Migration day (single focused session):** Tyler provisions every account above. We do the cutover in one sitting — transfer Vercel project, swap each env var to his keys, redeploy, smoke test login + lead form + agents.
 3. **After migration:** Tyler's card pays all infra directly. We keep shipping code from the GitHub repo and Vercel autodeploys to his team.
 
@@ -142,7 +142,7 @@ The endgame: **Tyler owns every paid service under his own logins and his own ca
 - **Verified email domain.** Using `onboarding@resend.dev` so Resend free tier only delivers to the signup email (cesar@creativequalitymarketing.com). Fine for now since that's the only recipient. Verify a custom domain when sending to other recipients.
 - **proxy.ts migration.** Next 16 prefers `proxy.ts` over `middleware.ts`. Backwards-compatible. Deferred until a focused session to validate the API.
 
-## Files touched in the Switchboard session (Apr 24)
+## Files touched in the TZ Switchboard session (Apr 24)
 
 ```
 src/middleware.ts                                          NEW — auth gate for /switchboard/*
@@ -201,6 +201,6 @@ After tomorrow's smoke test and sending Tyler the link:
 2. Migrate site to Tyler's Vercel team (he pays direct from now on)
 3. Build native lead forms (replaces Typeform, hits HCP)
 4. Scaffold the AI agents: SMS, web chat, Vapi tool endpoints
-5. Wire up the "coming soon" Switchboard modules as they come online
+5. Wire up the "coming soon" TZ Switchboard modules as they come online
 
-The Switchboard becomes Tyler's permanent operational backend. Every future agent (email assistant, office ops, warehouse, sales, marketing) ships as a new module in this same dashboard.
+The TZ Switchboard becomes Tyler's permanent operational backend. Every future agent (email assistant, office ops, warehouse, sales, marketing) ships as a new module in this same dashboard.

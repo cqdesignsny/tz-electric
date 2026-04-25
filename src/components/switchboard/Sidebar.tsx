@@ -14,7 +14,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
   return (
     <nav
       className="flex flex-col h-full"
-      aria-label="Switchboard navigation"
+      aria-label="TZ Switchboard navigation"
     >
       {/* Nav sections */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-7">
@@ -109,7 +109,7 @@ function LogoutButton() {
     try {
       await fetch('/api/switchboard/auth/logout', { method: 'POST' })
     } catch {
-      // ignore — proceed to redirect
+      // ignore, proceed to redirect
     }
     window.location.href = '/switchboard/login'
   }

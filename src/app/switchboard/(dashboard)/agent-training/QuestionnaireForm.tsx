@@ -456,7 +456,7 @@ function QuestionField({
         const update = (newYn: string, newDetail: string) => {
           if (!newYn && !newDetail) onChange('')
           else if (!newDetail) onChange(newYn)
-          else onChange(`${newYn || ''} — ${newDetail}`.trim())
+          else onChange(`${newYn || ''}: ${newDetail}`.trim())
         }
         return (
           <div className="space-y-3">
@@ -745,7 +745,7 @@ function formatSavedLabel(date: Date): string {
 
 function buildMarkdown(answers: Answers, filledBy: string): string {
   const lines: string[] = []
-  lines.push('# TZ Electric — AI Agent Training Questionnaire')
+  lines.push('# TZ Electric AI Agent Training Questionnaire')
   lines.push('')
   lines.push(`**Filled by:** ${filledBy || '(not provided)'}`)
   lines.push(`**Submitted:** ${new Date().toLocaleString()}`)

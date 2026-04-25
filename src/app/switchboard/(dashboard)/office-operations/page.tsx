@@ -2,8 +2,7 @@ import type { Metadata } from 'next'
 import ModuleInfoPage from '@/components/switchboard/ModuleInfoPage'
 
 export const metadata: Metadata = {
-  title: 'Office Operations — TZ Switchboard',
-  robots: { index: false, follow: false },
+  title: 'Office Operations',
 }
 
 export default function Page() {

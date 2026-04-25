@@ -96,7 +96,7 @@ src/
 
 ## TZ Switchboard (Internal Control Center)
 
-The Switchboard at `/switchboard` is the operational backend for TZ Electric. Auth-gated via single-password admin login. HMAC-signed cookie session, 30-day TTL. Footer link reads "Admin."
+The TZ Switchboard at `/switchboard` is the operational backend for TZ Electric. Auth-gated via single-password admin login. HMAC-signed cookie session, 30-day TTL. Footer link reads "Admin."
 
 **Live modules:**
 - **Agent Training** (`/switchboard/agent-training`) — Multi-step discovery questionnaire (~70 questions across 9 sections) that feeds the AI agent knowledge base. Auto-saves to localStorage. Submit button POSTs to `/api/agent-training/submit` which emails the Markdown to cesar@creativequalitymarketing.com via Resend.

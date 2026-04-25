@@ -2,8 +2,7 @@ import type { Metadata } from 'next'
 import ModuleInfoPage from '@/components/switchboard/ModuleInfoPage'
 
 export const metadata: Metadata = {
-  title: 'Lead Pipeline — TZ Switchboard',
-  robots: { index: false, follow: false },
+  title: 'Lead Pipeline',
 }
 
 export default function Page() {

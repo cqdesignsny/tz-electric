@@ -1,8 +1,12 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'TZ Switchboard',
-  description: 'Internal operations and AI agent control center for TZ Electric.',
+  title: {
+    default: 'TZ Switchboard',
+    template: '%s | TZ Switchboard',
+  },
+  description:
+    'Internal operations and AI agent control center for TZ Electric.',
   robots: {
     index: false,
     follow: false,

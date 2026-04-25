@@ -17,12 +17,13 @@ export default function DashboardHome() {
           Welcome
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-navy dark:text-white">
-          Switchboard
+          TZ Switchboard
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base max-w-2xl leading-relaxed">
-          The operational backend for TZ Electric. Every AI agent we build —
-          voice, SMS, web chat, email — lives here as a module. Click any
-          card to see what we&apos;re planning to build inside it.
+          The operational backend for TZ Electric. Each AI agent we build
+          lives here as its own module, whether that&apos;s voice, SMS,
+          web chat, or email. Click any card to see what we&apos;re
+          planning to build inside it.
         </p>
       </div>
 
