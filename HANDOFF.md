@@ -125,7 +125,7 @@ The endgame: **Tyler owns every paid service under his own logins and his own ca
 | **Anthropic API** | Claude API powering chat, SMS, voice agents | Tyler signs up at console.anthropic.com → adds his card → generates `ANTHROPIC_API_KEY` → we set it on his Vercel project |
 | **Twilio** | Phone number + SMS messaging for AI SMS agent | Tyler signs up at twilio.com → buys a local NY number → completes A2P 10DLC business registration → we set Twilio env vars on his Vercel |
 | **Vapi** | Voice agent (handles inbound calls, books jobs) | Tyler signs up at vapi.ai → connects his Twilio number → assistant configured against our `/api/vapi/*` tool endpoints |
-| **Resend** | Outbound email (TZ Switchboard submits, lead alerts) | Tyler signs up at resend.com → verifies `tzelectricinc.com` domain → generates `RESEND_API_KEY` → we set it on his Vercel |
+| **Resend** | Outbound email (TZ Switchboard submits, lead alerts) | **Live as of 2026-04-25.** Account created under `tzelectricoffice@gmail.com`. Domain `tzelectricinc.com` verified (SPF + DKIM via Cloudflare DNS). API key set on Vercel as `RESEND_API_KEY`. Sender: `notifications@tzelectricinc.com`, reply-to: `service@tzelectricinc.com`. Already on TZ's side, no migration needed at handoff. |
 | **Stripe** | Plan signup payments | Already on TZ's account — no migration needed |
 | **Housecall Pro** | CRM, scheduling, customer tagging | Already on TZ's account — no migration needed |
 
