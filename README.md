@@ -101,7 +101,7 @@ The Switchboard at `/switchboard` is the operational backend for TZ Electric. Au
 **Live modules:**
 - **Agent Training** (`/switchboard/agent-training`) — Multi-step discovery questionnaire (~70 questions across 9 sections) that feeds the AI agent knowledge base. Auto-saves to localStorage. Submit button POSTs to `/api/agent-training/submit` which emails the Markdown to cesar@creativequalitymarketing.com via Resend.
 
-**Coming soon (placeholders in sidebar):** Knowledge Base, Call Logs, SMS Conversations, Web Chat, Lead Pipeline, Reports, Email Assistant, Office Operations, Warehouse & Inventory, Sales & Outbound, Employee Training (Trainiuly).
+**Coming Soon / Planned modules** — every sidebar item is clickable and opens an info page describing what we're going to build there: Knowledge Base, Call Logs, SMS Conversations, Web Chat, Lead Pipeline, Reports, Email Assistant, Office Operations, Warehouse & Inventory, Sales & Outbound, Employee Training (powered by Trainual).
 
 **Required environment variables:**
 - `SWITCHBOARD_PASSWORD` — admin password Tyler/Terry/Cesar use to log in

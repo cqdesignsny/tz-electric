@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Dark mode variant — opt-in via [data-theme="dark"] on a wrapper.
+   Only used inside the Switchboard. The public site never sets it. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ============================================
    TZ ELECTRIC INC - DESIGN SYSTEM
    ============================================ */

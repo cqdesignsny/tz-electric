@@ -1,117 +1,68 @@
 import Link from 'next/link'
-import { NAV_SECTIONS } from '@/components/switchboard/nav-config'
+import { NAV_SECTIONS, navHref, type NavItem } from '@/components/switchboard/nav-config'
 
 export default function DashboardHome() {
   const allItems = NAV_SECTIONS.flatMap((s) => s.items)
-  const activeModules = allItems.filter((i) => i.status === 'active' && i.href)
+  const todoModules = allItems.filter(
+    (i) => i.status === 'active' && i.slug !== '',
+  )
   const soonModules = allItems.filter((i) => i.status === 'soon')
   const plannedModules = allItems.filter((i) => i.status === 'planned')
 
   return (
-    <div className="px-4 md:px-8 py-8 max-w-6xl">
-      <div className="mb-8">
-        <div className="text-xs uppercase tracking-wider text-gray-500 font-mono mb-1">
-          Overview
+    <div className="px-4 sm:px-6 md:px-10 lg:px-12 py-8 md:py-10 lg:py-12 max-w-6xl mx-auto w-full">
+      {/* Welcome */}
+      <div className="mb-10">
+        <div className="text-xs uppercase tracking-[0.2em] text-blue dark:text-blue-light/80 font-mono mb-2">
+          Welcome
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold text-navy">
-          Welcome back
+        <h1 className="text-3xl md:text-4xl font-bold text-navy dark:text-white">
+          Switchboard
         </h1>
-        <p className="text-gray-600 mt-1 text-sm md:text-base">
-          The Switchboard is the operational backend for TZ Electric. Active
-          sections work today. Others come online as we build them out.
+        <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base max-w-2xl leading-relaxed">
+          The operational backend for TZ Electric. Every AI agent we build —
+          voice, SMS, web chat, email — lives here as a module. Click any
+          card to see what we&apos;re planning to build inside it.
         </p>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-10">
-        <StatCard label="Calls (today)" value="—" note="Voice agent not live" />
-        <StatCard label="SMS (today)" value="—" note="SMS agent not live" />
-        <StatCard label="Web leads" value="—" note="Form pending" />
-        <StatCard label="Reviews requested" value="—" note="Workflow pending" />
-      </div>
+      {/* Things to do */}
+      {todoModules.length > 0 && (
+        <section className="mb-12">
+          <SectionHeading
+            label="Things to do"
+            note="Action items for you to complete"
+          />
+          <div className="grid grid-cols-1 gap-4">
+            {todoModules.map((m) => (
+              <ToDoCard key={m.label} item={m} />
+            ))}
+          </div>
+        </section>
+      )}
 
-      {/* Active modules */}
+      {/* Coming Soon */}
       <section className="mb-12">
-        <h2 className="text-sm uppercase tracking-wider font-semibold text-gray-500 mb-4">
-          Active Modules
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {activeModules.map((m) => (
-            <Link
-              key={m.label}
-              href={m.href!}
-              className="group bg-white border border-blue/20 hover:border-blue rounded-xl p-6 transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 block"
-            >
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <h3 className="text-lg font-bold text-navy">{m.label}</h3>
-                <span className="text-[10px] uppercase tracking-wider font-bold bg-success/10 text-success px-2 py-1 rounded">
-                  Active
-                </span>
-              </div>
-              <p className="text-sm text-gray-600 leading-relaxed mb-4">
-                {m.description}
-              </p>
-              <div className="text-sm font-semibold text-blue group-hover:text-blue-dark flex items-center gap-1">
-                Open
-                <span className="transition-transform group-hover:translate-x-0.5">
-                  →
-                </span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      {/* Coming soon */}
-      <section className="mb-12">
-        <h2 className="text-sm uppercase tracking-wider font-semibold text-gray-500 mb-4">
-          Coming Soon
-        </h2>
+        <SectionHeading
+          label="Coming Soon"
+          note="Modules being built next"
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {soonModules.map((m) => (
-            <div
-              key={m.label}
-              className="bg-white border border-gray-200 rounded-lg p-4"
-            >
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <h3 className="text-sm font-semibold text-charcoal">
-                  {m.label}
-                </h3>
-                <span className="text-[9px] uppercase tracking-wider font-bold bg-warning/10 text-warning px-1.5 py-0.5 rounded flex-shrink-0">
-                  Soon
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                {m.description}
-              </p>
-            </div>
+            <ModuleCard key={m.label} item={m} />
           ))}
         </div>
       </section>
 
       {/* Planned */}
       <section>
-        <h2 className="text-sm uppercase tracking-wider font-semibold text-gray-500 mb-4">
-          Planned
-        </h2>
+        <SectionHeading
+          label="Planned"
+          note="On the roadmap, not yet started"
+        />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {plannedModules.map((m) => (
-            <div
-              key={m.label}
-              className="bg-gray-100/60 border border-gray-200 rounded-lg p-4"
-            >
-              <div className="flex items-center justify-between gap-2 mb-1">
-                <h3 className="text-sm font-semibold text-gray-700">
-                  {m.label}
-                </h3>
-                <span className="text-[9px] uppercase tracking-wider font-bold bg-gray-200 text-gray-500 px-1.5 py-0.5 rounded flex-shrink-0">
-                  Planned
-                </span>
-              </div>
-              <p className="text-xs text-gray-500 leading-relaxed">
-                {m.description}
-              </p>
-            </div>
+            <ModuleCard key={m.label} item={m} variant="planned" />
           ))}
         </div>
       </section>
@@ -119,24 +70,107 @@ export default function DashboardHome() {
   )
 }
 
-function StatCard({
-  label,
-  value,
-  note,
-}: {
-  label: string
-  value: string
-  note: string
-}) {
+function SectionHeading({ label, note }: { label: string; note?: string }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4">
-      <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-1">
+    <div className="flex items-baseline justify-between mb-4 gap-3 flex-wrap">
+      <h2 className="text-base md:text-lg font-bold text-navy dark:text-white">
         {label}
-      </div>
-      <div className="text-2xl md:text-3xl font-bold text-navy tabular-nums">
-        {value}
-      </div>
-      <div className="text-[11px] text-gray-400 mt-1">{note}</div>
+      </h2>
+      {note && (
+        <p className="text-xs text-gray-500 dark:text-gray-400">{note}</p>
+      )}
     </div>
   )
+}
+
+function ToDoCard({ item }: { item: NavItem }) {
+  return (
+    <Link
+      href={navHref(item)}
+      className="group relative block bg-white dark:bg-[#0F1C3F] border-2 border-blue dark:border-blue-light rounded-2xl p-6 md:p-7 transition-all duration-200 hover:shadow-card-hover hover:-translate-y-0.5 overflow-hidden"
+    >
+      {/* Accent ribbon */}
+      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-accent via-blue-light to-blue" />
+
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-[10px] uppercase tracking-wider font-bold bg-accent/15 text-accent dark:bg-accent/20 dark:text-accent-light px-2 py-0.5 rounded-full">
+              Action required
+            </span>
+          </div>
+          <h3 className="text-xl md:text-2xl font-bold text-navy dark:text-white mb-1.5">
+            {item.label}
+          </h3>
+          <p className="text-sm md:text-base text-gray-600 dark:text-gray-400 leading-relaxed max-w-2xl">
+            Fill out the discovery questionnaire so we can build the AI
+            agents around how TZ actually operates. About 20 minutes,
+            saves as you go.
+          </p>
+        </div>
+        <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue dark:bg-blue-light text-white text-sm font-semibold shadow-sm group-hover:shadow-md group-hover:bg-blue-dark dark:group-hover:bg-blue transition-all">
+          Start
+          <span className="transition-transform group-hover:translate-x-0.5">
+            →
+          </span>
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function ModuleCard({
+  item,
+  variant = 'soon',
+}: {
+  item: NavItem
+  variant?: 'soon' | 'planned'
+}) {
+  const isPlanned = variant === 'planned'
+
+  return (
+    <Link
+      href={navHref(item)}
+      className={[
+        'group relative block rounded-xl p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover',
+        isPlanned
+          ? 'bg-gray-50 dark:bg-[#0A1128] border border-gray-200 dark:border-navy-light/40 hover:border-gray-300 dark:hover:border-navy-light/60'
+          : 'bg-white dark:bg-[#0F1C3F] border border-blue/20 dark:border-blue-light/30 hover:border-blue dark:hover:border-blue-light',
+      ].join(' ')}
+    >
+      <div className="flex items-start justify-between gap-2 mb-2">
+        <h3 className="text-sm font-bold text-navy dark:text-white">
+          {item.label}
+        </h3>
+        <StatusBadge status={item.status} />
+      </div>
+      <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed mb-3">
+        {item.tagline}
+      </p>
+      <div className="text-xs font-semibold text-blue dark:text-blue-light flex items-center gap-1 group-hover:text-blue-dark dark:group-hover:text-white transition-colors">
+        Learn more
+        <span className="transition-transform group-hover:translate-x-0.5">
+          →
+        </span>
+      </div>
+    </Link>
+  )
+}
+
+function StatusBadge({ status }: { status: NavItem['status'] }) {
+  if (status === 'soon') {
+    return (
+      <span className="text-[9px] uppercase tracking-wider font-bold bg-warning/10 text-warning dark:bg-warning/20 dark:text-amber-300 px-1.5 py-0.5 rounded flex-shrink-0">
+        Soon
+      </span>
+    )
+  }
+  if (status === 'planned') {
+    return (
+      <span className="text-[9px] uppercase tracking-wider font-bold bg-gray-100 text-gray-500 dark:bg-navy-light/50 dark:text-gray-300 px-1.5 py-0.5 rounded flex-shrink-0">
+        Planned
+      </span>
+    )
+  }
+  return null
 }

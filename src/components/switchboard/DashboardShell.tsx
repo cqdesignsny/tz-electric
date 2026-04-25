@@ -4,12 +4,21 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
+import { ThemeProvider } from './ThemeProvider'
 
 export default function DashboardShell({
   children,
 }: {
   children: React.ReactNode
 }) {
+  return (
+    <ThemeProvider>
+      <ShellContent>{children}</ShellContent>
+    </ThemeProvider>
+  )
+}
+
+function ShellContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -29,14 +38,14 @@ export default function DashboardShell({
   }, [mobileOpen])
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen flex flex-col">
       <TopBar
         onMobileToggle={() => setMobileOpen((v) => !v)}
         mobileOpen={mobileOpen}
       />
       <div className="flex-1 flex relative">
         {/* Desktop sidebar */}
-        <aside className="hidden md:block w-64 flex-shrink-0 border-r border-gray-200 bg-white">
+        <aside className="hidden md:block w-64 flex-shrink-0 border-r border-gray-200 dark:border-navy-light/40 bg-white dark:bg-[#0A1128]">
           <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
             <Sidebar />
           </div>
@@ -46,11 +55,11 @@ export default function DashboardShell({
         {mobileOpen && (
           <>
             <div
-              className="md:hidden fixed inset-0 top-16 bg-black/40 z-30"
+              className="md:hidden fixed inset-0 top-16 bg-black/50 dark:bg-black/70 z-30 backdrop-blur-sm"
               onClick={() => setMobileOpen(false)}
               aria-hidden
             />
-            <aside className="md:hidden fixed top-16 left-0 bottom-0 w-72 max-w-[85vw] bg-white z-40 shadow-2xl flex flex-col">
+            <aside className="md:hidden fixed top-16 left-0 bottom-0 w-72 max-w-[85vw] bg-white dark:bg-[#0A1128] z-40 shadow-2xl flex flex-col">
               <Sidebar onNavigate={() => setMobileOpen(false)} />
             </aside>
           </>

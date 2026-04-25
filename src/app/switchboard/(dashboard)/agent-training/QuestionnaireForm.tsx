@@ -145,8 +145,8 @@ export default function QuestionnaireForm() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Loading…</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-gray-500 dark:text-gray-400">Loading…</div>
       </div>
     )
   }
@@ -157,30 +157,30 @@ export default function QuestionnaireForm() {
   return (
     <div>
       {/* Header banner */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="px-4 md:px-8 py-6 md:py-8 max-w-6xl">
+      <div className="bg-white dark:bg-[#0F1C3F] border-b border-gray-200 dark:border-navy-light/40">
+        <div className="px-4 sm:px-6 md:px-10 lg:px-12 py-6 md:py-8 max-w-6xl mx-auto w-full">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
-              <div className="text-xs uppercase tracking-wider text-gray-500 font-mono mb-1">
+              <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-mono mb-1">
                 AI Agents
               </div>
-              <h1 className="text-navy text-2xl md:text-3xl font-bold">
+              <h1 className="text-navy dark:text-white text-2xl md:text-3xl font-bold">
                 Agent Training Questionnaire
               </h1>
-              <p className="text-gray-600 mt-2 max-w-2xl text-sm md:text-base">
+              <p className="text-gray-600 dark:text-gray-300 mt-2 max-w-2xl text-sm md:text-base">
                 Answer what you can. Skip anything you are not sure about. Your
                 answers save automatically as you type. When you finish, hit
                 Submit and your responses route directly to Cesar at CQ Studio.
               </p>
             </div>
             <div className="text-right flex-shrink-0">
-              <div className="text-2xl md:text-3xl font-bold text-navy tabular-nums">
+              <div className="text-2xl md:text-3xl font-bold text-navy dark:text-white tabular-nums">
                 {completedCount.answered}
-                <span className="text-gray-400 text-lg">
+                <span className="text-gray-400 dark:text-gray-500 text-lg">
                   /{completedCount.total}
                 </span>
               </div>
-              <div className="text-xs uppercase tracking-wider text-gray-500 mt-1">
+              <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 mt-1">
                 Answered
               </div>
             </div>
@@ -193,15 +193,15 @@ export default function QuestionnaireForm() {
               value={filledBy}
               onChange={(e) => setFilledBy(e.target.value)}
               placeholder="Who is filling this out? (e.g. Tyler, Terry)"
-              className="bg-gray-50 text-charcoal placeholder-gray-400 border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent w-full sm:max-w-xs"
+              className="bg-gray-50 dark:bg-[#0A1128] text-charcoal dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 border border-gray-300 dark:border-navy-light/60 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent w-full sm:max-w-xs"
             />
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-gray-500 dark:text-gray-400">
               {savedLabel ? `Auto-saved · ${savedLabel}` : 'Not saved yet'}
             </div>
           </div>
 
           {/* Progress bar */}
-          <div className="mt-5 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+          <div className="mt-5 h-1.5 bg-gray-100 dark:bg-navy-light/40 rounded-full overflow-hidden">
             <div
               className="h-full bg-accent transition-all duration-300"
               style={{
@@ -213,12 +213,12 @@ export default function QuestionnaireForm() {
       </div>
 
       {/* Body */}
-      <div className="px-4 md:px-8 py-8 md:py-10 max-w-6xl">
+      <div className="px-4 sm:px-6 md:px-10 lg:px-12 py-8 md:py-10 max-w-6xl mx-auto w-full">
         {!reviewMode ? (
           <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
             {/* Section nav */}
             <aside className="lg:sticky lg:top-6 self-start">
-              <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold mb-3">
+              <div className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 font-semibold mb-3">
                 Sections
               </div>
               <ol className="space-y-1">
@@ -235,8 +235,8 @@ export default function QuestionnaireForm() {
                         onClick={() => setCurrentSection(idx)}
                         className={`w-full text-left rounded-md px-3 py-2.5 text-sm transition-colors flex items-start gap-3 ${
                           isCurrent
-                            ? 'bg-navy text-white'
-                            : 'text-gray-700 hover:bg-gray-100'
+                            ? 'bg-navy dark:bg-blue-light text-white'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-navy-light/40'
                         }`}
                       >
                         <span
@@ -245,7 +245,7 @@ export default function QuestionnaireForm() {
                               ? 'bg-success border-success text-white'
                               : isCurrent
                                 ? 'border-white text-white'
-                                : 'border-gray-300 text-gray-400'
+                                : 'border-gray-300 dark:border-navy-light/60 text-gray-400 dark:text-gray-500'
                           }`}
                         >
                           {complete ? '✓' : idx + 1}
@@ -256,7 +256,9 @@ export default function QuestionnaireForm() {
                           </span>
                           <span
                             className={`block text-xs mt-0.5 ${
-                              isCurrent ? 'text-blue-light/80' : 'text-gray-500'
+                              isCurrent
+                                ? 'text-blue-light/80 dark:text-white/80'
+                                : 'text-gray-500 dark:text-gray-400'
                             }`}
                           >
                             {sectionAnswered}/{sectionTotal} done
@@ -270,9 +272,9 @@ export default function QuestionnaireForm() {
 
               <button
                 onClick={() => setReviewMode(true)}
-                className="mt-4 w-full text-left rounded-md px-3 py-2.5 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-3"
+                className="mt-4 w-full text-left rounded-md px-3 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-navy-light/40 flex items-center gap-3"
               >
-                <span className="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center text-gray-400 text-[10px] font-bold">
+                <span className="w-5 h-5 rounded-full border-2 border-gray-300 dark:border-navy-light/60 flex items-center justify-center text-gray-400 dark:text-gray-500 text-[10px] font-bold">
                   →
                 </span>
                 <span className="font-medium">Review &amp; Submit</span>
@@ -287,13 +289,13 @@ export default function QuestionnaireForm() {
                 onAnswer={setAnswer}
               />
 
-              <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-200">
+              <div className="flex items-center justify-between mt-10 pt-6 border-t border-gray-200 dark:border-navy-light/40">
                 <button
                   onClick={() =>
                     setCurrentSection((i) => Math.max(0, i - 1))
                   }
                   disabled={currentSection === 0}
-                  className="px-5 py-2.5 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 rounded-md text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-navy-light/40 disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   ← Previous
                 </button>
@@ -355,13 +357,15 @@ function SectionView({
   return (
     <div>
       <div className="mb-8">
-        <div className="text-xs uppercase tracking-wider text-blue font-semibold mb-2">
+        <div className="text-xs uppercase tracking-wider text-blue dark:text-blue-light font-semibold mb-2">
           {section.id}
         </div>
-        <h2 className="text-2xl md:text-3xl font-bold text-navy mb-3">
+        <h2 className="text-2xl md:text-3xl font-bold text-navy dark:text-white mb-3">
           {section.title}
         </h2>
-        <p className="text-gray-600 leading-relaxed max-w-3xl">{section.intro}</p>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed max-w-3xl">
+          {section.intro}
+        </p>
       </div>
 
       <div className="space-y-6">
@@ -388,7 +392,7 @@ function QuestionField({
   onChange: (value: string | string[]) => void
 }) {
   const baseInput =
-    'w-full bg-white border border-gray-300 rounded-md px-4 py-2.5 text-sm text-charcoal placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-light focus:border-transparent transition'
+    'w-full bg-white dark:bg-[#0A1128] border border-gray-300 dark:border-navy-light/60 rounded-md px-4 py-2.5 text-sm text-charcoal dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-light focus:border-transparent transition'
 
   const renderInput = () => {
     switch (question.type) {
@@ -432,8 +436,8 @@ function QuestionField({
                 onClick={() => onChange(opt)}
                 className={`px-4 py-2 rounded-md text-sm font-medium border transition ${
                   value === opt
-                    ? 'bg-navy text-white border-navy'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                    ? 'bg-navy dark:bg-blue-light text-white border-navy dark:border-blue-light'
+                    : 'bg-white dark:bg-[#0A1128] text-gray-700 dark:text-gray-300 border-gray-300 dark:border-navy-light/60 hover:border-gray-400 dark:hover:border-navy-light'
                 }`}
               >
                 {opt}
@@ -464,8 +468,8 @@ function QuestionField({
                   onClick={() => update(opt, detail)}
                   className={`px-4 py-2 rounded-md text-sm font-medium border transition ${
                     yn === opt
-                      ? 'bg-navy text-white border-navy'
-                      : 'bg-white text-gray-700 border-gray-300 hover:border-gray-400'
+                      ? 'bg-navy dark:bg-blue-light text-white border-navy dark:border-blue-light'
+                      : 'bg-white dark:bg-[#0A1128] text-gray-700 dark:text-gray-300 border-gray-300 dark:border-navy-light/60 hover:border-gray-400 dark:hover:border-navy-light'
                   }`}
                 >
                   {opt}
@@ -490,8 +494,8 @@ function QuestionField({
                 key={opt.value}
                 className={`flex items-start gap-3 p-3 rounded-md border cursor-pointer transition ${
                   value === opt.value
-                    ? 'border-blue bg-sky'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
+                    ? 'border-blue dark:border-blue-light bg-sky dark:bg-blue-light/10'
+                    : 'border-gray-200 dark:border-navy-light/40 bg-white dark:bg-[#0A1128] hover:border-gray-300 dark:hover:border-navy-light/70'
                 }`}
               >
                 <input
@@ -502,7 +506,7 @@ function QuestionField({
                   onChange={() => onChange(opt.value)}
                   className="mt-0.5 accent-blue"
                 />
-                <span className="text-sm text-charcoal">{opt.label}</span>
+                <span className="text-sm text-charcoal dark:text-gray-100">{opt.label}</span>
               </label>
             ))}
           </div>
@@ -522,8 +526,8 @@ function QuestionField({
                   key={opt.value}
                   className={`flex items-start gap-3 p-3 rounded-md border cursor-pointer transition ${
                     checked
-                      ? 'border-blue bg-sky'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
+                      ? 'border-blue dark:border-blue-light bg-sky dark:bg-blue-light/10'
+                      : 'border-gray-200 dark:border-navy-light/40 bg-white dark:bg-[#0A1128] hover:border-gray-300 dark:hover:border-navy-light/70'
                   }`}
                 >
                   <input
@@ -532,7 +536,7 @@ function QuestionField({
                     onChange={() => toggle(opt.value)}
                     className="mt-0.5 accent-blue"
                   />
-                  <span className="text-sm text-charcoal">{opt.label}</span>
+                  <span className="text-sm text-charcoal dark:text-gray-100">{opt.label}</span>
                 </label>
               )
             })}
@@ -545,12 +549,14 @@ function QuestionField({
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-5 md:p-6">
-      <label className="block text-base font-semibold text-navy mb-1">
+    <div className="bg-white dark:bg-[#0F1C3F] rounded-lg border border-gray-200 dark:border-navy-light/40 p-5 md:p-6">
+      <label className="block text-base font-semibold text-navy dark:text-white mb-1">
         {question.label}
       </label>
       {question.hint && (
-        <p className="text-sm text-gray-500 mb-3">{question.hint}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+          {question.hint}
+        </p>
       )}
       <div className="mt-3">{renderInput()}</div>
     </div>
