@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { COMPANY, NAV_ITEMS, TYPEFORM_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 
-const HIDDEN_PATHS = ['/agent-training', '/internal']
+const HIDDEN_PATHS = ['/switchboard', '/internal']
 
 // ============================================
 // MEGA MENU DATA

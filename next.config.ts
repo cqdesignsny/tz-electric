@@ -13,6 +13,15 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async redirects() {
+    return [
+      {
+        source: '/agent-training',
+        destination: '/switchboard/agent-training',
+        permanent: false,
+      },
+    ]
+  },
 }
 
 export default nextConfig

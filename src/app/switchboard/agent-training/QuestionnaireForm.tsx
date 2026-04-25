@@ -14,6 +14,12 @@ type Persisted = {
   savedAt: string
 }
 
+type SubmitState =
+  | { kind: 'idle' }
+  | { kind: 'submitting' }
+  | { kind: 'submitted'; deliveredByEmail: boolean }
+  | { kind: 'error'; message: string }
+
 export default function QuestionnaireForm() {
   const [hydrated, setHydrated] = useState(false)
   const [currentSection, setCurrentSection] = useState(0)
@@ -22,6 +28,7 @@ export default function QuestionnaireForm() {
   const [savedLabel, setSavedLabel] = useState<string>('')
   const [reviewMode, setReviewMode] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [submitState, setSubmitState] = useState<SubmitState>({ kind: 'idle' })
 
   useEffect(() => {
     try {
@@ -105,6 +112,34 @@ export default function QuestionnaireForm() {
       setTimeout(() => setCopied(false), 2500)
     } catch {
       alert('Could not copy to clipboard. Use Download instead.')
+    }
+  }
+
+  const handleSubmit = async () => {
+    setSubmitState({ kind: 'submitting' })
+    const markdown = buildMarkdown(answers, filledBy)
+    try {
+      const res = await fetch('/api/agent-training/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ markdown, filledBy, answers }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        throw new Error(data.error || 'Submission failed')
+      }
+      setSubmitState({
+        kind: 'submitted',
+        deliveredByEmail: Boolean(data.delivered),
+      })
+    } catch (err) {
+      setSubmitState({
+        kind: 'error',
+        message:
+          err instanceof Error
+            ? err.message
+            : 'Something went wrong. Try Copy as a backup.',
+      })
     }
   }
 
@@ -287,10 +322,12 @@ export default function QuestionnaireForm() {
             answers={answers}
             filledBy={filledBy}
             onBack={() => setReviewMode(false)}
-            onDownload={handleDownload}
+            onSubmit={handleSubmit}
             onCopy={handleCopy}
+            onDownload={handleDownload}
             onReset={handleReset}
             copied={copied}
+            submitState={submitState}
             answered={completedCount.answered}
             total={completedCount.total}
             onJumpToSection={(idx) => {
@@ -522,10 +559,12 @@ function ReviewView({
   answers,
   filledBy,
   onBack,
-  onDownload,
+  onSubmit,
   onCopy,
+  onDownload,
   onReset,
   copied,
+  submitState,
   answered,
   total,
   onJumpToSection,
@@ -533,14 +572,48 @@ function ReviewView({
   answers: Answers
   filledBy: string
   onBack: () => void
-  onDownload: () => void
+  onSubmit: () => void
   onCopy: () => void
+  onDownload: () => void
   onReset: () => void
   copied: boolean
+  submitState: SubmitState
   answered: number
   total: number
   onJumpToSection: (idx: number) => void
 }) {
+  const isSubmitting = submitState.kind === 'submitting'
+  const isSubmitted = submitState.kind === 'submitted'
+  const hasError = submitState.kind === 'error'
+
+  if (isSubmitted) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-12">
+        <div className="w-16 h-16 rounded-full bg-success/10 text-success flex items-center justify-center mx-auto mb-6 text-2xl font-bold">
+          ✓
+        </div>
+        <h2 className="text-2xl md:text-3xl font-bold text-navy mb-3">
+          Thanks{filledBy ? `, ${filledBy.split(' ')[0]}` : ''}
+        </h2>
+        <p className="text-gray-600 leading-relaxed mb-2">
+          Your answers were submitted to CQ Studio. Cesar will use them to build
+          out the AI agents.
+        </p>
+        <p className="text-sm text-gray-500 mb-8">
+          {submitState.deliveredByEmail
+            ? 'Email delivery confirmed.'
+            : 'Saved on the server. Email delivery will catch up when configured.'}
+        </p>
+        <button
+          onClick={onBack}
+          className="text-sm text-blue hover:text-blue-dark font-medium"
+        >
+          ← Back to questions
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-3xl mx-auto">
       <button
@@ -555,35 +628,44 @@ function ReviewView({
       </h2>
       <p className="text-gray-600 mb-6">
         {answered} of {total} answered{filledBy ? ` · Filled by ${filledBy}` : ''}.
-        Hit Download or Copy and send the result back to CQ Studio.
+        When you hit Submit, the answers route directly to Cesar at CQ Studio.
+        No download or email needed.
       </p>
 
-      {/* Action buttons */}
+      {/* Submit + fallback buttons */}
       <div className="bg-white rounded-lg border border-gray-200 p-5 md:p-6 mb-8">
-        <div className="flex flex-col sm:flex-row gap-3">
-          <button
-            onClick={onDownload}
-            className="flex-1 px-5 py-3 rounded-md bg-accent text-white text-sm font-semibold hover:bg-accent-dark transition"
-          >
-            Download as Markdown
-          </button>
+        <button
+          onClick={onSubmit}
+          disabled={isSubmitting}
+          className="w-full px-5 py-4 rounded-md bg-accent text-white text-base font-semibold hover:bg-accent-dark transition disabled:opacity-60 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? 'Submitting…' : 'Submit to CQ Studio'}
+        </button>
+
+        {hasError && (
+          <div className="mt-3 text-sm text-danger bg-danger/5 border border-danger/20 rounded-md px-4 py-3">
+            {submitState.message} Use Copy as a backup.
+          </div>
+        )}
+
+        <div className="flex flex-col sm:flex-row gap-2 mt-4">
           <button
             onClick={onCopy}
-            className="flex-1 px-5 py-3 rounded-md bg-blue text-white text-sm font-semibold hover:bg-blue-dark transition"
+            className="flex-1 px-4 py-2 rounded-md text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition"
           >
-            {copied ? 'Copied to clipboard' : 'Copy to Clipboard'}
+            {copied ? 'Copied' : 'Copy as backup'}
+          </button>
+          <button
+            onClick={onDownload}
+            className="flex-1 px-4 py-2 rounded-md text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition"
+          >
+            Download Markdown
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-3 leading-relaxed">
-          Email the file or pasted text to{' '}
-          <a
-            href="mailto:cqdesignsny@gmail.com"
-            className="text-blue underline"
-          >
-            cqdesignsny@gmail.com
-          </a>
-          . Your answers stay saved in this browser, so you can come back later if you
-          missed anything.
+
+        <p className="text-xs text-gray-500 mt-4 leading-relaxed">
+          Your answers stay saved in this browser, so you can come back later if
+          you missed anything.
         </p>
       </div>
 
