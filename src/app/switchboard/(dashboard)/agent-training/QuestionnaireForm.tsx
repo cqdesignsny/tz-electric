@@ -155,51 +155,53 @@ export default function QuestionnaireForm() {
   const isLast = currentSection === SECTIONS.length - 1
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       {/* Header banner */}
-      <div className="bg-navy text-white">
-        <div className="container-site py-8 md:py-10">
+      <div className="bg-white border-b border-gray-200">
+        <div className="px-4 md:px-8 py-6 md:py-8 max-w-6xl">
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
-              <div className="text-xs uppercase tracking-[0.2em] text-blue-light/70 font-mono mb-2">
-                Internal — TZ Electric
+              <div className="text-xs uppercase tracking-wider text-gray-500 font-mono mb-1">
+                AI Agents
               </div>
-              <h1 className="text-white text-3xl md:text-4xl font-bold">
-                AI Agent Training Questionnaire
+              <h1 className="text-navy text-2xl md:text-3xl font-bold">
+                Agent Training Questionnaire
               </h1>
-              <p className="text-gray-300 mt-3 max-w-2xl text-base">
-                Answer what you can. Skip anything you are not sure about. Your answers
-                save automatically as you type. When you finish, hit Download or Copy and
-                send the result back to CQ Studio.
+              <p className="text-gray-600 mt-2 max-w-2xl text-sm md:text-base">
+                Answer what you can. Skip anything you are not sure about. Your
+                answers save automatically as you type. When you finish, hit
+                Submit and your responses route directly to Cesar at CQ Studio.
               </p>
             </div>
-            <div className="text-right">
-              <div className="text-3xl font-bold text-white tabular-nums">
+            <div className="text-right flex-shrink-0">
+              <div className="text-2xl md:text-3xl font-bold text-navy tabular-nums">
                 {completedCount.answered}
-                <span className="text-gray-400 text-xl">/{completedCount.total}</span>
+                <span className="text-gray-400 text-lg">
+                  /{completedCount.total}
+                </span>
               </div>
-              <div className="text-xs uppercase tracking-wider text-gray-400 mt-1">
+              <div className="text-xs uppercase tracking-wider text-gray-500 mt-1">
                 Answered
               </div>
             </div>
           </div>
 
           {/* Filled-by + saved indicator */}
-          <div className="mt-6 flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="mt-5 flex flex-col sm:flex-row sm:items-center gap-3">
             <input
               type="text"
               value={filledBy}
               onChange={(e) => setFilledBy(e.target.value)}
               placeholder="Who is filling this out? (e.g. Tyler, Terry)"
-              className="bg-navy-light text-white placeholder-gray-400 border border-blue/40 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-light w-full sm:max-w-xs"
+              className="bg-gray-50 text-charcoal placeholder-gray-400 border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue focus:border-transparent w-full sm:max-w-xs"
             />
-            <div className="text-xs text-gray-400">
+            <div className="text-xs text-gray-500">
               {savedLabel ? `Auto-saved · ${savedLabel}` : 'Not saved yet'}
             </div>
           </div>
 
           {/* Progress bar */}
-          <div className="mt-6 h-1.5 bg-navy-light rounded-full overflow-hidden">
+          <div className="mt-5 h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className="h-full bg-accent transition-all duration-300"
               style={{
@@ -211,7 +213,7 @@ export default function QuestionnaireForm() {
       </div>
 
       {/* Body */}
-      <div className="container-site py-8 md:py-12">
+      <div className="px-4 md:px-8 py-8 md:py-10 max-w-6xl">
         {!reviewMode ? (
           <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-8">
             {/* Section nav */}

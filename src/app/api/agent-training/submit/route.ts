@@ -1,8 +1,28 @@
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
+import {
+  SWITCHBOARD_COOKIE,
+  verifySessionToken,
+} from '@/lib/switchboard-auth'
 
 const RECIPIENT = 'cesar@creativequalitymarketing.com'
 
 export async function POST(request: Request) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get(SWITCHBOARD_COOKIE)?.value
+  let authed = false
+  try {
+    authed = await verifySessionToken(token)
+  } catch {
+    authed = false
+  }
+  if (!authed) {
+    return NextResponse.json(
+      { ok: false, error: 'Sign in first' },
+      { status: 401 },
+    )
+  }
+
   let body: { markdown?: string; filledBy?: string; answers?: unknown }
   try {
     body = await request.json()

@@ -266,7 +266,7 @@ export default function Footer() {
       <div className="border-t border-navy-light/50">
         <div className="container-site py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-gray-500">
           <p>&copy; {currentYear} {COMPANY.name}. All rights reserved.</p>
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4 items-center">
             <Link href="/privacy-policy" className="hover:text-white transition-colors">
               Privacy Policy
             </Link>
@@ -275,6 +275,14 @@ export default function Footer() {
             </Link>
             <Link href="/sitemap.xml" className="hover:text-white transition-colors">
               Sitemap
+            </Link>
+            <span className="text-navy-light">·</span>
+            <Link
+              href="/switchboard"
+              className="text-gray-500 hover:text-white transition-colors"
+              aria-label="Internal admin switchboard"
+            >
+              Admin
             </Link>
           </div>
         </div>

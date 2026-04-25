@@ -1,0 +1,63 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
+import Sidebar from './Sidebar'
+import TopBar from './TopBar'
+
+export default function DashboardShell({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const pathname = usePathname()
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  useEffect(() => {
+    setMobileOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [mobileOpen])
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <TopBar
+        onMobileToggle={() => setMobileOpen((v) => !v)}
+        mobileOpen={mobileOpen}
+      />
+      <div className="flex-1 flex relative">
+        {/* Desktop sidebar */}
+        <aside className="hidden md:block w-64 flex-shrink-0 border-r border-gray-200 bg-white">
+          <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
+            <Sidebar />
+          </div>
+        </aside>
+
+        {/* Mobile sidebar overlay */}
+        {mobileOpen && (
+          <>
+            <div
+              className="md:hidden fixed inset-0 top-16 bg-black/40 z-30"
+              onClick={() => setMobileOpen(false)}
+              aria-hidden
+            />
+            <aside className="md:hidden fixed top-16 left-0 bottom-0 w-72 max-w-[85vw] bg-white z-40 shadow-2xl flex flex-col">
+              <Sidebar onNavigate={() => setMobileOpen(false)} />
+            </aside>
+          </>
+        )}
+
+        <main className="flex-1 min-w-0">{children}</main>
+      </div>
+    </div>
+  )
+}

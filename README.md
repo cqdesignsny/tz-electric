@@ -37,9 +37,10 @@ Dev server runs at [http://localhost:3000](http://localhost:3000).
 
 ```
 src/
-├── app/                           # Next.js App Router pages
+├── middleware.ts                  # Gates /switchboard/* routes (session cookie)
+├── app/
 │   ├── layout.tsx                 # Root layout (fonts, GTM, JSON-LD, Header/Footer)
-│   ├── page.tsx                   # Homepage (8 sections)
+│   ├── page.tsx                   # Homepage
 │   ├── globals.css                # Design system via Tailwind @theme
 │   ├── (services)/[slug]/         # 7 dynamic service pages
 │   ├── mitsubishi/                # Mitsubishi Electric landing page
@@ -57,10 +58,26 @@ src/
 │   ├── terms-condition/           # Terms & conditions
 │   ├── cookies/                   # Cookie policy
 │   ├── accessibility-statement/   # WCAG 2.1 AA compliance
-│   └── refund-cancellation-policy/# Refund policy
+│   ├── refund-cancellation-policy/# Refund policy
+│   ├── switchboard/               # TZ Switchboard internal control center
+│   │   ├── layout.tsx             # Bare wrapper + noindex metadata
+│   │   ├── login/                 # /switchboard/login (public, no chrome)
+│   │   │   ├── page.tsx
+│   │   │   └── LoginForm.tsx
+│   │   └── (dashboard)/           # Auth-gated dashboard with sidebar
+│   │       ├── layout.tsx         # Renders DashboardShell
+│   │       ├── page.tsx           # Dashboard home (overview, modules)
+│   │       └── agent-training/    # Agent training questionnaire
+│   │           ├── page.tsx
+│   │           ├── QuestionnaireForm.tsx
+│   │           └── questions.ts
+│   └── api/
+│       ├── agent-training/submit/ # Email questionnaire to Cesar via Resend
+│       └── switchboard/auth/      # /login + /logout cookie session
 ├── components/
 │   ├── ui/                        # Button, Badge, Card, SectionHeader, StarRating, TrustIndexWidget
 │   ├── layout/                    # Header (sticky, dropdowns, mobile), Footer (4-col)
+│   ├── switchboard/               # Sidebar, TopBar, DashboardShell, nav-config
 │   ├── sections/                  # HeroSection, TrustBar, ServicesGrid, WhyChooseUs,
 │   │                              # ReviewsSection, ServiceAreaSection, CTASection,
 │   │                              # ServicePageTemplate, CertificationSlider
@@ -72,8 +89,27 @@ src/
     ├── service-areas-data.ts      # 7 cities + 5 counties data (slug, county, meta, descriptions)
     ├── mitsubishi-data.ts         # Mitsubishi landing page content
     ├── signature-plans-data.ts    # Maintenance plan tiers & pricing
+    ├── housecall-pro.ts           # HCP API client (customer search, create, tag)
+    ├── switchboard-auth.ts        # HMAC-signed session token for /switchboard/*
     └── utils.ts                   # cn(), formatPhone()
 ```
+
+## TZ Switchboard (Internal Control Center)
+
+The Switchboard at `/switchboard` is the operational backend for TZ Electric. Auth-gated via single-password admin login. HMAC-signed cookie session, 30-day TTL. Footer link reads "Admin."
+
+**Live modules:**
+- **Agent Training** (`/switchboard/agent-training`) — Multi-step discovery questionnaire (~70 questions across 9 sections) that feeds the AI agent knowledge base. Auto-saves to localStorage. Submit button POSTs to `/api/agent-training/submit` which emails the Markdown to cesar@creativequalitymarketing.com via Resend.
+
+**Coming soon (placeholders in sidebar):** Knowledge Base, Call Logs, SMS Conversations, Web Chat, Lead Pipeline, Reports, Email Assistant, Office Operations, Warehouse & Inventory, Sales & Outbound, Employee Training (Trainiuly).
+
+**Required environment variables:**
+- `SWITCHBOARD_PASSWORD` — admin password Tyler/Terry/Cesar use to log in
+- `SWITCHBOARD_SESSION_SECRET` — HMAC secret for signing session cookies (≥16 chars, random)
+- `RESEND_API_KEY` — Resend API key (sender lives at cesar@creativequalitymarketing.com Resend account)
+
+If `RESEND_API_KEY` is missing, submissions are accepted but not emailed (graceful degradation).
+If `SWITCHBOARD_SESSION_SECRET` is missing, login throws a 503 with a clear message.
 
 ## Pages (38 Static Routes)
 
