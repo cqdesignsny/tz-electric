@@ -2,7 +2,7 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-04-25 — all three locations synced at `6abf7fc`.
+**Last verified:** 2026-04-25 — all three locations synced at `43616fe`.
 
 ## Sync architecture (read this first)
 
@@ -109,6 +109,30 @@ The site deploys but the Switchboard will not work until these are set on Vercel
 - Migrate the site to Tyler's Vercel team
 - Build native lead form (replaces Typeform)
 - Scaffold SMS, web chat, Vapi tool endpoints
+
+## Account handoff plan (everything paid moves to Tyler)
+
+The endgame: **Tyler owns every paid service under his own logins and his own card.** CQ Marketing keeps only the GitHub repo and the source code we author. All hosting, AI, telecom, and email costs hit Tyler's card directly. We stop being the middleman.
+
+### Stays with CQ Marketing
+- GitHub repo `cqdesignsny/tz-electric` (source of truth for the code)
+- Ongoing development and maintenance work
+
+### Moves to Tyler (TZ Electric)
+| Service | What it does | Migration step |
+|---|---|---|
+| **Vercel team** | Hosts the site, deploys, owns the domain | Tyler creates a Vercel team → invites Cesar as member → we transfer `tz-electric` project from `cq-marketings-projects` to his team → reattach `tzelectricinc.com` (DNS doesn't need to change — same Vercel IP) |
+| **Anthropic API** | Claude API powering chat, SMS, voice agents | Tyler signs up at console.anthropic.com → adds his card → generates `ANTHROPIC_API_KEY` → we set it on his Vercel project |
+| **Twilio** | Phone number + SMS messaging for AI SMS agent | Tyler signs up at twilio.com → buys a local NY number → completes A2P 10DLC business registration → we set Twilio env vars on his Vercel |
+| **Vapi** | Voice agent (handles inbound calls, books jobs) | Tyler signs up at vapi.ai → connects his Twilio number → assistant configured against our `/api/vapi/*` tool endpoints |
+| **Resend** | Outbound email (Switchboard submits, lead alerts) | Tyler signs up at resend.com → verifies `tzelectricinc.com` domain → generates `RESEND_API_KEY` → we set it on his Vercel |
+| **Stripe** | Plan signup payments | Already on TZ's account — no migration needed |
+| **Housecall Pro** | CRM, scheduling, customer tagging | Already on TZ's account — no migration needed |
+
+### Order of operations
+1. **Now → migration day:** finish building Switchboard modules + AI agents under our Vercel/Resend/Anthropic accounts. Tyler fills out the questionnaire; we build the agent knowledge base.
+2. **Migration day (single focused session):** Tyler provisions every account above. We do the cutover in one sitting — transfer Vercel project, swap each env var to his keys, redeploy, smoke test login + lead form + agents.
+3. **After migration:** Tyler's card pays all infra directly. We keep shipping code from the GitHub repo and Vercel autodeploys to his team.
 
 ## What's NOT built (intentionally deferred)
 
