@@ -2,7 +2,7 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-04-25, end of session 11. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
+**Last verified:** 2026-04-27, mid-session 12. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
 
 ## Sync architecture (read this first)
 
@@ -12,7 +12,9 @@ Three copies of this codebase exist. They must always match.
 |---|---|---|
 | **GitHub** | `https://github.com/cqdesignsny/tz-electric.git` | **Source of truth.** Vercel deploys from here. |
 | **SSD** | `/Volumes/CQ-PRO-4TB/CQ Marketing/TZ-Electric/TZ-Site-2026/tz-site` | **Local dev location.** Run `npm run dev` here (Turbopack hates Dropbox). |
-| **Dropbox** | `/Users/cqmarketing/Dropbox/TZ Electric Inc/TZ-Site-2026/tz-site` | **Cloud backup mirror.** Editable, but prefer SSD for active work. |
+| **Dropbox** | `/Users/cqstudio/Library/CloudStorage/Dropbox/TZ Electric Inc/TZ-Site-2026/tz-site` | **Cloud backup mirror.** Editable, but prefer SSD for active work. |
+
+**Per-machine note:** On Cesar's laptop the home directory is `cqmarketing` and Dropbox is at `/Users/cqmarketing/Dropbox/TZ Electric Inc/...`. Same Dropbox folder, different user-path prefix. The SSD's `.git/hooks/post-commit` hardcodes one path in its `PEER=` line and needs to be edited per machine to match the local Dropbox path, otherwise the SSD-to-Dropbox auto-sync silently no-ops.
 
 **Hierarchy if anything ever drifts:** GitHub > SSD > Dropbox.
 
@@ -37,7 +39,8 @@ All four live inside the repo and ride the auto-sync. Update them at the end of 
 
 ```bash
 git -C "/Volumes/CQ-PRO-4TB/CQ Marketing/TZ-Electric/TZ-Site-2026/tz-site" rev-parse HEAD
-git -C "/Users/cqmarketing/Dropbox/TZ Electric Inc/TZ-Site-2026/tz-site" rev-parse HEAD
+git -C "/Users/cqstudio/Library/CloudStorage/Dropbox/TZ Electric Inc/TZ-Site-2026/tz-site" rev-parse HEAD  # main rig
+# git -C "/Users/cqmarketing/Dropbox/TZ Electric Inc/TZ-Site-2026/tz-site" rev-parse HEAD  # laptop
 git ls-remote https://github.com/cqdesignsny/tz-electric.git refs/heads/main
 ```
 All three should print the same SHA.
@@ -46,7 +49,9 @@ All three should print the same SHA.
 
 ## Current state
 
-The TZ Switchboard is live and fully functional at `tzelectricinc.com/switchboard`. Tyler has the link and password. The agent training questionnaire is the open task. When he submits, the answers route to `cesar@creativequalitymarketing.com` as a branded HTML email.
+The TZ Switchboard is live and fully functional at `tzelectricinc.com/switchboard`. **Tyler submitted the agent training questionnaire on 2026-04-26 at 11:46 AM.** Cesar followed up with gap questions on 2026-04-27 and Tyler answered the persona/SMS/water-heater-promo/review-workflow gaps. All answers (original + follow-up) are locked in at [`docs/agent-training-answers.md`](docs/agent-training-answers.md). That file is the canonical knowledge base the SMS, voice, and web chat agents will load as their system prompt context. The persona is **Claire** (female voice, identifies as AI in the opener).
+
+A handful of blockers remain before the SMS or voice agent can ship; see "What's open right now" below and section 10 of `docs/agent-training-answers.md`.
 
 ### What's live in production
 
@@ -96,9 +101,15 @@ All of the above are on Production and Development. Preview is intentionally ski
 
 ## What's open right now
 
-- [ ] **Tyler fills out the agent training questionnaire.** Cesar already sent him the link, password, and a context message via Slack on 2026-04-25.
-- [ ] **Smoke test the full email flow.** Submit the questionnaire ourselves, confirm the branded email lands in `cesar@creativequalitymarketing.com` and renders well across Apple Mail, Gmail, Outlook.
-- [ ] **Native lead form to replace Typeform.** Multi-step lead capture, GCLID tracking for Google Ads Smart Bidding, posts directly to Housecall Pro. Reuses `renderEmailLayout()` for the lead notification email.
+- [x] ~~Tyler fills out the agent training questionnaire.~~ Submitted 2026-04-26.
+- [x] ~~Smoke test the full email flow.~~ Tyler's submission landed cleanly in `cesar@creativequalitymarketing.com` via Resend.
+- [ ] **Native lead form to replace Typeform (active priority).** Multi-step lead capture, GCLID tracking for Google Ads Smart Bidding, posts directly to Housecall Pro. Reuses `renderEmailLayout()` for the lead notification email.
+- [ ] **Get Tyler's answers on the 5 remaining blockers** (won't block the lead form, will block SMS / voice agents). All listed in section 10 of `docs/agent-training-answers.md`:
+    1. HCP required fields (his original answer was cut off mid-sentence, blocks auto-creation of customer records)
+    2. Renter / landlord approval workflow (collect landlord info and route to office, or hard block?)
+    3. Home warranty company decline script (we no, just need wording)
+    4. Review-already-left detection (recommend office staff manually flag in HCP for v1)
+    5. Saturday dispatch scope (does AI dispatch the on-call tech on Saturday or only book for Monday?)
 
 ## Account handoff plan (everything paid moves to Tyler)
 
@@ -133,6 +144,28 @@ The endgame: **Tyler owns every paid service under his own logins and his own ca
 - **Theme cookie.** Theme persists in localStorage only. Server-rendered HTML always defaults to light, then the inline init script sets the right `data-theme` before hydrate. Acceptable. Future: cookie-based for true zero-flash SSR.
 - **proxy.ts migration.** Next 16 prefers `proxy.ts` over `middleware.ts`. Backwards-compatible. Deferred until a focused session to validate the API.
 - **Branch-preview env vars.** Vercel CLI bug around all-preview-branches; not worth the workaround since we don't use feature-branch previews.
+
+## Files added or significantly changed in session 12 (Apr 27)
+
+```
+docs/agent-training-answers.md                            NEW, canonical agent knowledge base (Tyler's
+                                                          questionnaire answers + follow-up gap answers,
+                                                          structured for direct injection into agent
+                                                          system prompts)
+HANDOFF.md                                                MOD, this file — questionnaire status, blockers,
+                                                          Dropbox path correction, session 12 entry
+README.md                                                 MOD, references the new agent training answers
+                                                          doc + Claire persona
+MEMORY.md                                                 MOD, Delaware county, Claire persona, session 12
+                                                          entry, key files updated
+```
+
+Non-repo housekeeping that happened the same session (not part of any commit):
+
+- `tz-site/.env.local` synced from Dropbox → SSD (was missing on SSD, blocks `npm run dev`).
+- `tz-site/.vercel/project.json` on Dropbox replaced with the canonical SSD copy (Dropbox had a stale link to an old `tz-site` Vercel project; canonical is `tz-electric` / `prj_wtBcaXPS6KOeXJniJroHRYnxiDtm`).
+- Parent-level docs (`README.md`, `STRATEGY.md`, `webflow-data.md`, `skills-lock.json`) and the `.agents/` Resend skill bundles + parent `.claude/` settings copied from Dropbox → SSD parent.
+- SSD `.git/hooks/post-commit` `PEER=` path fixed from `/Users/cqmarketing/...` to `/Users/cqstudio/Library/CloudStorage/Dropbox/...` so SSD-to-Dropbox auto-sync actually runs on the main rig.
 
 ## Files added or significantly changed in session 11 (Apr 25)
 
@@ -185,7 +218,8 @@ openssl rand -hex 32
 
 # Verify all three locations are in sync
 git -C "/Volumes/CQ-PRO-4TB/CQ Marketing/TZ-Electric/TZ-Site-2026/tz-site" rev-parse HEAD
-git -C "/Users/cqmarketing/Dropbox/TZ Electric Inc/TZ-Site-2026/tz-site" rev-parse HEAD
+git -C "/Users/cqstudio/Library/CloudStorage/Dropbox/TZ Electric Inc/TZ-Site-2026/tz-site" rev-parse HEAD  # main rig
+# git -C "/Users/cqmarketing/Dropbox/TZ Electric Inc/TZ-Site-2026/tz-site" rev-parse HEAD  # laptop
 git ls-remote https://github.com/cqdesignsny/tz-electric.git refs/heads/main
 
 # Vercel env management (project linked at SSD only)
@@ -199,11 +233,12 @@ vercel redeploy <last-prod-url>
 
 ## What Cesar wants next
 
-1. Tyler completes the questionnaire and we get the answers
-2. Build the agent knowledge base (`/switchboard/knowledge-base` becomes the live module)
-3. Native lead form to replace Typeform (with GCLID tracking and HCP integration)
-4. Scaffold the AI agents in order: SMS, web chat, then Vapi voice
-5. Wire each "coming soon" module as it ships
-6. When everything works, run the Tyler migration day (Vercel team transfer + remaining account provisioning)
+1. ✓ Tyler completes the questionnaire and we get the answers (done 2026-04-26)
+2. **Native lead form to replace Typeform** (active priority, with GCLID tracking and HCP integration)
+3. Wire `/switchboard/knowledge-base` to render `docs/agent-training-answers.md` so Tyler can review and refine answers in-app
+4. Get answers on the 5 remaining blockers in section 10 of `docs/agent-training-answers.md`
+5. Scaffold the AI agents in order: SMS first (Claire, 24/7), web chat next (proactive popup at 15s, all pages), Vapi voice last (15-min max before handoff)
+6. Wire each "coming soon" module as it ships
+7. When everything works, run the Tyler migration day (Vercel team transfer + remaining account provisioning)
 
-The TZ Switchboard becomes Tyler's permanent operational backend. Every future agent (email assistant, office ops, warehouse, sales, marketing) ships as a new module in this same dashboard.
+The TZ Switchboard becomes Tyler's permanent operational backend. Every future agent (email assistant, office ops, warehouse, sales, marketing) ships as a new module in this same dashboard. The voice persona for all customer-facing agents is **Claire** (per the answers doc).

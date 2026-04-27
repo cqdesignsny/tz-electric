@@ -107,7 +107,7 @@ src/
 The TZ Switchboard at `/switchboard` is the operational backend for TZ Electric. Auth-gated via single-password admin login. HMAC-signed cookie session, 30-day TTL. Public footer has a discreet "Admin" link in the bottom bar.
 
 **Live modules:**
-- **Agent Training** (`/switchboard/agent-training`), multi-step discovery questionnaire (~70 questions across 9 sections) that feeds the AI agent knowledge base. Auto-saves to localStorage. Submit posts to `/api/agent-training/submit`, which sends a branded HTML email to the recipient configured in `AGENT_TRAINING_TO_EMAIL` (default `cesar@creativequalitymarketing.com`).
+- **Agent Training** (`/switchboard/agent-training`), multi-step discovery questionnaire (~70 questions across 9 sections) that feeds the AI agent knowledge base. Auto-saves to localStorage. Submit posts to `/api/agent-training/submit`, which sends a branded HTML email to the recipient configured in `AGENT_TRAINING_TO_EMAIL` (default `cesar@creativequalitymarketing.com`). **Tyler submitted on 2026-04-26.** His answers (plus follow-up gap answers) live at [`docs/agent-training-answers.md`](docs/agent-training-answers.md), which is the canonical knowledge base the SMS, voice, and web chat agents will load as their system prompt context.
 
 **Coming Soon and Planned modules:** every sidebar item is clickable and opens a dedicated info page describing what we'll build there. All 11 share a single `ModuleInfoPage` template that reads from `nav-config.ts`:
 - Lead Pipeline, Reports, Employee Training (Trainual)
@@ -186,7 +186,8 @@ All scripts loaded directly in `(public)/layout.tsx` so they only fire on the pu
 - **Email:** service@tzelectricinc.com
 - **Address:** 5079 NY-32, Catskill, NY 12414
 - **Service Area:** Hudson Valley, NY (Greene, Columbia, Ulster, Dutchess, Albany, Delaware counties)
-- **Certifications:** Mitsubishi Diamond Elite Contractor, Generac Authorized Dealer, BBB Accredited, Voted Best Electrician Hudson Valley
+- **Certifications:** Mitsubishi Diamond Elite Contractor, Generac Authorized Dealer, BBB Accredited
+- **Awards:** Chronogrammies #1 Electrician Hudson Valley 2025 + 2026 (#2 in 2023), Nextdoor #1 Electrician two years running
 - **Local Copy:** `/Volumes/CQ-PRO-4TB/CQ Marketing/TZ-Electric/TZ-Site-2026/tz-site`
 
 ## SEO & Infrastructure
@@ -225,11 +226,15 @@ All scripts loaded directly in `(public)/layout.tsx` so they only fire on the pu
 ### Priority
 - [ ] **Native forms to replace Typeform.** Multi-step lead capture + job application forms directly on the site. Wire to Housecall Pro CRM for instant lead delivery. Include GCLID tracking (Google Click ID) for Smart Bidding optimization. Eliminates Typeform subscription and improves ad conversion tracking. Reuses `renderEmailLayout()` for the lead notification.
 
-### AI Agent Buildout (per agent training answers)
-- [ ] Knowledge Base module (live editor, version history, search)
-- [ ] SMS agent (Twilio + Anthropic Claude, threaded conversations, takeover button)
-- [ ] Web chat agent (replaces Podium, integrated with knowledge base)
-- [ ] Voice agent (Vapi + Twilio, books jobs, handles emergencies)
+### AI Agent Buildout
+
+The voice persona for all customer-facing agents is **Claire** (female voice, warm/neighborly, identifies as AI in the opener). Source of truth for behavior: [`docs/agent-training-answers.md`](docs/agent-training-answers.md).
+
+- [ ] **5 remaining blockers** before agents can ship (section 10 of the answers doc): HCP required fields, renter/landlord workflow, home-warranty decline script, review-already-left detection, Saturday dispatch scope.
+- [ ] Knowledge Base module (live editor over the answers doc, version history, search)
+- [ ] SMS agent — Claire, Twilio + Anthropic Claude, 24/7, threaded conversations, takeover button
+- [ ] Web chat agent — Claire, replaces Podium gap, proactive popup at 15s, on all pages
+- [ ] Voice agent — Claire, Vapi + Twilio, 15-min max before forced handoff, books jobs, follows after-hours emergency dispatch SOP
 - [ ] Lead Pipeline (live view of all captured leads)
 - [ ] Reports (calls, leads, conversions, revenue per channel)
 - [ ] Email Assistant for Tyler's inbox
