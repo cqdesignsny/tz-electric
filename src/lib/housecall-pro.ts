@@ -116,6 +116,13 @@ export async function createCustomer(data: CustomerData, planInfo: PlanInfo): Pr
  * Lead form submission. Lands in HCP Job Inbox > "API Leads" channel.
  * See docs/agent-training-answers.md section 10.1 for the rationale on
  * using /leads instead of /customers for prospect capture.
+ *
+ * Payload shape matches HCP's actual /leads endpoint (verified against
+ * the BuildWithBeacon housecallpro-mcp reference implementation):
+ * customer is a nested object, address is a flat object (no `type`
+ * field), service intent goes in `description` since /leads has no
+ * dedicated service_type, and tags / renter status are folded into
+ * `notes` since the lead create endpoint doesn't accept tags directly.
  */
 export type LeadPayload = {
   firstName: string
@@ -129,7 +136,6 @@ export type LeadPayload = {
   serviceType: string
   source: 'Website Lead Form' | 'TZ AI Agent'
   notes: string
-  tags?: string[]
 }
 
 export type HCPLeadResponse = {
@@ -138,20 +144,20 @@ export type HCPLeadResponse = {
 }
 
 export async function createLead(lead: LeadPayload): Promise<HCPLeadResponse> {
-  const baseTags = [lead.source === 'TZ AI Agent' ? 'TZ AI AGENT' : 'Web Form']
-  const tags = [...baseTags, ...(lead.tags || [])]
+  const fullName = `${lead.firstName.trim()} ${lead.lastName.trim()}`.trim()
+
+  const customer: Record<string, string> = {
+    name: fullName,
+    phone: normalizePhone(lead.phone),
+  }
+  if (lead.email) customer.email = lead.email
 
   const body: Record<string, unknown> = {
-    first_name: lead.firstName,
-    last_name: lead.lastName,
-    mobile_number: normalizePhone(lead.phone),
-    lead_source: lead.source,
-    service_type: lead.serviceType,
+    customer,
+    source: lead.source,
+    description: `${lead.serviceType} service request`,
     notes: lead.notes,
-    tags,
   }
-
-  if (lead.email) body.email = lead.email
 
   if (lead.street && lead.city && lead.state && lead.zip) {
     body.address = {
@@ -159,7 +165,6 @@ export async function createLead(lead: LeadPayload): Promise<HCPLeadResponse> {
       city: lead.city,
       state: lead.state,
       zip: lead.zip,
-      type: 'service',
     }
   }
 

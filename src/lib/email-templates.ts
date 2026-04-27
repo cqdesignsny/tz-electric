@@ -339,6 +339,7 @@ type LeadFormSubmissionOptions = {
   utmCampaign?: string
   landingPage?: string
   hcpLeadId?: string
+  hcpError?: string
   submittedAt?: Date
 }
 
@@ -436,8 +437,11 @@ export function renderLeadFormSubmissionEmail(
         HCP Lead ID: <code style="font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;color:#1E40AF;">${escapeHtml(opts.hcpLeadId)}</code>
       </div>`
     : `
-      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#B91C1C;margin-top:6px;">
-        ⚠ HCP lead creation failed. Office should manually enter this lead.
+      <div style="background:#FEE2E2;border:1px solid #FCA5A5;border-radius:8px;padding:12px 14px;margin-top:6px;">
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#991B1B;font-weight:700;margin-bottom:4px;">
+          ⚠ HCP lead creation failed. Office should manually enter this lead.
+        </div>
+        ${opts.hcpError ? `<div style="font-family:'SFMono-Regular',Consolas,monospace;font-size:11.5px;color:#7F1D1D;line-height:1.5;white-space:pre-wrap;word-break:break-word;">${escapeHtml(opts.hcpError)}</div>` : ''}
       </div>`
 
   const bodyHtml = `

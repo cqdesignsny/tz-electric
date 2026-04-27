@@ -40,7 +40,17 @@ function isNonEmpty(value: unknown): value is string {
 }
 
 function buildLeadNotes(body: SubmitBody): string {
+  // The HCP /leads endpoint doesn't accept tags directly. Lead context that
+  // would otherwise be a tag (renter status, Google Ads source, AI vs form
+  // origin) gets prepended here so it's the first thing office staff see.
   const lines: string[] = []
+
+  const flags: string[] = []
+  flags.push(body.tracking?.gclid ? '[TZ AI AGENT or Google Ads]' : '[Web Form]')
+  if (body.ownership === 'renter') flags.push('[RENTER - LANDLORD VERIFICATION NEEDED]')
+  lines.push(flags.join(' '))
+  lines.push('')
+
   lines.push(`Service: ${body.serviceLabel} (${body.serviceKey})`)
   lines.push('')
   lines.push('--- Qualification ---')
@@ -113,10 +123,6 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const tags: string[] = []
-  if (body.ownership === 'renter') tags.push('Renter - Landlord Verification Needed')
-  if (body.tracking?.gclid) tags.push('Google Ads')
-
   const leadPayload: LeadPayload = {
     firstName: body.firstName.trim(),
     lastName: body.lastName.trim(),
@@ -129,7 +135,6 @@ export async function POST(req: NextRequest) {
     serviceType: body.serviceLabel,
     source: 'Website Lead Form',
     notes: buildLeadNotes(body),
-    tags,
   }
 
   let hcpLeadId: string | undefined
@@ -182,6 +187,7 @@ export async function POST(req: NextRequest) {
       utmCampaign: body.tracking?.utmCampaign,
       landingPage: body.tracking?.landingPage,
       hcpLeadId,
+      hcpError,
     })
 
     try {
