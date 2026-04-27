@@ -103,13 +103,10 @@ All of the above are on Production and Development. Preview is intentionally ski
 
 - [x] ~~Tyler fills out the agent training questionnaire.~~ Submitted 2026-04-26.
 - [x] ~~Smoke test the full email flow.~~ Tyler's submission landed cleanly in `cesar@creativequalitymarketing.com` via Resend.
-- [ ] **Native lead form to replace Typeform (active priority).** Multi-step lead capture, GCLID tracking for Google Ads Smart Bidding, posts directly to Housecall Pro. Reuses `renderEmailLayout()` for the lead notification email.
-- [ ] **Get Tyler's answers on the 5 remaining blockers** (won't block the lead form, will block SMS / voice agents). All listed in section 10 of `docs/agent-training-answers.md`:
-    1. HCP required fields (his original answer was cut off mid-sentence, blocks auto-creation of customer records)
-    2. Renter / landlord approval workflow (collect landlord info and route to office, or hard block?)
-    3. Home warranty company decline script (we no, just need wording)
-    4. Review-already-left detection (recommend office staff manually flag in HCP for v1)
-    5. Saturday dispatch scope (does AI dispatch the on-call tech on Saturday or only book for Monday?)
+- [x] ~~Get Tyler's answers on the remaining blockers.~~ Tyler doesn't have opinions on the operational gaps, so CQ Studio filled them in with industry-standard best-practice defaults. See **section 10 of `docs/agent-training-answers.md`** ("v1 Best-Practice Fills"). Tyler can override any default by editing that file. Resolved: HCP record creation flow (use `/leads` endpoint), renter / landlord workflow (soft-block, collect landlord info, office verifies), home warranty decline script (warm pivot to Wisetack / Synchrony financing), review-already-left detection (single automated send + optional manual follow-up via Switchboard), Saturday dispatch scope (emergencies follow after-hours SOP, non-emergencies book for next business day, no estimates).
+- [ ] **Native lead form to replace Typeform (active priority, in progress).** `/quote` page, 3-step (service type → quick qualification → contact + address), posts to HCP `POST /leads`, branded email via Resend reusing `renderEmailLayout()`, GCLID + UTM capture, replaces every `TYPEFORM_URL` CTA site-wide.
+- [ ] Knowledge Base v1 (read-only) at `/switchboard/knowledge-base`. Renders `docs/agent-training-answers.md` as a structured browsable view, broken out by category. Sets up Tyler / Cesar to review the full answer set without opening the file.
+- [ ] Knowledge Base v2 (edit-in-place). Authenticated WYSIWYG editor commits changes to the answers doc via the GitHub API. Version history and diffs come from git. Closes the loop on "easy way to continuously edit the agents."
 
 ## Account handoff plan (everything paid moves to Tyler)
 

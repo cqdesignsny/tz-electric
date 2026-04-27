@@ -746,22 +746,78 @@ Route to voicemail.
 
 ---
 
-## 10. Open Items (Blockers & Clarifications)
+## 10. v1 Best-Practice Fills (CQ Studio judgment)
 
-These need answers before we ship the SMS or voice agent.
+Tyler couldn't fill in five of the gaps Cesar flagged, so CQ Studio made the calls based on industry-standard practice for multi-trade home-services contractors. These are designed to be safe, customer-respectful defaults. Tyler can override any of them by editing this file. The matching items have been struck from the open-items table below.
+
+### 10.1 HCP record creation (resolves blocker 1)
+
+Production lead capture (web form, SMS, voice, web chat) creates **HCP Leads** via `POST /leads`, NOT customer records. Leads land in HCP Job Inbox in the "API Leads" channel where the office triages and converts to customers when work is booked. Plan-signup payments (Stripe webhook) keep using `POST /customers` because those are paying customers immediately.
+
+Required fields the agent / form sends on every submission:
+- `first_name`, `last_name`, `mobile_number`
+- `email` (asked, optional but strongly preferred)
+- `address` (street, city, state, zip)
+- `lead_source`: "Website Lead Form" or "TZ AI Agent" depending on channel
+- `service_type`: HVAC, Electrical, Generator, Plumbing, EV Charger, Surge Protection, Other
+- `notes`: rich context block. Always includes GCLID, UTM source/medium/campaign, page that triggered the form, service type and urgency, qualification answers, timestamp. AI-generated leads also include the conversation summary or transcript link.
+- `tags`: `Web Form` (always for the form), `TZ AI AGENT` (Tyler's specified tag, used for any AI-generated record), `Renter - Landlord Verification Needed` (when applicable, see 10.2)
+
+Why Leads not Customers: a lead is a prospect, not a customer until work is booked. Creating customer records on every web submission clutters HCP and creates duplicates when the office later books the actual job.
+
+### 10.2 Renter / landlord workflow (resolves blocker 2)
+
+Soft-block at the point of capture. Form / AI asks "Are you the homeowner or are you renting?" upfront. If renting, an extra panel collects landlord name, phone, and email, plus a checkbox: "I have my landlord's permission for this work / they've authorized the visit."
+
+Submission still posts to HCP Leads but tagged `Renter - Landlord Verification Needed`. The office calls the landlord before booking. AI / form **never auto-books a renter without office sign-off.**
+
+For voice and SMS specifically, Claire branches early: "Got it. Before we can book, our team will need to verify with your landlord. Can I get their name and best phone number?"
+
+Industry rationale: work on the structure (panels, HVAC installs, plumbing) typically requires owner authorization for permits, insurance, lien rights, and warranty registration. A booked job without owner sign-off creates a bad job (work blocked at the door, wasted truck roll). This is the standard pattern at Service Champions, ARS, and most multi-state HVAC contractors.
+
+### 10.3 Home warranty decline script (resolves blocker 3)
+
+Decline warm, pivot to financing. Don't bash the warranty company.
+
+> "We don't work directly with home warranty companies. We've found we can serve our customers faster and with higher quality working direct. We'd still love to help you out, and if cost is a concern we offer financing through Wisetack and Synchrony with quick approvals. Would you like me to set up a Field Assessment or a Diagnostic visit?"
+
+The pivot to financing is intentional: customers go to home warranty companies because they're cost-sensitive, declining without an alternative loses the lead. This is the standard playbook from Nexstar Network and Service Roundtable training.
+
+### 10.4 Review-already-left detection (resolves blocker 4)
+
+Single send only. No automated follow-up. Optional manual second send via the TZ Switchboard.
+
+- **First send:** 48 hours after job completion, between 5:00–9:00 PM (per Tyler).
+- **No automated follow-up** to avoid pestering customers who already reviewed (Tyler's specific concern).
+- **Manual second send via TZ Switchboard:** the "Reviews Requested" view in the Switchboard shows every customer who got the first ask. Office staff can one-click "Send follow-up reminder" or "Mark as reviewed" if they know the customer already left a review. Judgment stays with the human.
+- **Future automation:** when the Google Business Profile API can reliably webhook review events, wire that to flip an HCP custom field `review_left = true` and unlock automated follow-ups. Don't build that now, the API is unreliable and the manual flow is fine for v1.
+
+### 10.5 Saturday dispatch scope (resolves blocker 5)
+
+Codify what the on-call rotation calendar already implies.
+
+- **Saturday emergencies** (per Tyler's emergency criteria in section 3): AI follows the after-hours emergency dispatch SOP and contacts the on-call tech per the weekly rotation, which already covers Saturdays.
+- **Saturday non-emergencies:** AI takes intake, schedules for next business day or earliest available.
+- **Saturday quotes / estimates:** not bookable by AI, per Tyler's existing rule (estimates Mon–Fri 8:30 AM – 3:00 PM only).
+
+This codifies what the existing dispatch SOP already supports without contradicting Tyler's "AI handles all Saturday calls" instruction.
+
+---
+
+## 10.6 Open Items (still owed)
 
 | # | Item | Why it matters |
 |---|---|---|
-| 1 | **HCP required fields** (intake answer was cut off) | Without this, agents can't auto-create customer records cleanly. |
-| 2 | **Drain cleaning rate** ("Custome..." cut off) | Customers will ask. |
-| 3 | **Renter/landlord approval workflow** | "Require landlord approval" needs the actual flow: collect landlord info and route to office, or hard block? |
-| 4 | **Home warranty decline script** | Need exact polite-decline wording. |
-| 5 | **Review-already-left detection** | Avoid pestering customers who already reviewed. Recommend office-flag-in-HCP for v1. |
-| 6 | **Review platform scope** | Google only? Nextdoor / BBB / Facebook? Single link or menu? |
-| 7 | **Saturday dispatch scope** | AI handles all Saturday calls confirmed; clarify whether AI can dispatch the on-call tech on Saturday or only books for Monday. |
-| 8 | **Medical equipment escalation flag** | Tyler listed medical equipment as a generator backup priority; should AI flag callers with medical equipment as high-priority during outages? |
-| 9 | **Permits in quoted ranges** | When agent quotes EV charger / panel install / generator ranges, should it call out "permits not included" or build them in? |
-| 10 | **Customer-supplied equipment policy** | EV charger qualification asks "supplied or install only?" — what's TZ's stance on customer-supplied equipment and the warranty implications? |
+| ~~1~~ | ~~HCP required fields~~ | **Resolved by 10.1.** |
+| 2 | **Drain cleaning rate** ("Custome..." cut off) | Customers will ask. Recommend treating as custom-quoted only until Tyler confirms a published rate. |
+| ~~3~~ | ~~Renter/landlord approval workflow~~ | **Resolved by 10.2.** |
+| ~~4~~ | ~~Home warranty decline script~~ | **Resolved by 10.3.** |
+| ~~5~~ | ~~Review-already-left detection~~ | **Resolved by 10.4.** |
+| 6 | **Review platform scope** | Google only? Nextdoor / BBB / Facebook? Single link or menu? Default until decided: Google only. |
+| ~~7~~ | ~~Saturday dispatch scope~~ | **Resolved by 10.5.** |
+| 8 | **Medical equipment escalation flag** | Tyler listed medical equipment as a generator backup priority; default until decided: yes, AI tags any caller mentioning medical equipment as high-priority during power outages and prioritizes them in the no-heat / generator-failure dispatch queue. |
+| 9 | **Permits in quoted ranges** | When agent quotes EV charger / panel install / generator ranges, default until decided: state "ranges typically do not include permits, which vary by township and are quoted on-site." |
+| 10 | **Customer-supplied equipment policy** | EV charger qualification asks "supplied or install only?" Default until decided: "We can install equipment you've purchased separately, with the labor warranty applying to our installation only. Manufacturer warranty terms apply per the device manufacturer." |
 
 ---
 

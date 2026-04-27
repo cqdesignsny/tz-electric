@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema, getFAQSchema } from '@/lib/metadata'
 import {
   UNIT_TYPES,
@@ -123,7 +123,7 @@ export default function MitsubishiPage() {
               </p>
 
               <div className="mt-8 flex flex-wrap gap-4">
-                <Button href={TYPEFORM_URL} external size="lg">
+                <Button href={QUOTE_URL} size="lg">
                   Get a Free Quote
                 </Button>
                 <Button

@@ -1,4 +1,4 @@
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 
 export default function CTASection() {
@@ -15,7 +15,7 @@ export default function CTASection() {
 
         <div className="mt-8 flex flex-wrap justify-center gap-4">
           <Button
-            href={TYPEFORM_URL}
+            href={QUOTE_URL}
             external
             size="lg"
             className="!bg-accent !text-white hover:!bg-accent-dark shadow-lg"

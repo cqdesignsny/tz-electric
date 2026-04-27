@@ -1,4 +1,4 @@
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import Button from '@/components/ui/Button'
 import CTASection from '@/components/sections/CTASection'
@@ -102,7 +102,7 @@ export default function ReviewsPage() {
               <Button href={COMPANY.social.google} external variant="secondary">
                 Leave Us a Review
               </Button>
-              <Button href={TYPEFORM_URL} external>
+              <Button href={QUOTE_URL}>
                 Get a Free Quote
               </Button>
             </div>

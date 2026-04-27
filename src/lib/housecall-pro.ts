@@ -112,6 +112,63 @@ export async function createCustomer(data: CustomerData, planInfo: PlanInfo): Pr
   })
 }
 
+/**
+ * Lead form submission. Lands in HCP Job Inbox > "API Leads" channel.
+ * See docs/agent-training-answers.md section 10.1 for the rationale on
+ * using /leads instead of /customers for prospect capture.
+ */
+export type LeadPayload = {
+  firstName: string
+  lastName: string
+  phone: string
+  email?: string
+  street?: string
+  city?: string
+  state?: string
+  zip?: string
+  serviceType: string
+  source: 'Website Lead Form' | 'TZ AI Agent'
+  notes: string
+  tags?: string[]
+}
+
+export type HCPLeadResponse = {
+  id?: string
+  [key: string]: unknown
+}
+
+export async function createLead(lead: LeadPayload): Promise<HCPLeadResponse> {
+  const baseTags = [lead.source === 'TZ AI Agent' ? 'TZ AI AGENT' : 'Web Form']
+  const tags = [...baseTags, ...(lead.tags || [])]
+
+  const body: Record<string, unknown> = {
+    first_name: lead.firstName,
+    last_name: lead.lastName,
+    mobile_number: normalizePhone(lead.phone),
+    lead_source: lead.source,
+    service_type: lead.serviceType,
+    notes: lead.notes,
+    tags,
+  }
+
+  if (lead.email) body.email = lead.email
+
+  if (lead.street && lead.city && lead.state && lead.zip) {
+    body.address = {
+      street: lead.street,
+      city: lead.city,
+      state: lead.state,
+      zip: lead.zip,
+      type: 'service',
+    }
+  }
+
+  return hcpFetch('/leads', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
 export async function tagExistingCustomer(customerId: string, planInfo: PlanInfo): Promise<void> {
   const tag = `${planInfo.planName}-${planInfo.billingCycle}`
   const note = `ONLINE SIGNUP: ${planInfo.templateName} (${planInfo.billingCycle}, $${planInfo.amount}${planInfo.frequency === 'monthly' || planInfo.frequency === '3year' ? '/mo' : '/yr'}). Paid via Stripe on ${new Date().toISOString().split('T')[0]}. Needs manual plan assignment in HCP.`

@@ -45,7 +45,9 @@ export const COMPANY = {
   },
 } as const
 
-export const TYPEFORM_URL = 'https://ghfs29y37tj.typeform.com/to/HDLXmnob'
+// Native lead form path. Replaced the old Typeform URL.
+// Service pages can deep-link via /quote?service=hvac to prefill the service step.
+export const QUOTE_URL = '/quote'
 
 // Analytics IDs (preserved from current site)
 export const ANALYTICS = {

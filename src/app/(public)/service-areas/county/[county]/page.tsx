@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import { createMetadata } from '@/lib/metadata'
 import { COUNTY_AREAS, SERVICE_AREAS, getCountyBySlug } from '@/lib/service-areas-data'
 import Button from '@/components/ui/Button'
@@ -127,7 +127,7 @@ export default async function CountyPage({ params }: { params: Promise<{ county:
               {county.description}
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Button href={TYPEFORM_URL} external size="lg">
+              <Button href={QUOTE_URL} size="lg">
                 Get a Free Quote
               </Button>
               <Button href={`tel:${COMPANY.phoneRaw}`} variant="outline" size="lg">

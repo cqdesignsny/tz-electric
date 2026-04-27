@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { COMPANY, SERVICES, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, SERVICES, QUOTE_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import HeroSection from '@/components/sections/HeroSection'
 import CertificationSlider from '@/components/sections/CertificationSlider'

@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import { SERVICE_AREAS, COUNTY_AREAS } from '@/lib/service-areas-data'
 import Button from '@/components/ui/Button'
@@ -46,7 +46,7 @@ export default function ServiceAreasPage() {
               cooling, heating, electrical, plumbing, and generator services across the Hudson Valley.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Button href={TYPEFORM_URL} external size="lg">
+              <Button href={QUOTE_URL} size="lg">
                 Get a Free Quote
               </Button>
               <Button

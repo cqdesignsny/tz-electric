@@ -1,4 +1,4 @@
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import Button from '@/components/ui/Button'
 import CTASection from '@/components/sections/CTASection'
@@ -127,7 +127,7 @@ export default function GalleryPage() {
       <GalleryGrid categories={categories} projects={projects} />
 
       <div className="py-12 text-center">
-        <Button href={TYPEFORM_URL} external size="lg">
+        <Button href={QUOTE_URL} size="lg">
           Start Your Project Today
         </Button>
       </div>

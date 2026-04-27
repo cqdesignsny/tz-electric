@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { COMPANY, NAV_ITEMS, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, NAV_ITEMS, QUOTE_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 
 const footerServices = [
@@ -51,7 +51,7 @@ export default function Footer() {
               </svg>
               {COMPANY.phone}
             </a>
-            <Button href={TYPEFORM_URL} external size="md">
+            <Button href={QUOTE_URL} size="md">
               Get a Free Quote
             </Button>
           </div>

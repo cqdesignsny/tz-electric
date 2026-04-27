@@ -1,4 +1,4 @@
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import Button from '@/components/ui/Button'
 import CTASection from '@/components/sections/CTASection'
@@ -141,7 +141,7 @@ export default function PromotionsPage() {
               <div className="mt-6 md:mt-0 flex-shrink-0 text-center">
                 <div className="text-5xl md:text-6xl font-heading font-bold text-white">$100</div>
                 <div className="text-white/80 text-sm font-medium mt-1">Credit Each</div>
-                <Button href={TYPEFORM_URL} external className="mt-4 !bg-white !text-accent hover:!bg-gray-100" size="md">
+                <Button href={QUOTE_URL} className="mt-4 !bg-white !text-accent hover:!bg-gray-100" size="md">
                   Refer a Friend
                 </Button>
               </div>
@@ -171,7 +171,7 @@ export default function PromotionsPage() {
                   <p className="mt-3 text-gray-500 text-xs">
                     {promo.details}
                   </p>
-                  <Button href={TYPEFORM_URL} external className="mt-4 !bg-accent hover:!bg-accent-dark" size="sm">
+                  <Button href={QUOTE_URL} className="mt-4 !bg-accent hover:!bg-accent-dark" size="sm">
                     Claim This Offer
                   </Button>
                 </div>
@@ -191,7 +191,7 @@ export default function PromotionsPage() {
               <Button href={`tel:${COMPANY.phoneRaw}`} variant="secondary">
                 Call {COMPANY.phone}
               </Button>
-              <Button href={TYPEFORM_URL} external>
+              <Button href={QUOTE_URL}>
                 Get a Free Quote
               </Button>
             </div>

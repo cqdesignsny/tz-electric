@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import type { SubServicePage } from '@/lib/sub-services-data'
 import { getBreadcrumbSchema, getFAQSchema } from '@/lib/metadata'
 import SectionHeader from '@/components/ui/SectionHeader'
@@ -52,7 +52,7 @@ export default function SubServicePageTemplate({ service }: SubServicePageTempla
             <h1 className="text-white text-4xl lg:text-5xl font-heading font-bold leading-tight">{service.heroTitle}</h1>
             <p className="mt-4 text-gray-300 text-lg max-w-2xl leading-relaxed">{service.heroDescription}</p>
             <div className="mt-8 flex flex-wrap items-center gap-4">
-              <Button href={TYPEFORM_URL} external size="lg">Get a Free Quote</Button>
+              <Button href={QUOTE_URL} size="lg">Get a Free Quote</Button>
               <Button href={`tel:${COMPANY.phoneRaw}`} variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-navy">
                 Call {COMPANY.phone}
               </Button>
@@ -76,7 +76,7 @@ export default function SubServicePageTemplate({ service }: SubServicePageTempla
                   ))}
                 </div>
                 <div className="mt-8 flex flex-wrap gap-4">
-                  <Button href={TYPEFORM_URL} external>Get a Free Quote</Button>
+                  <Button href={QUOTE_URL}>Get a Free Quote</Button>
                   <Button href={`tel:${COMPANY.phoneRaw}`} variant="outline">Call {COMPANY.phone}</Button>
                 </div>
               </div>

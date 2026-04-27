@@ -1,4 +1,4 @@
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import Button from '@/components/ui/Button'
 import ElectricCursor from '@/components/effects/ElectricCursor'
@@ -163,7 +163,7 @@ export default function ContactPage() {
                     Tell us about your project and we&apos;ll provide a detailed estimate.
                     Most quotes delivered within 24 hours.
                   </p>
-                  <Button href={TYPEFORM_URL} external size="lg" className="mt-6">
+                  <Button href={QUOTE_URL} size="lg" className="mt-6">
                     Start Your Free Quote
                   </Button>
                 </div>

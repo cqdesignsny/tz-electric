@@ -313,3 +313,218 @@ export function renderQuestionnaireSubmissionEmail(
 
   return { subject, html, text }
 }
+
+type LeadFormSubmissionOptions = {
+  firstName: string
+  lastName: string
+  phone: string
+  email?: string
+  serviceType: string
+  serviceTypeLabel: string
+  urgency?: string
+  street?: string
+  city?: string
+  state?: string
+  zip?: string
+  ownership: 'homeowner' | 'renter'
+  landlordName?: string
+  landlordPhone?: string
+  landlordEmail?: string
+  qualification: Record<string, string>
+  referralSource?: string
+  notes?: string
+  gclid?: string
+  utmSource?: string
+  utmMedium?: string
+  utmCampaign?: string
+  landingPage?: string
+  hcpLeadId?: string
+  submittedAt?: Date
+}
+
+/**
+ * Email sent to office + admin when someone submits the native lead form.
+ * Reuses renderEmailLayout for brand consistency.
+ */
+export function renderLeadFormSubmissionEmail(
+  opts: LeadFormSubmissionOptions,
+): RenderedEmail {
+  const submittedAt = opts.submittedAt || new Date()
+  const fullName = `${opts.firstName} ${opts.lastName}`.trim()
+  const subject = `New Lead: ${opts.serviceTypeLabel} — ${fullName}`
+
+  const stats: StatItem[] = [
+    { label: 'Service', value: opts.serviceTypeLabel },
+    { label: 'Urgency', value: opts.urgency || 'Not specified' },
+    { label: 'Ownership', value: opts.ownership === 'renter' ? 'Renter' : 'Homeowner' },
+  ]
+
+  const submittedAtLabel = submittedAt.toLocaleString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  })
+
+  const addressLine = [opts.street, opts.city, opts.state, opts.zip]
+    .filter(Boolean)
+    .join(', ')
+
+  const renterBlock =
+    opts.ownership === 'renter'
+      ? `
+      <div style="background:#FEF3C7;border-left:4px solid #D97706;border-radius:8px;padding:16px 18px;margin-bottom:18px;">
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#92400E;font-weight:700;margin-bottom:6px;">Action required</div>
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;color:#78350F;line-height:1.5;margin-bottom:10px;">
+          This is a renter inquiry. Verify with the landlord before booking.
+        </div>
+        <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#1E293B;line-height:1.7;">
+          <strong>Landlord:</strong> ${escapeHtml(opts.landlordName || '(not provided)')}<br />
+          <strong>Phone:</strong> ${escapeHtml(opts.landlordPhone || '(not provided)')}<br />
+          <strong>Email:</strong> ${escapeHtml(opts.landlordEmail || '(not provided)')}
+        </div>
+      </div>`
+      : ''
+
+  const qualificationItems = Object.entries(opts.qualification)
+    .filter(([, v]) => v && v.trim().length > 0)
+    .map(
+      ([k, v]) => `
+      <tr>
+        <td style="padding:8px 0;width:42%;vertical-align:top;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#6B7280;font-weight:600;letter-spacing:0.02em;">${escapeHtml(k)}</td>
+        <td style="padding:8px 0;vertical-align:top;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#1E293B;line-height:1.5;">${escapeHtml(v)}</td>
+      </tr>`,
+    )
+    .join('')
+
+  const qualificationBlock = qualificationItems
+    ? `
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#1E40AF;font-weight:700;margin-bottom:6px;">Qualification</div>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;border-top:1px solid #E5E7EB;">
+        ${qualificationItems}
+      </table>`
+    : ''
+
+  const trackingBits: string[] = []
+  if (opts.gclid) trackingBits.push(`<strong>GCLID:</strong> ${escapeHtml(opts.gclid)}`)
+  if (opts.utmSource) trackingBits.push(`<strong>Source:</strong> ${escapeHtml(opts.utmSource)}`)
+  if (opts.utmMedium) trackingBits.push(`<strong>Medium:</strong> ${escapeHtml(opts.utmMedium)}`)
+  if (opts.utmCampaign) trackingBits.push(`<strong>Campaign:</strong> ${escapeHtml(opts.utmCampaign)}`)
+  if (opts.landingPage) trackingBits.push(`<strong>Landing:</strong> ${escapeHtml(opts.landingPage)}`)
+  if (opts.referralSource) trackingBits.push(`<strong>Heard about us via:</strong> ${escapeHtml(opts.referralSource)}`)
+
+  const trackingBlock = trackingBits.length
+    ? `
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#1E40AF;font-weight:700;margin-bottom:6px;">Attribution</div>
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#4B5563;line-height:1.7;margin-bottom:18px;padding-bottom:12px;border-bottom:1px solid #E5E7EB;">
+        ${trackingBits.join('<br />')}
+      </div>`
+    : ''
+
+  const customerNotesBlock = opts.notes && opts.notes.trim().length > 0
+    ? `
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#1E40AF;font-weight:700;margin-bottom:6px;">Customer notes</div>
+      <div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:8px;padding:12px 14px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#1E293B;line-height:1.5;margin-bottom:18px;white-space:pre-wrap;">${escapeHtml(opts.notes)}</div>`
+    : ''
+
+  const hcpBlock = opts.hcpLeadId
+    ? `
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#6B7280;margin-top:6px;">
+        HCP Lead ID: <code style="font-family:'SFMono-Regular',Consolas,monospace;font-size:12px;color:#1E40AF;">${escapeHtml(opts.hcpLeadId)}</code>
+      </div>`
+    : `
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#B91C1C;margin-top:6px;">
+        ⚠ HCP lead creation failed. Office should manually enter this lead.
+      </div>`
+
+  const bodyHtml = `
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#6B7280;margin-bottom:14px;">
+      Submitted ${escapeHtml(submittedAtLabel)}
+    </div>
+
+    ${renterBlock}
+
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#1E40AF;font-weight:700;margin-bottom:6px;">Contact</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-bottom:18px;border-top:1px solid #E5E7EB;">
+      <tr>
+        <td style="padding:8px 0;width:42%;vertical-align:top;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#6B7280;font-weight:600;">Name</td>
+        <td style="padding:8px 0;vertical-align:top;font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;color:#0F1C3F;font-weight:700;">${escapeHtml(fullName)}</td>
+      </tr>
+      <tr>
+        <td style="padding:8px 0;border-top:1px solid #F3F4F6;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#6B7280;font-weight:600;">Phone</td>
+        <td style="padding:8px 0;border-top:1px solid #F3F4F6;font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;color:#1E293B;"><a href="tel:${escapeHtml(opts.phone.replace(/\D/g, ''))}" style="color:#1E40AF;text-decoration:none;font-weight:600;">${escapeHtml(opts.phone)}</a></td>
+      </tr>
+      ${opts.email ? `
+      <tr>
+        <td style="padding:8px 0;border-top:1px solid #F3F4F6;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#6B7280;font-weight:600;">Email</td>
+        <td style="padding:8px 0;border-top:1px solid #F3F4F6;font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;color:#1E293B;"><a href="mailto:${escapeHtml(opts.email)}" style="color:#1E40AF;text-decoration:none;">${escapeHtml(opts.email)}</a></td>
+      </tr>` : ''}
+      ${addressLine ? `
+      <tr>
+        <td style="padding:8px 0;border-top:1px solid #F3F4F6;font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#6B7280;font-weight:600;">Address</td>
+        <td style="padding:8px 0;border-top:1px solid #F3F4F6;font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;color:#1E293B;">${escapeHtml(addressLine)}</td>
+      </tr>` : ''}
+    </table>
+
+    ${qualificationBlock}
+    ${customerNotesBlock}
+    ${trackingBlock}
+    ${hcpBlock}
+  `
+
+  const html = renderEmailLayout({
+    preheader: `${fullName} just submitted a ${opts.serviceTypeLabel} lead via the website.`,
+    eyebrow: 'TZ Switchboard · New Lead',
+    heading: `${opts.serviceTypeLabel} lead from ${fullName}`,
+    intro:
+      opts.ownership === 'renter'
+        ? 'Renter inquiry. Landlord verification needed before booking. Full context below.'
+        : 'New lead just landed in HCP Job Inbox. Full context below.',
+    stats,
+    bodyHtml,
+    cta: {
+      label: 'Open HCP Job Inbox',
+      href: 'https://pro.housecallpro.com/app/job_inbox',
+    },
+  })
+
+  const textLines = [
+    subject,
+    '',
+    `Submitted: ${submittedAtLabel}`,
+    `Service: ${opts.serviceTypeLabel}`,
+    opts.urgency ? `Urgency: ${opts.urgency}` : null,
+    `Ownership: ${opts.ownership}`,
+    '',
+    `Name: ${fullName}`,
+    `Phone: ${opts.phone}`,
+    opts.email ? `Email: ${opts.email}` : null,
+    addressLine ? `Address: ${addressLine}` : null,
+    '',
+    opts.ownership === 'renter' ? `Landlord: ${opts.landlordName || ''} | ${opts.landlordPhone || ''} | ${opts.landlordEmail || ''}` : null,
+    '',
+    Object.entries(opts.qualification)
+      .filter(([, v]) => v)
+      .map(([k, v]) => `${k}: ${v}`)
+      .join('\n'),
+    '',
+    opts.notes ? `Customer notes: ${opts.notes}` : null,
+    '',
+    opts.gclid ? `GCLID: ${opts.gclid}` : null,
+    opts.utmSource ? `UTM source: ${opts.utmSource}` : null,
+    opts.utmCampaign ? `UTM campaign: ${opts.utmCampaign}` : null,
+    opts.landingPage ? `Landing page: ${opts.landingPage}` : null,
+    opts.referralSource ? `Heard via: ${opts.referralSource}` : null,
+    '',
+    opts.hcpLeadId
+      ? `HCP Lead ID: ${opts.hcpLeadId}`
+      : 'WARNING: HCP lead creation failed. Manual entry needed.',
+  ]
+    .filter((line): line is string => line !== null && line !== '')
+    .join('\n')
+
+  return { subject, html, text: textLines }
+}

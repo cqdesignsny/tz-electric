@@ -226,22 +226,67 @@ All scripts loaded directly in `(public)/layout.tsx` so they only fire on the pu
 ### Priority
 - [ ] **Native forms to replace Typeform.** Multi-step lead capture + job application forms directly on the site. Wire to Housecall Pro CRM for instant lead delivery. Include GCLID tracking (Google Click ID) for Smart Bidding optimization. Eliminates Typeform subscription and improves ad conversion tracking. Reuses `renderEmailLayout()` for the lead notification.
 
-### AI Agent Buildout
+### AI Agent Buildout Roadmap
 
-The voice persona for all customer-facing agents is **Claire** (female voice, warm/neighborly, identifies as AI in the opener). Source of truth for behavior: [`docs/agent-training-answers.md`](docs/agent-training-answers.md).
+The voice persona for all customer-facing agents is **Claire** (female voice, warm/neighborly, identifies as AI in the opener). Source of truth for behavior: [`docs/agent-training-answers.md`](docs/agent-training-answers.md). Operational gaps Tyler couldn't fill have v1 best-practice defaults in section 10 of that doc.
 
-- [ ] **5 remaining blockers** before agents can ship (section 10 of the answers doc): HCP required fields, renter/landlord workflow, home-warranty decline script, review-already-left detection, Saturday dispatch scope.
-- [ ] Knowledge Base module (live editor over the answers doc, version history, search)
-- [ ] SMS agent — Claire, Twilio + Anthropic Claude, 24/7, threaded conversations, takeover button
-- [ ] Web chat agent — Claire, replaces Podium gap, proactive popup at 15s, on all pages
-- [ ] Voice agent — Claire, Vapi + Twilio, 15-min max before forced handoff, books jobs, follows after-hours emergency dispatch SOP
-- [ ] Lead Pipeline (live view of all captured leads)
-- [ ] Reports (calls, leads, conversions, revenue per channel)
-- [ ] Email Assistant for Tyler's inbox
-- [ ] Office Operations agent
-- [ ] Warehouse & Inventory agent
-- [ ] Sales & Outbound agent
-- [ ] Trainual integration for human staff training
+The buildout runs in seven phases. Each phase is small enough to ship in 1–2 sessions, and each builds on the prior.
+
+**Phase 1: Native Lead Form (active)**
+- `/quote` page replaces the Typeform popup. Multi-step: service type → quick qualification → contact + address.
+- Posts to HCP `POST /leads`, lands in Job Inbox > "API Leads" channel.
+- Captures GCLID (30-day cookie) and UTM source/medium/campaign for Google Ads Smart Bidding attribution.
+- Sends a branded HTML email via Resend (reuses `renderEmailLayout()`).
+- Replaces every `TYPEFORM_URL` CTA site-wide. Header, hero, service pages, area pages, financing, contact, footer, FloatingCTA.
+- Renter detection branch: soft-blocks the auto-book, collects landlord info, tags the lead, routes to office.
+
+**Phase 2: Knowledge Base v1 (read-only)**
+- `/switchboard/knowledge-base` becomes the live module.
+- Parses `docs/agent-training-answers.md` and renders it as a structured browsable view: category tabs, section anchors, search.
+- No editing yet, just a clean way for Tyler / Cesar to review the full answer set in-app.
+
+**Phase 3: Knowledge Base v2 (edit-in-place)**
+- Authenticated WYSIWYG editor over each section.
+- Save commits the change directly to `docs/agent-training-answers.md` via the GitHub API and triggers a Vercel redeploy.
+- Version history view = `git log` on that file. Diff view between any two versions.
+- Edits flow through the same git history as code, so the agents always load whatever's in the deployed file.
+
+**Phase 4: SMS Agent (Claire)**
+- Twilio inbound webhook → Vercel function → Anthropic Claude streaming reply.
+- System prompt assembled at request time from `docs/agent-training-answers.md`.
+- Conversation history persisted in Vercel storage (Postgres or KV from the Marketplace).
+- Takeover button in `/switchboard/sms-conversations`: any office staff can pause Claire mid-thread and respond as themselves; Claire resumes when they release the thread.
+- Tools: `lookupCustomer`, `createLead`, `bookField Assessment`, `escalateEmergency` (calls the dispatch SOP), `transferToHuman`.
+- 24/7 coverage. Confirmation text after key actions per Tyler's wording.
+
+**Phase 5: Web Chat Agent (Claire)**
+- Persistent chat widget on all public pages. Proactive popup after ~15 seconds (Tyler's spec).
+- Same system prompt as SMS, same tool surface, same conversation store, same takeover UX.
+- Built on the AI SDK for streaming.
+- Replaces the gap left by the Podium webchat removal.
+
+**Phase 6: Voice Agent (Claire)**
+- Vapi assistant with the Claire voice profile, configured against `/api/vapi/*` tool endpoints (same tools as SMS / chat).
+- 15-minute max call duration before forced handoff per Tyler's spec.
+- Inbound on a dedicated Twilio number.
+- Strictly follows the after-hours emergency dispatch SOP (15-minute retry loop, escalation to Ty Stein → Tyler Zitz, 7 AM / 7:30 AM morning follow-ups). The dispatch logic is durable workflow material so it survives function restarts.
+
+**Phase 7: Self-Improving Learning Loop**
+- Every conversation transcript logged to durable storage with metadata (channel, duration, outcome, handoff y/n, tools called).
+- Office staff flag transcripts in `/switchboard/sms-conversations` and the analogous voice / chat views: "Claire got this wrong" or "this answer should be in the KB."
+- Flagged items queue in `/switchboard/knowledge-base` as suggested edits with the relevant section pre-selected.
+- Cesar / Tyler approve or reject. Approved edits flow through the Phase 3 editor → commit → redeploy.
+- `/switchboard/reports` shows per-agent KPIs: handoff rate, false-escalation count, customer satisfaction proxy (sentiment + booking conversion), top failure modes.
+- This is the full audit-and-improve loop. Architecture decisions in Phases 4-6 set us up for it (transcript capture, tool-call logging, conversation IDs).
+
+### Module status (per `nav-config.ts`)
+- Lead Pipeline (live view of all captured leads from Phase 1 onward)
+- Reports (calls, leads, conversions, revenue per channel; populated as agents go live)
+- Email Assistant for Tyler's inbox (later phase, not in the seven above)
+- Office Operations agent (later phase)
+- Warehouse & Inventory agent (later phase)
+- Sales & Outbound agent (later phase)
+- Trainual integration for human staff training (deep-link only, depends on Tyler setting up Trainual)
 
 ### Backlog
 - [ ] Blog content migration from old Webflow site

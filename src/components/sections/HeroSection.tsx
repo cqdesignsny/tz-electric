@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 import { TrustIndexBadge } from '@/components/ui/TrustIndexWidget'
@@ -82,7 +82,7 @@ export default function HeroSection() {
 
             {/* CTAs */}
             <div className="mt-8 flex flex-wrap gap-4">
-              <Button href={TYPEFORM_URL} external size="lg">
+              <Button href={QUOTE_URL} size="lg">
                 Get a Free Quote
               </Button>
               <Button

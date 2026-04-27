@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { COMPANY, SERVICES, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, SERVICES, QUOTE_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import SectionHeader from '@/components/ui/SectionHeader'
 import Button from '@/components/ui/Button'
@@ -68,7 +68,7 @@ export default function ServicesPage() {
               One call, one company, total comfort for your Hudson Valley home.
             </p>
             <div className="mt-8 flex flex-wrap gap-4">
-              <Button href={TYPEFORM_URL} external size="lg">
+              <Button href={QUOTE_URL} size="lg">
                 Get a Free Quote
               </Button>
               <Button

@@ -1,4 +1,4 @@
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import { TEAM_MEMBERS } from '@/lib/team-data'
 import Image from 'next/image'
@@ -139,7 +139,7 @@ export default function AboutPage() {
                 </p>
               </div>
               <div className="mt-8 flex flex-wrap gap-4">
-                <Button href={TYPEFORM_URL} external>
+                <Button href={QUOTE_URL}>
                   Get a Free Quote
                 </Button>
                 <Button href={`tel:${COMPANY.phoneRaw}`} variant="secondary">

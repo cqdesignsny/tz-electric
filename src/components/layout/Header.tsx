@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { COMPANY, NAV_ITEMS, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, NAV_ITEMS, QUOTE_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
 
 const HIDDEN_PATHS = ['/switchboard', '/internal']
@@ -670,7 +670,7 @@ export default function Header() {
               <PhoneIcon />
               {COMPANY.phone}
             </a>
-            <Button href={TYPEFORM_URL} external size="sm">
+            <Button href={QUOTE_URL} size="sm">
               Get a Free Quote
             </Button>
           </div>
@@ -918,7 +918,7 @@ export default function Header() {
                     <PhoneIcon />
                     Call {COMPANY.phone}
                   </a>
-                  <Button href={TYPEFORM_URL} external className="w-full" size="md">
+                  <Button href={QUOTE_URL} className="w-full" size="md">
                     Get a Free Quote
                   </Button>
                 </div>

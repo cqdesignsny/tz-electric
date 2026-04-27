@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { COMPANY, TYPEFORM_URL } from '@/lib/constants'
+import { COMPANY, QUOTE_URL } from '@/lib/constants'
 
 const HIDDEN_PATHS = ['/switchboard', '/internal']
 
@@ -37,7 +37,7 @@ export default function FloatingCTA() {
 
       {/* Get Quote Button */}
       <a
-        href={TYPEFORM_URL}
+        href={QUOTE_URL}
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center gap-2 bg-accent text-white px-5 py-3 rounded-full shadow-lg hover:bg-accent-dark transition-all duration-300 hover:scale-105 font-heading font-semibold text-sm"
