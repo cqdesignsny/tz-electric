@@ -114,15 +114,22 @@ export async function createCustomer(data: CustomerData, planInfo: PlanInfo): Pr
 
 /**
  * Lead form submission. Lands in HCP Job Inbox > "API Leads" channel.
- * See docs/agent-training-answers.md section 10.1 for the rationale on
- * using /leads instead of /customers for prospect capture.
  *
- * Payload shape matches HCP's actual /leads endpoint (verified against
- * the BuildWithBeacon housecallpro-mcp reference implementation):
- * customer is a nested object, address is a flat object (no `type`
- * field), service intent goes in `description` since /leads has no
- * dedicated service_type, and tags / renter status are folded into
- * `notes` since the lead create endpoint doesn't accept tags directly.
+ * Payload shape was verified empirically against the live HCP API on
+ * 2026-04-27 (test leads numbered 14, 15, 17). HCP silently drops
+ * unknown fields rather than echoing them back, so the only fields
+ * that actually persist are:
+ *   - customer.first_name, customer.last_name
+ *   - customer.mobile_number  (NOT `phone`)
+ *   - customer.email
+ *   - customer.notes          (NOT top-level `notes`)
+ *   - address.{street,city,state,zip}  (no `type` field)
+ *   - tags (top-level array of strings)
+ *
+ * `description`, `source`, `lead_source`, `service_type`, customer.name,
+ * customer.phone all get silently dropped. Source labeling lives in
+ * tags (since lead_source needs HCP-managed UUIDs) and at the top of
+ * customer.notes for office-staff visibility in Job Inbox.
  */
 export type LeadPayload = {
   firstName: string
@@ -136,6 +143,7 @@ export type LeadPayload = {
   serviceType: string
   source: 'Website Lead Form' | 'TZ AI Agent'
   notes: string
+  tags?: string[]
 }
 
 export type HCPLeadResponse = {
@@ -144,19 +152,17 @@ export type HCPLeadResponse = {
 }
 
 export async function createLead(lead: LeadPayload): Promise<HCPLeadResponse> {
-  const fullName = `${lead.firstName.trim()} ${lead.lastName.trim()}`.trim()
-
   const customer: Record<string, string> = {
-    name: fullName,
-    phone: normalizePhone(lead.phone),
+    first_name: lead.firstName.trim(),
+    last_name: lead.lastName.trim(),
+    mobile_number: normalizePhone(lead.phone),
+    notes: lead.notes,
   }
   if (lead.email) customer.email = lead.email
 
   const body: Record<string, unknown> = {
     customer,
-    source: lead.source,
-    description: `${lead.serviceType} service request`,
-    notes: lead.notes,
+    tags: lead.tags && lead.tags.length > 0 ? lead.tags : undefined,
   }
 
   if (lead.street && lead.city && lead.state && lead.zip) {

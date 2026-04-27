@@ -123,6 +123,11 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  const tags: string[] = ['Web Form']
+  if (body.ownership === 'renter') tags.push('Renter - Landlord Verification Needed')
+  if (body.tracking?.gclid) tags.push('Google Ads')
+  tags.push(`Service: ${body.serviceLabel}`)
+
   const leadPayload: LeadPayload = {
     firstName: body.firstName.trim(),
     lastName: body.lastName.trim(),
@@ -135,6 +140,7 @@ export async function POST(req: NextRequest) {
     serviceType: body.serviceLabel,
     source: 'Website Lead Form',
     notes: buildLeadNotes(body),
+    tags,
   }
 
   let hcpLeadId: string | undefined
