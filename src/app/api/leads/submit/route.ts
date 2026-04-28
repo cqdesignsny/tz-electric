@@ -39,11 +39,21 @@ function isNonEmpty(value: unknown): value is string {
   return typeof value === 'string' && value.trim().length > 0
 }
 
+function shorten(s: string, max: number): string {
+  return s.length > max ? `${s.slice(0, max - 1)}…` : s
+}
+
 function buildLeadNotes(body: SubmitBody): string {
-  // The HCP /leads endpoint doesn't accept tags directly. Lead context that
-  // would otherwise be a tag (renter status, Google Ads source, AI vs form
-  // origin) gets prepended here so it's the first thing office staff see.
+  // HCP's /leads endpoint stores rich content only in customer.notes, which
+  // shows on the customer card but not on the Job Inbox preview. Lead-level
+  // tags are the office's at-a-glance signal; this notes block is the full
+  // detail for once they click in. The leading banner makes that obvious.
   const lines: string[] = []
+
+  lines.push('====================================================================')
+  lines.push('  WEBSITE LEAD — Full details below. (Tags above show service/urgency.)')
+  lines.push('====================================================================')
+  lines.push('')
 
   const flags: string[] = []
   flags.push(body.tracking?.gclid ? '[TZ AI AGENT or Google Ads]' : '[Web Form]')
@@ -123,10 +133,34 @@ export async function POST(req: NextRequest) {
     }
   }
 
+  // Tags surface on the Job Inbox preview without clicking. Keep them short
+  // and high-signal: source, service, urgency, scope, and any flag fields
+  // (renter, medical equipment, active leak, Google Ads attribution).
   const tags: string[] = ['Web Form']
-  if (body.ownership === 'renter') tags.push('Renter - Landlord Verification Needed')
-  if (body.tracking?.gclid) tags.push('Google Ads')
   tags.push(`Service: ${body.serviceLabel}`)
+
+  const urgency = body.qualification?.urgency
+  if (isNonEmpty(urgency)) {
+    tags.push(`Urgency: ${shorten(urgency, 40)}`)
+  }
+
+  const scope = body.qualification?.scope
+  if (isNonEmpty(scope)) {
+    tags.push(shorten(scope, 50))
+  }
+
+  if (body.ownership === 'renter') {
+    tags.push('Renter - Verify with Landlord')
+  }
+  if (body.qualification?.medical === 'Yes') {
+    tags.push('Medical Equipment in Home')
+  }
+  if (body.qualification?.urgentNow === 'Yes — active leak') {
+    tags.push('ACTIVE LEAK')
+  }
+  if (body.tracking?.gclid) {
+    tags.push('Google Ads')
+  }
 
   const leadPayload: LeadPayload = {
     firstName: body.firstName.trim(),
