@@ -18,6 +18,7 @@
 import {
   categorizeEstimateStatus,
   getEstimate,
+  rawEstimateStatus,
   type EstimateStatusCategory,
 } from './housecall-pro'
 import {
@@ -64,8 +65,7 @@ export async function syncEstimateStatuses(
         continue
       }
 
-      const rawStatus =
-        estimate.status ?? estimate.pipeline_status ?? null
+      const rawStatus = rawEstimateStatus(estimate)
       const next = formatStatus(rawStatus, categorizeEstimateStatus(rawStatus, estimate))
 
       if (next === target.estimate_status) {

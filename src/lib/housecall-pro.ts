@@ -376,21 +376,32 @@ export async function createLead(lead: LeadPayload): Promise<HCPLeadResponse> {
 
 /**
  * Create an unscheduled estimate against an existing customer. Lead/job
- * details go in `private_notes` (office-only, scoped to this estimate)
- * rather than customer.notes, which is reserved for persistent customer
- * info. Tags surface on the estimate row in HCP for at-a-glance triage.
+ * details go in the option's `notes` array (office-internal, never
+ * customer-facing) rather than customer.notes, which is reserved for
+ * persistent customer info. Tags surface on the option row in HCP for
+ * at-a-glance triage.
  *
- * Empirically verified on 2026-04-28 with a test submission:
+ * Empirically verified on 2026-04-28 with two test submissions:
  *   - HCP /estimates REQUIRES an `options` array (returns
- *     `{"errors":{"options":"is missing"}}` if absent). We pass a single
- *     placeholder option carrying the lead description so the office sees
- *     a labeled estimate row even before line items are added.
- *   - `customer_id`, `private_notes`, `tags`, `address` accepted as-is.
+ *     `{"errors":{"options":"is missing"}}` if absent).
+ *   - Top-level `private_notes`, `notes`, `description`, `tags` are
+ *     silently dropped — none are real fields.
+ *   - The right place for office-internal notes is `option.notes`, an
+ *     array of `{content: string}` objects. Confirmed by reading back
+ *     real estimates that have notes populated (e.g. 19917, 19918).
+ *   - `option.tags` is the right place for triage tags.
+ *   - `option.message` would be customer-facing — never put internal
+ *     qualification answers there.
+ *   - Estimates created this way land with `work_status: "needs
+ *     scheduling"` which is the unscheduled-open state.
  */
 export type EstimateInput = {
   customerId: string
+  /** Goes into option.notes — office-internal, never shown to the customer. */
   privateNotes: string
+  /** Becomes the option name (estimate row label in HCP). */
   description?: string
+  /** Goes onto option.tags for at-a-glance row triage in HCP. */
   tags?: string[]
   address?: {
     street: string
@@ -413,18 +424,14 @@ export async function createEstimateForLead(
 
   const body: Record<string, unknown> = {
     customer_id: input.customerId,
-    private_notes: input.privateNotes,
-    notes: input.privateNotes,
     options: [
       {
         name: optionName,
-        message: input.privateNotes,
-        line_items: [],
+        notes: [{ content: input.privateNotes }],
+        tags: input.tags && input.tags.length > 0 ? input.tags : undefined,
       },
     ],
   }
-  if (input.description) body.description = input.description
-  if (input.tags && input.tags.length > 0) body.tags = input.tags
   if (input.address) body.address = input.address
 
   return hcpFetch('/estimates', {
@@ -441,15 +448,27 @@ export async function createEstimateForLead(
  *
  * Returns null on any error so the sync loop can keep going for the rest
  * of the batch.
+ *
+ * Empirically verified estimate response fields (2026-04-28): top-level
+ * `work_status` carries the scheduling/lifecycle state (e.g. "needs
+ * scheduling"). Each option has its own `status` and `approval_status` —
+ * `approval_status` flips to "approved" / "declined" when the office uses
+ * the Won/Lost buttons. We sync on whichever signal is present.
  */
+export type HCPEstimateOption = {
+  id: string
+  name: string | null
+  status?: string | null
+  approval_status?: string | null
+  total_amount?: number | null
+}
+
 export type HCPEstimate = {
   id: string
-  status?: string | null
-  pipeline_status?: string | null
+  estimate_number?: string | null
+  work_status?: string | null
   customer_id?: string | null
-  total_amount?: number | null
-  accepted_at?: string | null
-  lost_at?: string | null
+  options?: HCPEstimateOption[] | null
   [key: string]: unknown
 }
 
@@ -465,11 +484,11 @@ export async function getEstimate(estimateId: string): Promise<HCPEstimate | nul
 }
 
 /**
- * Reduce HCP's raw status string + side-channel timestamps into the three
- * categories the Lead Pipeline UI cares about. HCP exposes several
- * statuses ("estimate sent", "draft", "scheduled", "won", "lost", etc.);
- * the office mostly cares about whether it's been won, lost, or is still
- * pending. Anything we don't recognize stays as "open" so the lead remains
+ * Reduce HCP's raw status string + option-level approval state into the
+ * three categories the Lead Pipeline UI cares about. The office flips
+ * estimates between states using HCP's UI; we look at any signal that
+ * indicates won (approved/booked/scheduled) or lost (declined/canceled).
+ * Anything we don't recognize stays as "open" so the lead remains
  * actionable.
  */
 export type EstimateStatusCategory = 'open' | 'won' | 'lost'
@@ -478,16 +497,34 @@ export function categorizeEstimateStatus(
   raw: string | null | undefined,
   estimate?: HCPEstimate | null,
 ): EstimateStatusCategory {
-  const lower = (raw || '').toLowerCase()
-  if (estimate?.lost_at) return 'lost'
-  if (estimate?.accepted_at) return 'won'
-  if (lower.includes('won') || lower.includes('accepted') || lower.includes('booked')) {
-    return 'won'
+  const signals: string[] = []
+  if (raw) signals.push(raw.toLowerCase())
+  if (estimate?.work_status) signals.push(estimate.work_status.toLowerCase())
+  for (const opt of estimate?.options || []) {
+    if (opt.approval_status) signals.push(opt.approval_status.toLowerCase())
+    if (opt.status) signals.push(opt.status.toLowerCase())
   }
-  if (lower.includes('lost') || lower.includes('declined') || lower.includes('canceled')) {
-    return 'lost'
-  }
+
+  const wonHits = ['won', 'approved', 'accepted', 'booked', 'completed', 'scheduled']
+  const lostHits = ['lost', 'declined', 'canceled', 'cancelled', 'rejected']
+
+  if (signals.some((s) => lostHits.some((h) => s.includes(h)))) return 'lost'
+  if (signals.some((s) => wonHits.some((h) => s.includes(h)))) return 'won'
   return 'open'
+}
+
+/**
+ * Pick the best raw status string from an estimate to display in the UI.
+ * Top-level work_status is preferred when it conveys lifecycle state;
+ * falls back to the first option's approval_status / status.
+ */
+export function rawEstimateStatus(estimate: HCPEstimate | null | undefined): string | null {
+  if (!estimate) return null
+  if (estimate.work_status) return estimate.work_status
+  const first = estimate.options?.[0]
+  if (first?.approval_status) return first.approval_status
+  if (first?.status) return first.status
+  return null
 }
 
 /**
