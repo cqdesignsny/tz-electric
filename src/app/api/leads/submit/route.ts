@@ -302,7 +302,7 @@ export async function POST(req: NextRequest) {
         ? `${privateNotes}\n\nMatched existing customer by: ${hcpMatchedBy}`
         : privateNotes
 
-      const estimate = await createEstimateForLead({
+      const { estimate, noteAttachError } = await createEstimateForLead({
         customerId: hcpCustomer.id,
         privateNotes: notesWithMatch,
         description,
@@ -310,6 +310,12 @@ export async function POST(req: NextRequest) {
         address,
       })
       if (typeof estimate?.id === 'string') hcpEstimateId = estimate.id
+      if (noteAttachError) {
+        // Estimate exists in HCP, but office-internal notes never landed.
+        // Surface the failure so the Switchboard row + office email show
+        // it; office can re-add the note manually.
+        hcpError = `Estimate created but office note failed to attach: ${noteAttachError}`
+      }
     } catch (e) {
       hcpError = e instanceof Error ? e.message : String(e)
       console.error('[lead-form] HCP createEstimate failed:', hcpError)

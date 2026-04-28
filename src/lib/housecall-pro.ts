@@ -417,9 +417,14 @@ export type HCPEstimateResponse = {
   [key: string]: unknown
 }
 
+export type CreateEstimateForLeadResult = {
+  estimate: HCPEstimateResponse
+  noteAttachError?: string
+}
+
 export async function createEstimateForLead(
   input: EstimateInput,
-): Promise<HCPEstimateResponse> {
+): Promise<CreateEstimateForLeadResult> {
   const optionName = input.description?.trim() || 'Website lead'
 
   const body: Record<string, unknown> = {
@@ -427,17 +432,46 @@ export async function createEstimateForLead(
     options: [
       {
         name: optionName,
-        notes: [{ content: input.privateNotes }],
         tags: input.tags && input.tags.length > 0 ? input.tags : undefined,
       },
     ],
   }
   if (input.address) body.address = input.address
 
-  return hcpFetch('/estimates', {
+  const estimate = (await hcpFetch('/estimates', {
     method: 'POST',
     body: JSON.stringify(body),
-  })
+  })) as HCPEstimateResponse
+
+  // Notes can't be set in the create payload (HCP drops `notes` on options
+  // at create time, verified empirically 2026-04-28). Add the office-
+  // internal note in a second call to the option's notes endpoint —
+  // POST /estimates/{eid}/options/{oid}/notes is the documented insert
+  // path. Failures here are non-fatal: the estimate already exists with
+  // its tags, so we record the error but keep returning the estimate id
+  // so the Switchboard can deep-link.
+  const options = (estimate as { options?: Array<{ id?: string }> }).options
+  const optionId = options?.[0]?.id
+  let noteAttachError: string | undefined
+
+  if (optionId && estimate.id && input.privateNotes) {
+    try {
+      await hcpFetch(
+        `/estimates/${encodeURIComponent(estimate.id)}/options/${encodeURIComponent(
+          optionId,
+        )}/notes`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ content: input.privateNotes }),
+        },
+      )
+    } catch (e) {
+      noteAttachError = e instanceof Error ? e.message : String(e)
+      console.error('[hcp] estimate created but note attach failed:', noteAttachError)
+    }
+  }
+
+  return { estimate, noteAttachError }
 }
 
 /**
