@@ -1,5 +1,8 @@
 import Link from 'next/link'
 import { NAV_SECTIONS, navHref, type NavItem } from '@/components/switchboard/nav-config'
+import RecentLeadsCard from '@/components/switchboard/RecentLeadsCard'
+
+export const dynamic = 'force-dynamic'
 
 export default function DashboardHome() {
   const allItems = NAV_SECTIONS.flatMap((s) => s.items)
@@ -41,6 +44,16 @@ export default function DashboardHome() {
           </div>
         </section>
       )}
+
+      {/* Recent leads (live from HCP) */}
+      <section className="mb-12">
+        <SectionHeading
+          label="Recent leads"
+          note="Latest 5, live from Housecall Pro"
+        />
+        <RecentLeadsCard />
+      </section>
+
 
       {/* Coming Soon */}
       <section className="mb-12">

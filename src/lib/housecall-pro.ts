@@ -180,6 +180,82 @@ export async function createLead(lead: LeadPayload): Promise<HCPLeadResponse> {
   })
 }
 
+/**
+ * Lead read endpoints. Used by the TZ Switchboard Lead Pipeline view to
+ * show every lead from HCP without requiring a separate database. See
+ * HANDOFF.md "What's NOT built" for the rationale and the long-term
+ * own-database migration plan that replaces this.
+ */
+export type HCPLead = {
+  id: string
+  number: number
+  customer: {
+    id: string
+    first_name: string | null
+    last_name: string | null
+    email: string | null
+    mobile_number: string | null
+    home_number: string | null
+    work_number: string | null
+    notes: string | null
+    lead_source: string | null
+    created_at: string
+    updated_at: string
+  }
+  address: {
+    street: string | null
+    street_line_2: string | null
+    city: string | null
+    state: string | null
+    zip: string | null
+  }
+  status: string
+  pipeline_status: string | null
+  tags: string[]
+  total_amount: number
+  assigned_employee: unknown
+  conversions: unknown[]
+  lost_at: string | null
+  job_fields: { job_type_uuid: string | null; business_unit_uuid: string | null }
+}
+
+export type ListLeadsOptions = {
+  pageSize?: number
+  page?: number
+  sortBy?: 'created_at' | 'updated_at'
+  sortDirection?: 'asc' | 'desc'
+}
+
+export async function listLeads(opts: ListLeadsOptions = {}): Promise<{
+  leads: HCPLead[]
+  totalItems: number
+  totalPages: number
+  page: number
+}> {
+  const params = new URLSearchParams({
+    page_size: String(opts.pageSize ?? 100),
+    page: String(opts.page ?? 1),
+    sort_by: opts.sortBy ?? 'created_at',
+    sort_direction: opts.sortDirection ?? 'desc',
+  })
+  const data = await hcpFetch(`/leads?${params.toString()}`)
+  return {
+    leads: data.leads || [],
+    totalItems: data.total_items || 0,
+    totalPages: data.total_pages || 1,
+    page: data.page || 1,
+  }
+}
+
+export async function getLead(leadId: string): Promise<HCPLead | null> {
+  try {
+    return await hcpFetch(`/leads/${encodeURIComponent(leadId)}`)
+  } catch (e) {
+    console.error('[hcp] getLead failed:', e)
+    return null
+  }
+}
+
 export async function tagExistingCustomer(customerId: string, planInfo: PlanInfo): Promise<void> {
   const tag = `${planInfo.planName}-${planInfo.billingCycle}`
   const note = `ONLINE SIGNUP: ${planInfo.templateName} (${planInfo.billingCycle}, $${planInfo.amount}${planInfo.frequency === 'monthly' || planInfo.frequency === '3year' ? '/mo' : '/yr'}). Paid via Stripe on ${new Date().toISOString().split('T')[0]}. Needs manual plan assignment in HCP.`

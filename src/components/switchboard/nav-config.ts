@@ -1,4 +1,8 @@
-export type NavStatus = 'active' | 'soon' | 'planned'
+// 'active' = needs the user to act (e.g. fill out a questionnaire)
+// 'live' = built and operational, no action required
+// 'soon' = next in the buildout queue
+// 'planned' = on the roadmap, not yet started
+export type NavStatus = 'active' | 'live' | 'soon' | 'planned'
 
 export type NavItem = {
   label: string
@@ -32,7 +36,7 @@ export const NAV_SECTIONS: NavSection[] = [
       {
         label: 'Lead Pipeline',
         slug: 'lead-pipeline',
-        status: 'soon',
+        status: 'live',
         tagline: 'Every lead, end to end.',
         overview:
           "A live view of every lead the AI captured across voice calls, SMS, web chat, and form fills, plus where it came from and where it ended up. Tyler sees the funnel in real time without logging into HCP.",

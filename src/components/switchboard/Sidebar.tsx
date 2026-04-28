@@ -87,6 +87,13 @@ function ActiveDot() {
 }
 
 function StatusPill({ status }: { status: NavItem['status'] }) {
+  if (status === 'live') {
+    return (
+      <span className="text-[9px] uppercase tracking-wider font-bold bg-success/10 text-success dark:bg-emerald-900/40 dark:text-emerald-300 px-1.5 py-0.5 rounded flex-shrink-0">
+        Live
+      </span>
+    )
+  }
   if (status === 'soon') {
     return (
       <span className="text-[9px] uppercase tracking-wider font-bold bg-warning/10 text-warning dark:bg-warning/20 dark:text-amber-300 px-1.5 py-0.5 rounded flex-shrink-0">
