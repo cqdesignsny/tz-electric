@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   createCustomerForLead,
   createEstimateForLead,
-  findCustomerByPhone,
+  findExistingCustomer,
   type HCPCustomer,
 } from '@/lib/housecall-pro'
 import { renderLeadFormSubmissionEmail } from '@/lib/email-templates'
@@ -243,15 +243,26 @@ export async function POST(req: NextRequest) {
   // HCP routing: find-or-create customer, then create an unscheduled
   // estimate with the lead details in private_notes. This replaces the
   // previous /leads-only flow per Tyler's 2026-04-28 routing change.
+  // Match logic: any one of name / phone / email matches a record in HCP
+  // and we treat them as existing; this catches returning customers who
+  // mistyped a name or use a household-shared email.
   let hcpCustomer: HCPCustomer | null = null
   let hcpCustomerExisting = false
+  let hcpMatchedBy: 'phone' | 'email' | 'name' | null = null
   let hcpEstimateId: string | undefined
   let hcpError: string | undefined
 
   try {
-    hcpCustomer = await findCustomerByPhone(phone)
-    if (hcpCustomer) {
+    const match = await findExistingCustomer({
+      firstName,
+      lastName,
+      phone,
+      email,
+    })
+    if (match) {
+      hcpCustomer = match.customer
       hcpCustomerExisting = true
+      hcpMatchedBy = match.matchedBy
     } else {
       hcpCustomer = await createCustomerForLead({
         firstName,
@@ -284,9 +295,16 @@ export async function POST(req: NextRequest) {
           ? { street, city, state, zip }
           : undefined
 
+      // Surface how we matched the existing customer in private_notes so
+      // the office can sanity-check the link (especially the name-only and
+      // email-only cases which are weaker signals than a phone match).
+      const notesWithMatch = hcpMatchedBy
+        ? `${privateNotes}\n\nMatched existing customer by: ${hcpMatchedBy}`
+        : privateNotes
+
       const estimate = await createEstimateForLead({
         customerId: hcpCustomer.id,
-        privateNotes,
+        privateNotes: notesWithMatch,
         description,
         tags,
         address,
@@ -306,6 +324,7 @@ export async function POST(req: NextRequest) {
         hcpCustomerId: hcpCustomer.id,
         hcpEstimateId,
         hcpCustomerExisting,
+        hcpMatchVia: hcpMatchedBy,
         hcpError,
       })
     } catch (e) {

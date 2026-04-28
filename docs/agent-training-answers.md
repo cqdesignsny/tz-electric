@@ -889,8 +889,8 @@ Replaces the prior /leads (Job Inbox > "API Leads") behavior as of 2026-04-28. E
 **Server-side flow (`src/app/api/leads/submit/route.ts`):**
 
 1. Persist to Neon (`tz_leads`) first so the lead is recorded even if HCP is unreachable.
-2. Find existing customer in HCP by phone (`GET /customers?phone_number={normalized}`). Phone-only match — names can differ ("Mike" vs "Michael") and still be the same person.
-3. If found: keep `customer.notes` untouched (it holds persistent customer info like "don't wear shoes in the house" — never overwritten by lead data).
+2. Find existing customer in HCP by **any of phone, email, or name** (the three lookups fire in parallel; first hit wins, with phone preferred over email over name). Catches the "same person, mistyped name" / "shared household email" / "new phone" cases that phone-only would miss.
+3. If found: keep `customer.notes` untouched (it holds persistent customer info like "don't wear shoes in the house" — never overwritten by lead data). The estimate's private notes record which signal matched (`Matched existing customer by: phone|email|name`) so the office can sanity-check.
 4. If not found: create a new customer with name, phone, email, address only. `notes` is left blank for the same reason.
 5. Create an unscheduled estimate against that customer. Job-specific lead details go in the estimate's `private_notes` (office-only, scoped to this estimate) along with `description`, `tags`, and the service `address`. The estimate stays open / unscheduled — the office schedules from there.
 6. Stitch `hcp_customer_id`, `hcp_estimate_id`, `hcp_customer_existing` back onto the `tz_leads` row so the TZ Switchboard Lead Pipeline can deep-link and the office can confirm the routing worked.
@@ -921,6 +921,8 @@ Replaces the prior /leads (Job Inbox > "API Leads") behavior as of 2026-04-28. E
 - Flag tags: `Renter - Verify with Landlord`, `Medical Equipment in Home`, `ACTIVE LEAK`, `Google Ads`
 
 **TZ Switchboard mirror** (`/switchboard/lead-pipeline`): reads from `tz_leads` (Neon), one row per submission. Each row deep-links to the matching HCP estimate via `hcp_estimate_id`. If HCP sync errored mid-flight, the row shows an "HCP sync error" badge with the error message and instructions for the office to recreate manually.
+
+**Two-way status sync.** The office flips estimates Won / Lost in HCP. Every time the Lead Pipeline page loads, the server reads the latest status for any rows whose `estimate_status_synced_at` is older than 5 minutes (capped at 30 rows per request, sequential reads to stay under HCP's rate limit) and writes the categorized status (`open` / `won` / `lost`) back onto `tz_leads.estimate_status`. The page header shows when the sync last ran and exposes a "Refresh statuses" button that bypasses the throttle. Won leads get an emerald accent, lost leads dim to muted, sync errors flag the row.
 
 **For SMS / voice / chat agents:** call the same `POST /api/leads/submit` once qualification is done, with the `qualification` map matching the keys defined in section 6's "Canonical Lead Intake Question Set." The endpoint will handle the customer + estimate routing the same way the website form does, so all channels stay consistent.
 

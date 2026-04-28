@@ -94,13 +94,9 @@ export async function searchCustomer(phone: string, firstName: string, lastName:
 }
 
 /**
- * Find a customer by phone alone, returning the most likely match. Used by the
- * lead-form flow: an existing TZ customer requesting new work via the website
- * should be matched even if they enter a slightly different name (e.g.
- * "Mike Smith" in HCP but "Michael Smith" on the form).
- *
- * Returns null on no match or HCP error so callers can fall through to
- * creating a new customer.
+ * Find a customer by phone alone, returning the most likely match. Retained
+ * for any caller that has only a phone number; new code should prefer
+ * findExistingCustomer (which also matches on email and name).
  */
 export async function findCustomerByPhone(phone: string): Promise<HCPCustomer | null> {
   const normalized = normalizePhone(phone)
@@ -115,6 +111,119 @@ export async function findCustomerByPhone(phone: string): Promise<HCPCustomer | 
     console.error('HCP findCustomerByPhone error:', error)
     return null
   }
+}
+
+/**
+ * Find an existing HCP customer by ANY of phone, email, or full name.
+ * Per Tyler's 2026-04-28 routing rules, a returning customer should be
+ * matched if any single one of those three fields hits a record in HCP —
+ * not all three combined. Examples this catches that phone-only would miss:
+ *
+ *   - Same person, new phone (matches by email or name)
+ *   - Same person, mistyped name (matches by phone or email)
+ *   - Spouse / household member submits with shared email (matches by email)
+ *
+ * Strategy: fire all three lookups in parallel, dedupe by customer id, and
+ * return the first hit. Phone match is still the strongest signal so it's
+ * preferred when multiple lookups hit different customers; falls back to
+ * email, then name.
+ *
+ * Returns null on total miss or any unrecoverable error so callers can fall
+ * through to creating a new customer.
+ */
+export type ExistingCustomerLookup = {
+  firstName?: string
+  lastName?: string
+  phone?: string
+  email?: string
+}
+
+export type ExistingCustomerMatch = {
+  customer: HCPCustomer
+  matchedBy: 'phone' | 'email' | 'name'
+}
+
+async function searchCustomersByQuery(query: string): Promise<HCPCustomer[]> {
+  const trimmed = query.trim()
+  if (!trimmed) return []
+  try {
+    const data = await hcpFetch(`/customers?q=${encodeURIComponent(trimmed)}`)
+    return (data.customers as HCPCustomer[]) || []
+  } catch (error) {
+    console.error(`HCP /customers?q=${query} error:`, error)
+    return []
+  }
+}
+
+async function searchCustomersByPhone(phone: string): Promise<HCPCustomer[]> {
+  const normalized = normalizePhone(phone)
+  if (!normalized) return []
+  try {
+    const data = await hcpFetch(
+      `/customers?phone_number=${encodeURIComponent(normalized)}`,
+    )
+    return (data.customers as HCPCustomer[]) || []
+  } catch (error) {
+    console.error(`HCP /customers?phone_number=${normalized} error:`, error)
+    return []
+  }
+}
+
+export async function findExistingCustomer(
+  lookup: ExistingCustomerLookup,
+): Promise<ExistingCustomerMatch | null> {
+  const fullName =
+    [lookup.firstName?.trim(), lookup.lastName?.trim()]
+      .filter(Boolean)
+      .join(' ') || ''
+
+  const tasks: Array<Promise<{ via: 'phone' | 'email' | 'name'; customers: HCPCustomer[] }>> = []
+  if (lookup.phone) {
+    tasks.push(
+      searchCustomersByPhone(lookup.phone).then((customers) => ({
+        via: 'phone',
+        customers,
+      })),
+    )
+  }
+  if (lookup.email && lookup.email.trim()) {
+    tasks.push(
+      searchCustomersByQuery(lookup.email.trim()).then((customers) => ({
+        via: 'email',
+        // HCP /customers?q= matches across multiple fields so re-filter to
+        // confirm the email actually appears on the customer record.
+        customers: customers.filter(
+          (c) => (c.email || '').toLowerCase() === lookup.email!.trim().toLowerCase(),
+        ),
+      })),
+    )
+  }
+  if (fullName) {
+    tasks.push(
+      searchCustomersByQuery(fullName).then((customers) => ({
+        via: 'name',
+        // Confirm the full name actually matches; q= can return partial hits.
+        customers: customers.filter((c) => {
+          const hcpName = `${c.first_name || ''} ${c.last_name || ''}`
+            .trim()
+            .toLowerCase()
+          return hcpName === fullName.toLowerCase()
+        }),
+      })),
+    )
+  }
+
+  if (tasks.length === 0) return null
+
+  const results = await Promise.all(tasks)
+  // Phone is the strongest signal, then email, then name. Order results
+  // accordingly; first non-empty wins.
+  const order: Array<'phone' | 'email' | 'name'> = ['phone', 'email', 'name']
+  for (const via of order) {
+    const hit = results.find((r) => r.via === via && r.customers.length > 0)
+    if (hit) return { customer: hit.customers[0], matchedBy: hit.via }
+  }
+  return null
 }
 
 export async function createCustomer(data: CustomerData, planInfo: PlanInfo): Promise<HCPCustomer> {
@@ -306,6 +415,63 @@ export async function createEstimateForLead(
     method: 'POST',
     body: JSON.stringify(body),
   })
+}
+
+/**
+ * Read a single estimate by id. Used by the periodic status sync — when the
+ * office flips an estimate Won/Lost in HCP, we read the new status here and
+ * mirror it onto the matching tz_leads row so the TZ Switchboard Lead
+ * Pipeline can filter and badge it without a roundtrip to HCP per page load.
+ *
+ * Returns null on any error so the sync loop can keep going for the rest
+ * of the batch.
+ */
+export type HCPEstimate = {
+  id: string
+  status?: string | null
+  pipeline_status?: string | null
+  customer_id?: string | null
+  total_amount?: number | null
+  accepted_at?: string | null
+  lost_at?: string | null
+  [key: string]: unknown
+}
+
+export async function getEstimate(estimateId: string): Promise<HCPEstimate | null> {
+  try {
+    return (await hcpFetch(
+      `/estimates/${encodeURIComponent(estimateId)}`,
+    )) as HCPEstimate
+  } catch (e) {
+    console.error('[hcp] getEstimate failed:', e)
+    return null
+  }
+}
+
+/**
+ * Reduce HCP's raw status string + side-channel timestamps into the three
+ * categories the Lead Pipeline UI cares about. HCP exposes several
+ * statuses ("estimate sent", "draft", "scheduled", "won", "lost", etc.);
+ * the office mostly cares about whether it's been won, lost, or is still
+ * pending. Anything we don't recognize stays as "open" so the lead remains
+ * actionable.
+ */
+export type EstimateStatusCategory = 'open' | 'won' | 'lost'
+
+export function categorizeEstimateStatus(
+  raw: string | null | undefined,
+  estimate?: HCPEstimate | null,
+): EstimateStatusCategory {
+  const lower = (raw || '').toLowerCase()
+  if (estimate?.lost_at) return 'lost'
+  if (estimate?.accepted_at) return 'won'
+  if (lower.includes('won') || lower.includes('accepted') || lower.includes('booked')) {
+    return 'won'
+  }
+  if (lower.includes('lost') || lower.includes('declined') || lower.includes('canceled')) {
+    return 'lost'
+  }
+  return 'open'
 }
 
 /**

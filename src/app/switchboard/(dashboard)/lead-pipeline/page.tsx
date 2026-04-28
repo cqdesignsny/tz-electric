@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { listStoredLeads } from '@/lib/leads-store'
+import { syncEstimateStatuses } from '@/lib/lead-status-sync'
 import {
   summarizeStoredLead,
   type LeadSummary,
@@ -16,6 +17,18 @@ export const dynamic = 'force-dynamic'
 export default async function LeadPipelinePage() {
   let summaries: LeadSummary[] = []
   let error: string | null = null
+  let lastSyncedAt: string | null = null
+
+  // Inline status sync. Throttled to a 5-minute stale threshold so frequent
+  // refreshes don't hammer HCP. Capped at 30 rows per request to fit inside
+  // the function budget. Manual "Refresh" button on the client bypasses
+  // the throttle.
+  try {
+    await syncEstimateStatuses()
+    lastSyncedAt = new Date().toISOString()
+  } catch (e) {
+    console.error('[lead-pipeline] inline sync failed (non-fatal):', e)
+  }
 
   try {
     const stored = await listStoredLeads({ limit: 200 })
@@ -44,9 +57,9 @@ export default async function LeadPipelinePage() {
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base max-w-3xl leading-relaxed">
           Every lead from the website form, AI agents, and other inbound
-          channels. Each row mirrors a Housecall Pro estimate. Click any
-          lead to see the full qualification answers and jump to the
-          matching estimate in HCP.
+          channels. Each row mirrors a Housecall Pro estimate, including
+          its Won/Lost status. Click any lead to see qualification answers
+          and jump to the matching estimate in HCP.
         </p>
       </header>
 
@@ -57,15 +70,15 @@ export default async function LeadPipelinePage() {
         </div>
       )}
 
-      <LeadPipelineClient leads={summaries} />
+      <LeadPipelineClient leads={summaries} lastSyncedAt={lastSyncedAt} />
 
       <p className="mt-10 text-xs text-gray-400 dark:text-gray-500 leading-relaxed max-w-3xl">
         Reads from the TZ Switchboard&apos;s own database (Neon Postgres).
         Each form submission is also routed to Housecall Pro: existing
-        customers get a new estimate appended to their record, new
-        customers get a fresh customer + estimate. The &quot;Open in
-        Housecall Pro&quot; button on each row deep-links to the matching
-        estimate.
+        customers get a new estimate appended to their record (matched by
+        any of phone, email, or name), new customers get a fresh customer +
+        estimate. When the office flips an estimate Won or Lost in HCP,
+        the status syncs back here within 5 minutes.
       </p>
     </div>
   )

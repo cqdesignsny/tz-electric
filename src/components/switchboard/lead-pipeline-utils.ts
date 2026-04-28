@@ -10,6 +10,8 @@ import {
   getQuestionLabel,
   type ServiceConfig,
 } from '@/components/forms/lead-form-config'
+import type { EstimateStatusCategory } from '@/lib/housecall-pro'
+import { parseStoredStatus } from '@/lib/lead-status-sync'
 import type { StoredLead } from '@/lib/leads-store'
 
 const HCP_APP_BASE = 'https://pro.housecallpro.com/app'
@@ -34,8 +36,12 @@ export type LeadSummary = {
   isMedical: boolean
   isGoogleAds: boolean
   isExistingHcpCustomer: boolean
+  matchedVia: 'phone' | 'email' | 'name' | null
   hasHcpEstimate: boolean
   hcpError: string | null
+  estimateStatus: EstimateStatusCategory
+  estimateStatusRaw: string | null
+  estimateStatusSyncedAt: string | null
   createdAt: string
   qualification: Array<{ key: string; value: string }>
   customerNotes: string | null
@@ -134,8 +140,18 @@ export function summarizeStoredLead(stored: StoredLead): LeadSummary {
   if (isMedical) flagTags.push('Medical equipment')
   if (isRenter) flagTags.push('Renter')
   if (isGoogleAds) flagTags.push('Google Ads')
-  if (isExistingHcpCustomer) flagTags.push('Existing customer')
+  if (isExistingHcpCustomer && stored.hcp_match_via) {
+    flagTags.push(`Existing customer · ${stored.hcp_match_via}`)
+  } else if (isExistingHcpCustomer) {
+    flagTags.push('Existing customer')
+  }
   if (stored.hcp_error) flagTags.push('HCP sync error')
+
+  const { category: estimateStatus, raw: estimateStatusRaw } = parseStoredStatus(
+    stored.estimate_status,
+  )
+  if (estimateStatus === 'won') flagTags.push('Won')
+  if (estimateStatus === 'lost') flagTags.push('Lost')
 
   const serviceTag = stored.service_label || service?.label || null
   const urgencyTag = q.urgency ? shorten(q.urgency, 40) : null
@@ -180,8 +196,12 @@ export function summarizeStoredLead(stored: StoredLead): LeadSummary {
     isMedical,
     isGoogleAds,
     isExistingHcpCustomer,
+    matchedVia: stored.hcp_match_via,
     hasHcpEstimate,
     hcpError: stored.hcp_error,
+    estimateStatus,
+    estimateStatusRaw,
+    estimateStatusSyncedAt: stored.estimate_status_synced_at,
     createdAt: stored.created_at,
     qualification: buildQualification(stored, service),
     customerNotes: stored.customer_notes,

@@ -11,15 +11,20 @@ const PAGE_SIZE = 15
 
 type Props = {
   leads: LeadSummary[]
+  lastSyncedAt: string | null
 }
 
 type ServiceFilter = 'all' | string
+type StatusFilter = 'all' | 'open' | 'won' | 'lost'
 
-export default function LeadPipelineClient({ leads }: Props) {
+export default function LeadPipelineClient({ leads, lastSyncedAt }: Props) {
   const [serviceFilter, setServiceFilter] = useState<ServiceFilter>('all')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
+  const [refreshing, setRefreshing] = useState(false)
+  const [refreshError, setRefreshError] = useState<string | null>(null)
 
   const services = useMemo(() => {
     const set = new Set<string>()
@@ -33,6 +38,7 @@ export default function LeadPipelineClient({ leads }: Props) {
     const q = search.trim().toLowerCase()
     return leads.filter((l) => {
       if (serviceFilter !== 'all' && l.serviceTag !== serviceFilter) return false
+      if (statusFilter !== 'all' && l.estimateStatus !== statusFilter) return false
       if (q) {
         const hay = [
           l.fullName,
@@ -51,14 +57,16 @@ export default function LeadPipelineClient({ leads }: Props) {
       }
       return true
     })
-  }, [leads, serviceFilter, search])
+  }, [leads, serviceFilter, statusFilter, search])
 
   const counts = useMemo(() => {
     const total = leads.length
+    const open = leads.filter((l) => l.estimateStatus === 'open').length
+    const won = leads.filter((l) => l.estimateStatus === 'won').length
+    const lost = leads.filter((l) => l.estimateStatus === 'lost').length
     const renters = leads.filter((l) => l.isRenter).length
     const activeLeak = leads.filter((l) => l.isActiveLeak).length
-    const ads = leads.filter((l) => l.isGoogleAds).length
-    return { total, renters, activeLeak, ads }
+    return { total, open, won, lost, renters, activeLeak }
   }, [leads])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -70,15 +78,63 @@ export default function LeadPipelineClient({ leads }: Props) {
 
   useEffect(() => {
     setPage(1)
-  }, [serviceFilter, search])
+  }, [serviceFilter, statusFilter, search])
+
+  async function refreshStatuses() {
+    setRefreshing(true)
+    setRefreshError(null)
+    try {
+      const res = await fetch('/api/leads/sync-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force: true, limit: 100 }),
+      })
+      if (!res.ok) {
+        const body = (await res.json().catch(() => ({}))) as { error?: string }
+        throw new Error(body.error || `Sync failed (${res.status})`)
+      }
+      // Force a server re-render so we see the updated estimate_status
+      // values. Simplest approach is a soft reload.
+      window.location.reload()
+    } catch (e) {
+      setRefreshing(false)
+      setRefreshError(e instanceof Error ? e.message : String(e))
+    }
+  }
 
   return (
     <div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-        <Stat label="Total leads" value={counts.total} />
-        <Stat label="Active leaks" value={counts.activeLeak} accent={counts.activeLeak > 0 ? 'danger' : 'muted'} />
-        <Stat label="Renters" value={counts.renters} />
-        <Stat label="Google Ads" value={counts.ads} />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
+        <Stat label="Total" value={counts.total} />
+        <Stat label="Open" value={counts.open} />
+        <Stat label="Won" value={counts.won} accent={counts.won > 0 ? 'success' : 'muted'} />
+        <Stat label="Lost" value={counts.lost} accent="muted" />
+        <Stat
+          label="Active leaks"
+          value={counts.activeLeak}
+          accent={counts.activeLeak > 0 ? 'danger' : 'muted'}
+        />
+      </div>
+
+      <div className="flex items-center justify-between gap-3 mb-5 text-xs text-gray-500 dark:text-gray-400">
+        <div>
+          {lastSyncedAt
+            ? `HCP statuses synced ${relativeTime(lastSyncedAt)}`
+            : 'HCP status sync not run yet'}
+          {refreshError && (
+            <span className="ml-2 text-red-600 dark:text-red-400">
+              · {refreshError}
+            </span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={refreshStatuses}
+          disabled={refreshing}
+          className="inline-flex items-center gap-1.5 rounded-full border border-gray-300 dark:border-navy-light/60 px-3 py-1.5 text-xs font-semibold text-navy dark:text-white hover:border-blue hover:text-blue disabled:cursor-not-allowed disabled:opacity-50 transition-colors"
+        >
+          {refreshing ? 'Refreshing…' : 'Refresh statuses'}
+        </button>
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
@@ -91,6 +147,16 @@ export default function LeadPipelineClient({ leads }: Props) {
             className="w-full rounded-xl border border-gray-300 dark:border-navy-light/60 bg-white dark:bg-[#0F1C3F] px-4 py-2.5 text-sm text-navy dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/30"
           />
         </div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+          className="rounded-xl border border-gray-300 dark:border-navy-light/60 bg-white dark:bg-[#0F1C3F] px-3 py-2.5 text-sm text-navy dark:text-white focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/30"
+        >
+          <option value="all">All statuses</option>
+          <option value="open">Open</option>
+          <option value="won">Won</option>
+          <option value="lost">Lost</option>
+        </select>
         <select
           value={serviceFilter}
           onChange={(e) => setServiceFilter(e.target.value)}
@@ -270,19 +336,23 @@ function Stat({
 }: {
   label: string
   value: number
-  accent?: 'default' | 'muted' | 'danger'
+  accent?: 'default' | 'muted' | 'danger' | 'success'
 }) {
   const tone =
     accent === 'danger' && value > 0
       ? 'border-red-300 dark:border-red-900 bg-red-50 dark:bg-red-950/40'
-      : accent === 'muted'
-        ? 'border-gray-200 dark:border-navy-light/40 bg-gray-50 dark:bg-[#0A1128]'
-        : 'border-gray-200 dark:border-navy-light/40 bg-white dark:bg-[#0F1C3F]'
+      : accent === 'success' && value > 0
+        ? 'border-emerald-300 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/40'
+        : accent === 'muted'
+          ? 'border-gray-200 dark:border-navy-light/40 bg-gray-50 dark:bg-[#0A1128]'
+          : 'border-gray-200 dark:border-navy-light/40 bg-white dark:bg-[#0F1C3F]'
 
   const num =
     accent === 'danger' && value > 0
       ? 'text-red-700 dark:text-red-300'
-      : 'text-navy dark:text-white'
+      : accent === 'success' && value > 0
+        ? 'text-emerald-700 dark:text-emerald-300'
+        : 'text-navy dark:text-white'
 
   return (
     <div className={`rounded-xl border p-4 ${tone}`}>
@@ -303,13 +373,17 @@ function LeadCard({
   expanded: boolean
   onToggle: () => void
 }) {
-  const accentBorder = lead.isActiveLeak
-    ? 'border-red-400 dark:border-red-700'
-    : lead.isRenter
-      ? 'border-amber-300 dark:border-amber-700'
-      : lead.hcpError
-        ? 'border-orange-300 dark:border-orange-700'
-        : 'border-gray-200 dark:border-navy-light/40'
+  const accentBorder = lead.estimateStatus === 'won'
+    ? 'border-emerald-300 dark:border-emerald-700'
+    : lead.estimateStatus === 'lost'
+      ? 'border-gray-200 dark:border-navy-light/40 opacity-75'
+      : lead.isActiveLeak
+        ? 'border-red-400 dark:border-red-700'
+        : lead.isRenter
+          ? 'border-amber-300 dark:border-amber-700'
+          : lead.hcpError
+            ? 'border-orange-300 dark:border-orange-700'
+            : 'border-gray-200 dark:border-navy-light/40'
 
   return (
     <div
@@ -356,11 +430,15 @@ function LeadCard({
                 tone={
                   t === 'Active leak' || t === 'HCP sync error'
                     ? 'danger'
-                    : t === 'Medical equipment' || t === 'Renter'
-                      ? 'warning'
-                      : t === 'Existing customer'
-                        ? 'success'
-                        : 'neutral'
+                    : t === 'Won'
+                      ? 'success'
+                      : t === 'Lost'
+                        ? 'neutral'
+                        : t === 'Medical equipment' || t === 'Renter'
+                          ? 'warning'
+                          : t.startsWith('Existing customer')
+                            ? 'success'
+                            : 'neutral'
                 }
               >
                 {t}
@@ -406,6 +484,26 @@ function LeadDetail({ lead }: { lead: LeadSummary }) {
                   v:
                     [lead.city, lead.state, lead.zip].filter(Boolean).join(', ') ||
                     '(not provided)',
+                },
+              ]}
+            />
+          </div>
+
+          <div className="mt-5">
+            <SectionLabel>HCP routing</SectionLabel>
+            <KVList
+              items={[
+                {
+                  k: 'Customer',
+                  v: lead.isExistingHcpCustomer
+                    ? `Existing${lead.matchedVia ? ` (matched by ${lead.matchedVia})` : ''}`
+                    : 'New (created from this submission)',
+                },
+                {
+                  k: 'Estimate',
+                  v: lead.hasHcpEstimate
+                    ? `${lead.estimateStatus.toUpperCase()}${lead.estimateStatusRaw ? ` · ${lead.estimateStatusRaw}` : ''}`
+                    : '(not created)',
                 },
               ]}
             />

@@ -20,6 +20,7 @@ export type InsertLeadInput = {
   hcpCustomerId?: string | null
   hcpEstimateId?: string | null
   hcpCustomerExisting?: boolean | null
+  hcpMatchVia?: 'phone' | 'email' | 'name' | null
   hcpError?: string | null
   source: LeadSource
   serviceKey?: string | null
@@ -48,7 +49,10 @@ export type StoredLead = {
   hcp_customer_id: string | null
   hcp_estimate_id: string | null
   hcp_customer_existing: boolean | null
+  hcp_match_via: 'phone' | 'email' | 'name' | null
   hcp_error: string | null
+  estimate_status: string | null
+  estimate_status_synced_at: string | null
   source: LeadSource
   service_key: string | null
   service_label: string | null
@@ -82,7 +86,7 @@ export async function insertLead(input: InsertLeadInput): Promise<string> {
   const rows = (await sql`
     INSERT INTO tz_leads (
       hcp_lead_id, hcp_customer_id, hcp_estimate_id,
-      hcp_customer_existing, hcp_error,
+      hcp_customer_existing, hcp_match_via, hcp_error,
       source,
       service_key, service_label,
       first_name, last_name, phone, email,
@@ -94,6 +98,7 @@ export async function insertLead(input: InsertLeadInput): Promise<string> {
       ${input.hcpCustomerId ?? null},
       ${input.hcpEstimateId ?? null},
       ${input.hcpCustomerExisting ?? null},
+      ${input.hcpMatchVia ?? null},
       ${input.hcpError ?? null},
       ${input.source},
       ${input.serviceKey ?? null}, ${input.serviceLabel ?? null},
@@ -156,6 +161,7 @@ export type AttachHcpEstimateInput = {
   hcpCustomerId: string
   hcpEstimateId?: string | null
   hcpCustomerExisting: boolean
+  hcpMatchVia?: 'phone' | 'email' | 'name' | null
   hcpError?: string | null
 }
 
@@ -169,6 +175,7 @@ export async function attachHcpEstimate(
     SET hcp_customer_id = ${input.hcpCustomerId},
         hcp_estimate_id = ${input.hcpEstimateId ?? null},
         hcp_customer_existing = ${input.hcpCustomerExisting},
+        hcp_match_via = ${input.hcpMatchVia ?? null},
         hcp_error = ${input.hcpError ?? null},
         updated_at = NOW()
     WHERE id = ${id}
@@ -179,5 +186,59 @@ export async function setLeadHcpError(id: string, message: string): Promise<void
   const sql = db()
   await sql`
     UPDATE tz_leads SET hcp_error = ${message}, updated_at = NOW() WHERE id = ${id}
+  `
+}
+
+/**
+ * Lightweight projection of leads that have an HCP estimate id and need
+ * their status refreshed. Used by the periodic estimate-status sync. Pass
+ * `staleThresholdMs` to skip rows that were synced recently and `limit` to
+ * cap the batch (HCP rate-limits ~5 req/sec, so keep this small enough to
+ * fit in a single Vercel function invocation).
+ */
+export type LeadStatusSyncTarget = {
+  id: string
+  hcp_estimate_id: string
+  estimate_status: string | null
+  estimate_status_synced_at: string | null
+}
+
+export async function listLeadsNeedingStatusSync(
+  staleThresholdMs: number,
+  limit: number,
+): Promise<LeadStatusSyncTarget[]> {
+  const sql = db()
+  const cutoff = new Date(Date.now() - staleThresholdMs).toISOString()
+  return (await sql`
+    SELECT id, hcp_estimate_id, estimate_status, estimate_status_synced_at
+    FROM tz_leads
+    WHERE hcp_estimate_id IS NOT NULL
+      AND (estimate_status_synced_at IS NULL OR estimate_status_synced_at < ${cutoff})
+    ORDER BY estimate_status_synced_at NULLS FIRST, created_at DESC
+    LIMIT ${Math.min(limit, 100)}
+  `) as LeadStatusSyncTarget[]
+}
+
+export async function setEstimateStatus(
+  id: string,
+  status: string | null,
+): Promise<void> {
+  const sql = db()
+  await sql`
+    UPDATE tz_leads
+    SET estimate_status = ${status},
+        estimate_status_synced_at = NOW(),
+        updated_at = NOW()
+    WHERE id = ${id}
+  `
+}
+
+export async function markStatusSyncAttempted(id: string): Promise<void> {
+  const sql = db()
+  await sql`
+    UPDATE tz_leads
+    SET estimate_status_synced_at = NOW(),
+        updated_at = NOW()
+    WHERE id = ${id}
   `
 }
