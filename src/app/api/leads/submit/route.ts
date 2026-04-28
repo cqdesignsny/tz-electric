@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   createCustomerForLead,
   createEstimateForLead,
+  createInboxLeadForEstimate,
   findExistingCustomer,
   type HCPCustomer,
 } from '@/lib/housecall-pro'
 import { renderLeadFormSubmissionEmail } from '@/lib/email-templates'
-import { attachHcpEstimate, insertLead } from '@/lib/leads-store'
+import { attachHcpEstimate, attachHcpLeadId, insertLead } from '@/lib/leads-store'
 import {
   findService,
   getQuestionLabel,
@@ -250,6 +251,7 @@ export async function POST(req: NextRequest) {
   let hcpCustomerExisting = false
   let hcpMatchedBy: 'phone' | 'email' | 'name' | null = null
   let hcpEstimateId: string | undefined
+  let hcpInboxLeadId: string | undefined
   let hcpError: string | undefined
 
   try {
@@ -316,6 +318,21 @@ export async function POST(req: NextRequest) {
         // it; office can re-add the note manually.
         hcpError = `Estimate created but office note failed to attach: ${noteAttachError}`
       }
+
+      // Drop a Job Inbox entry so the office sees new leads at a glance
+      // in HCP's "API Leads" channel. Attaches to the existing customer
+      // via customer_id (no duplicate). Failure here is non-fatal — the
+      // estimate already exists.
+      try {
+        const inbox = await createInboxLeadForEstimate({
+          customerId: hcpCustomer.id,
+          tags,
+          address,
+        })
+        if (typeof inbox?.id === 'string') hcpInboxLeadId = inbox.id
+      } catch (e) {
+        console.error('[lead-form] HCP Job Inbox lead failed (non-fatal):', e)
+      }
     } catch (e) {
       hcpError = e instanceof Error ? e.message : String(e)
       console.error('[lead-form] HCP createEstimate failed:', hcpError)
@@ -333,6 +350,9 @@ export async function POST(req: NextRequest) {
         hcpMatchVia: hcpMatchedBy,
         hcpError,
       })
+      if (hcpInboxLeadId) {
+        await attachHcpLeadId(storedLeadId, hcpInboxLeadId)
+      }
     } catch (e) {
       console.error('[lead-form] attachHcpEstimate failed (non-fatal):', e)
     }
@@ -412,6 +432,7 @@ export async function POST(req: NextRequest) {
     ok: true,
     hcpCustomerId: hcpCustomer?.id || null,
     hcpEstimateId: hcpEstimateId || null,
+    hcpInboxLeadId: hcpInboxLeadId || null,
     hcpCustomerExisting,
     hcpError: hcpError || null,
   })

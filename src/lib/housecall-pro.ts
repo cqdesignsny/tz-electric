@@ -309,10 +309,11 @@ export async function createCustomerForLead(
 
 /**
  * Lead form submission via /leads (legacy path). Lands in HCP Job Inbox >
- * "API Leads" channel. Retained for reference and for any agent that
- * specifically wants the Job Inbox flow; the website lead form has moved
- * to the create-customer + create-estimate path (see createEstimateForLead
- * below) per Tyler's 2026-04-28 routing change.
+ * "API Leads" channel. Retained for reference; the website lead form has
+ * moved to the create-customer + create-estimate path (see
+ * createEstimateForLead) per Tyler's 2026-04-28 routing change. We still
+ * call /leads alongside the estimate via createInboxLeadForEstimate
+ * (below) so the office gets Job Inbox visibility on every new lead.
  *
  * Payload shape was verified empirically against the live HCP API on
  * 2026-04-27 (test leads numbered 14, 15, 17). HCP silently drops
@@ -415,6 +416,56 @@ export type HCPEstimateResponse = {
   id?: string
   number?: string | number
   [key: string]: unknown
+}
+
+/**
+ * Drop a Job Inbox entry alongside the estimate so the office sees new
+ * leads at a glance in HCP's "API Leads" channel and can click straight
+ * through to the customer (and from there to the open estimate). Unlike
+ * the legacy createLead flow, this attaches the inbox lead to an
+ * EXISTING customer via top-level `customer_id` — verified empirically
+ * 2026-04-28 — so we don't end up with duplicate customer records.
+ *
+ * Empirical findings on POST /leads with customer_id:
+ *   - `customer_id` at the top level: 201 Created, attaches to the
+ *     existing customer cleanly (no duplicate).
+ *   - Nested `customer.id`: 400 Bad Request — wrong shape.
+ *   - Sending a `customer` object with phone matching an existing record
+ *     creates a DUPLICATE customer rather than matching. Always prefer
+ *     `customer_id`.
+ *   - `tags` (top-level array of strings) accepted and shown on the
+ *     Job Inbox card preview. Same tags we put on the estimate option
+ *     so triage is consistent across both surfaces.
+ *   - `address` accepted; helpful when the inbox shows location.
+ *
+ * Failures are non-fatal: the estimate already exists, so a missing
+ * inbox entry just means the office has to find it via the Estimates
+ * list instead of the Job Inbox.
+ */
+export type InboxLeadInput = {
+  customerId: string
+  tags?: string[]
+  address?: {
+    street: string
+    city: string
+    state: string
+    zip: string
+  }
+}
+
+export async function createInboxLeadForEstimate(
+  input: InboxLeadInput,
+): Promise<HCPLeadResponse> {
+  const body: Record<string, unknown> = {
+    customer_id: input.customerId,
+  }
+  if (input.tags && input.tags.length > 0) body.tags = input.tags
+  if (input.address) body.address = input.address
+
+  return hcpFetch('/leads', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
 }
 
 export type CreateEstimateForLeadResult = {

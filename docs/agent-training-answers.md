@@ -893,8 +893,9 @@ Replaces the prior /leads (Job Inbox > "API Leads") behavior as of 2026-04-28. E
 3. If found: keep `customer.notes` untouched (it holds persistent customer info like "don't wear shoes in the house" — never overwritten by lead data). The estimate's private notes record which signal matched (`Matched existing customer by: phone|email|name`) so the office can sanity-check.
 4. If not found: create a new customer with name, phone, email, address only. `notes` is left blank for the same reason.
 5. Create an unscheduled estimate against that customer. Job-specific lead details go in the estimate's `private_notes` (office-only, scoped to this estimate) along with `description`, `tags`, and the service `address`. The estimate stays open / unscheduled — the office schedules from there.
-6. Stitch `hcp_customer_id`, `hcp_estimate_id`, `hcp_customer_existing` back onto the `tz_leads` row so the TZ Switchboard Lead Pipeline can deep-link and the office can confirm the routing worked.
-7. Email the office with the same details via Resend regardless of HCP outcome.
+6. Drop a Job Inbox entry alongside the estimate via `POST /leads` with top-level `customer_id` referencing the existing customer (no duplicate). Same triage tags go on the inbox lead so the office sees service / urgency / scope / flags on the inbox card and can quickly notice new leads in HCP's "API Leads" channel. Inbox lead failure is non-fatal — the estimate stays the source of truth.
+7. Stitch `hcp_customer_id`, `hcp_estimate_id`, `hcp_lead_id`, `hcp_customer_existing` back onto the `tz_leads` row so the TZ Switchboard Lead Pipeline can deep-link and the office can confirm the routing worked.
+8. Email the office with the same details via Resend regardless of HCP outcome.
 
 **Where each piece of data lands in HCP:**
 
