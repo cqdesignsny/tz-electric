@@ -1,11 +1,13 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   formatPhoneForDisplay,
   relativeTime,
   type LeadSummary,
 } from './lead-pipeline-utils'
+
+const PAGE_SIZE = 15
 
 type Props = {
   leads: LeadSummary[]
@@ -19,6 +21,7 @@ export default function LeadPipelineClient({ leads }: Props) {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
 
   const services = useMemo(() => {
     const set = new Set<string>()
@@ -66,6 +69,20 @@ export default function LeadPipelineClient({ leads }: Props) {
     const ads = leads.filter((l) => l.isGoogleAds).length
     return { total, renters, activeLeak, ads }
   }, [leads])
+
+  // Pagination derived state.
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const safePage = Math.min(page, totalPages)
+  const paginated = useMemo(
+    () => filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [filtered, safePage],
+  )
+
+  // Reset to page 1 whenever filters change so the user isn't stranded on
+  // a now-empty page after narrowing the result set.
+  useEffect(() => {
+    setPage(1)
+  }, [serviceFilter, statusFilter, search])
 
   return (
     <div>
@@ -120,25 +137,156 @@ export default function LeadPipelineClient({ leads }: Props) {
           No leads match your filters.
         </div>
       ) : (
-        <div className="space-y-2">
-          {filtered.map((lead) => (
-            <LeadCard
-              key={lead.id}
-              lead={lead}
-              expanded={expandedId === lead.id}
-              onToggle={() =>
-                setExpandedId((cur) => (cur === lead.id ? null : lead.id))
-              }
-            />
-          ))}
-        </div>
-      )}
+        <>
+          <div className="space-y-2">
+            {paginated.map((lead) => (
+              <LeadCard
+                key={lead.id}
+                lead={lead}
+                expanded={expandedId === lead.id}
+                onToggle={() =>
+                  setExpandedId((cur) => (cur === lead.id ? null : lead.id))
+                }
+              />
+            ))}
+          </div>
 
-      <div className="mt-4 text-xs text-gray-400 dark:text-gray-500">
-        Showing {filtered.length} of {leads.length} leads
-      </div>
+          <Pagination
+            page={safePage}
+            totalPages={totalPages}
+            onChange={(p) => {
+              setPage(p)
+              setExpandedId(null)
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            shownStart={(safePage - 1) * PAGE_SIZE + 1}
+            shownEnd={Math.min(safePage * PAGE_SIZE, filtered.length)}
+            totalShown={filtered.length}
+            totalAll={leads.length}
+          />
+        </>
+      )}
     </div>
   )
+}
+
+function Pagination({
+  page,
+  totalPages,
+  onChange,
+  shownStart,
+  shownEnd,
+  totalShown,
+  totalAll,
+}: {
+  page: number
+  totalPages: number
+  onChange: (page: number) => void
+  shownStart: number
+  shownEnd: number
+  totalShown: number
+  totalAll: number
+}) {
+  const pages = paginationRange(page, totalPages)
+
+  return (
+    <div className="mt-6 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+      <div className="text-xs text-gray-500 dark:text-gray-400">
+        Showing <span className="font-semibold text-navy dark:text-white">{shownStart}–{shownEnd}</span>{' '}
+        of <span className="font-semibold text-navy dark:text-white">{totalShown}</span>
+        {totalShown !== totalAll && (
+          <span className="text-gray-400 dark:text-gray-500"> (filtered from {totalAll})</span>
+        )}
+      </div>
+
+      {totalPages > 1 && (
+        <nav className="flex items-center gap-1" aria-label="Pagination">
+          <PageButton
+            disabled={page <= 1}
+            onClick={() => onChange(page - 1)}
+            ariaLabel="Previous page"
+          >
+            ←
+          </PageButton>
+          {pages.map((p, i) =>
+            p === '…' ? (
+              <span
+                key={`gap-${i}`}
+                className="px-2 text-xs text-gray-400 dark:text-gray-500"
+                aria-hidden
+              >
+                …
+              </span>
+            ) : (
+              <PageButton
+                key={p}
+                active={p === page}
+                onClick={() => onChange(p)}
+                ariaLabel={`Page ${p}`}
+              >
+                {p}
+              </PageButton>
+            ),
+          )}
+          <PageButton
+            disabled={page >= totalPages}
+            onClick={() => onChange(page + 1)}
+            ariaLabel="Next page"
+          >
+            →
+          </PageButton>
+        </nav>
+      )}
+    </div>
+  )
+}
+
+function PageButton({
+  children,
+  onClick,
+  active,
+  disabled,
+  ariaLabel,
+}: {
+  children: React.ReactNode
+  onClick: () => void
+  active?: boolean
+  disabled?: boolean
+  ariaLabel?: string
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={ariaLabel}
+      aria-current={active ? 'page' : undefined}
+      className={[
+        'min-w-[36px] h-9 px-2 text-xs font-semibold rounded-lg border transition-colors',
+        active
+          ? 'bg-blue text-white border-blue dark:bg-blue-light dark:border-blue-light dark:text-navy'
+          : 'bg-white dark:bg-[#0F1C3F] text-navy dark:text-white border-gray-200 dark:border-navy-light/60 hover:border-blue hover:text-blue dark:hover:border-blue-light dark:hover:text-blue-light',
+        disabled ? 'opacity-40 cursor-not-allowed hover:border-gray-200 dark:hover:border-navy-light/60' : '',
+      ].join(' ')}
+    >
+      {children}
+    </button>
+  )
+}
+
+// Compact page range like 1 … 4 5 6 … 12, with neighbors of the current page.
+function paginationRange(page: number, total: number): Array<number | '…'> {
+  if (total <= 7) {
+    return Array.from({ length: total }, (_, i) => i + 1)
+  }
+  const result: Array<number | '…'> = [1]
+  const start = Math.max(2, page - 1)
+  const end = Math.min(total - 1, page + 1)
+  if (start > 2) result.push('…')
+  for (let i = start; i <= end; i++) result.push(i)
+  if (end < total - 1) result.push('…')
+  result.push(total)
+  return result
 }
 
 function leadIsLost(l: LeadSummary): boolean {
