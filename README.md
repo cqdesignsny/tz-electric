@@ -253,7 +253,7 @@ The buildout runs in seven phases. Each phase is small enough to ship in 1–2 s
 - Edits flow through the same git history as code, so the agents always load whatever's in the deployed file.
 
 **Phase 4: SMS Agent (Claire)**
-- Twilio inbound webhook → Vercel function → Anthropic Claude streaming reply.
+- Twilio inbound webhook → Vercel function → Anthropic API streaming reply.
 - System prompt assembled at request time from `docs/agent-training-answers.md`.
 - Conversation history persisted in Vercel storage (Postgres or KV from the Marketplace).
 - Takeover button in `/switchboard/sms-conversations`: any office staff can pause Claire mid-thread and respond as themselves; Claire resumes when they release the thread.

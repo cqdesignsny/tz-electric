@@ -1,7 +1,7 @@
 # TZ Electric AI Agent Training Answers
 
 **Source:** Tyler Zitz, owner. Submitted via `/switchboard/agent-training` on 2026-04-26 11:46 AM.
-**Follow-up answers (gaps):** delivered 2026-04-27 by Cesar via Claude Code session.
+**Follow-up answers (gaps):** delivered 2026-04-27 by Cesar.
 
 This document is the canonical knowledge base the AI agents (voice, SMS, web chat) load as their system context. If anything below conflicts with the live SOP at TZ, treat the live SOP as authoritative and update this file.
 

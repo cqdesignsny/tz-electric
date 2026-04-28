@@ -29,7 +29,7 @@ So a normal commit on the SSD propagates everywhere automatically. No manual `gi
 ### Files always kept in sync (alongside the code)
 
 - `tz-site/README.md`, public-facing project overview
-- `tz-site/MEMORY.md`, Claude memory snapshot for session continuity
+- `tz-site/MEMORY.md`, project memory snapshot for session continuity
 - `tz-site/HANDOFF.md`, this file
 - `tz-site/STRATEGY.md` (if present), strategy and design rationale
 
@@ -123,7 +123,7 @@ All of the above are on Production and Development. Preview is intentionally ski
 - [x] ~~Knowledge Base v1 (read-only).~~ Live at `/switchboard/knowledge-base`. Renders `docs/agent-training-answers.md` as a structured browseable view with sticky section nav, scroll-spy active state, and full markdown styling.
 - [x] ~~Neon Postgres provisioned (`tz-db`) and attached to the project.~~ Marketplace integration on Vercel. `tz_leads` table created via `migrations/001_init.sql`. `npm run migrate` applies any new migrations.
 - [ ] **Phase 3 (next): Knowledge Base v2 (edit-in-place).** Authenticated in-app editor for the answers doc. Two viable paths: commit changes back to `docs/agent-training-answers.md` via the GitHub API (cleaner: edits land in git history and trigger a redeploy) or back the editor with a `tz_kb_versions` table in Neon (faster: in-app version control, sync to git on demand). Recommendation: start DB-backed for speed, sync to git via a "publish" action. Closes "easy way to continuously edit the agents."
-- [ ] **Phase 4: SMS Agent (Claire).** Twilio inbound webhook → Vercel function → Claude API streaming reply. Conversations persisted in Neon (new `tz_agent_conversations` and `tz_agent_messages` tables). System prompt assembled from `docs/agent-training-answers.md`. Office takeover button in `/switchboard/sms-conversations`.
+- [ ] **Phase 4: SMS Agent (Claire).** Twilio inbound webhook → Vercel function → Anthropic API streaming reply. Conversations persisted in Neon (new `tz_agent_conversations` and `tz_agent_messages` tables). System prompt assembled from `docs/agent-training-answers.md`. Office takeover button in `/switchboard/sms-conversations`.
 - [ ] **Phase 5: Web chat agent (Claire).** Same prompt and tool surface as SMS, AI SDK streaming widget on every public page, proactive popup at 15s.
 - [ ] **Phase 6: Voice agent (Claire).** Vapi assistant on a Twilio number, 15-minute max before forced handoff, runs the after-hours emergency dispatch SOP exactly.
 - [ ] **Phase 7: Self-improving learning loop.** Office flags transcripts in the SMS / chat / voice modules. Flagged items queue in the Knowledge Base. Approved edits auto-merge into the answers doc. Performance dashboard with handoff rate, false-escalation count, satisfaction proxy.
@@ -140,7 +140,7 @@ The endgame: **Tyler owns every paid service under his own logins and his own ca
 | Service | What it does | Migration step |
 |---|---|---|
 | **Vercel team** | Hosts the site, deploys, owns the domain | Tyler creates a Vercel team, invites Cesar as member, we transfer `tz-electric` project from `cq-marketings-projects` to his team, reattach `tzelectricinc.com` (DNS doesn't change, same Vercel IP) |
-| **Anthropic API** | Claude API powering chat, SMS, voice agents | Tyler signs up at console.anthropic.com, adds his card, generates `ANTHROPIC_API_KEY`, we set it on his Vercel project |
+| **Anthropic API** | Powers chat, SMS, voice agents | Tyler signs up at console.anthropic.com, adds his card, generates `ANTHROPIC_API_KEY`, we set it on his Vercel project |
 | **Twilio** | Phone number + SMS messaging for AI SMS agent | Tyler signs up at twilio.com, buys a local NY number, completes A2P 10DLC business registration, we set Twilio env vars on his Vercel |
 | **Vapi** | Voice agent (handles inbound calls, books jobs) | Tyler signs up at vapi.ai, connects his Twilio number, assistant configured against our `/api/vapi/*` tool endpoints |
 | **Resend** | Outbound email | **Already on TZ side.** Account owner `tzelectricoffice@gmail.com`. Domain `tzelectricinc.com` verified. API key on Vercel. No migration needed. |
@@ -284,7 +284,7 @@ Non-repo housekeeping that happened the same session (not part of any commit):
 
 - `tz-site/.env.local` synced from Dropbox → SSD (was missing on SSD, blocks `npm run dev`).
 - `tz-site/.vercel/project.json` on Dropbox replaced with the canonical SSD copy (Dropbox had a stale link to an old `tz-site` Vercel project; canonical is `tz-electric` / `prj_wtBcaXPS6KOeXJniJroHRYnxiDtm`).
-- Parent-level docs (`README.md`, `STRATEGY.md`, `webflow-data.md`, `skills-lock.json`) and the `.agents/` Resend skill bundles + parent `.claude/` settings copied from Dropbox → SSD parent.
+- Parent-level docs (`README.md`, `STRATEGY.md`, `webflow-data.md`, `skills-lock.json`), Resend skill bundles, and parent dev-tool settings copied from Dropbox → SSD parent.
 - SSD `.git/hooks/post-commit` `PEER=` path fixed from `/Users/cqmarketing/...` to `/Users/cqstudio/Library/CloudStorage/Dropbox/...` so SSD-to-Dropbox auto-sync actually runs on the main rig.
 
 ## Files added or significantly changed in session 11 (Apr 25)
