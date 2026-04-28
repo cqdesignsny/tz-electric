@@ -162,7 +162,17 @@ async function searchCustomersByPhone(phone: string): Promise<HCPCustomer[]> {
     const data = await hcpFetch(
       `/customers?phone_number=${encodeURIComponent(normalized)}`,
     )
-    return (data.customers as HCPCustomer[]) || []
+    const customers = (data.customers as HCPCustomer[]) || []
+    // HCP silently ignores the phone_number filter and returns its first
+    // page of customers regardless of input (verified empirically
+    // 2026-04-28). Filter client-side by exact match against any of the
+    // customer's three phone fields.
+    return customers.filter((c) => {
+      const candidates = [c.mobile_number, c.home_number, c.work_number]
+        .filter((n): n is string => !!n)
+        .map(normalizePhone)
+      return candidates.includes(normalized)
+    })
   } catch (error) {
     console.error(`HCP /customers?phone_number=${normalized} error:`, error)
     return []
@@ -370,15 +380,12 @@ export async function createLead(lead: LeadPayload): Promise<HCPLeadResponse> {
  * rather than customer.notes, which is reserved for persistent customer
  * info. Tags surface on the estimate row in HCP for at-a-glance triage.
  *
- * NOTE on field shape: HCP's docs site (Stoplight SPA) is JS-rendered so
- * the OpenAPI spec couldn't be statically scraped at build-time. We send
- * a defensively wide payload (`private_notes`, `notes`, `description`,
- * `tags`, optional `address`) under the assumption HCP silently drops
- * fields it doesn't recognize, the same behavior verified empirically on
- * /leads in session 12. First production submission acts as the
- * empirical verification — surface any HCP error to the office email
- * and iterate. Update this comment + the request body once the kept-
- * vs-dropped fields are confirmed.
+ * Empirically verified on 2026-04-28 with a test submission:
+ *   - HCP /estimates REQUIRES an `options` array (returns
+ *     `{"errors":{"options":"is missing"}}` if absent). We pass a single
+ *     placeholder option carrying the lead description so the office sees
+ *     a labeled estimate row even before line items are added.
+ *   - `customer_id`, `private_notes`, `tags`, `address` accepted as-is.
  */
 export type EstimateInput = {
   customerId: string
@@ -402,10 +409,19 @@ export type HCPEstimateResponse = {
 export async function createEstimateForLead(
   input: EstimateInput,
 ): Promise<HCPEstimateResponse> {
+  const optionName = input.description?.trim() || 'Website lead'
+
   const body: Record<string, unknown> = {
     customer_id: input.customerId,
     private_notes: input.privateNotes,
     notes: input.privateNotes,
+    options: [
+      {
+        name: optionName,
+        message: input.privateNotes,
+        line_items: [],
+      },
+    ],
   }
   if (input.description) body.description = input.description
   if (input.tags && input.tags.length > 0) body.tags = input.tags
