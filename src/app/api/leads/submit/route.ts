@@ -1,7 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createLead, type LeadPayload } from '@/lib/housecall-pro'
+import {
+  createCustomerForLead,
+  createEstimateForLead,
+  findCustomerByPhone,
+  type HCPCustomer,
+} from '@/lib/housecall-pro'
 import { renderLeadFormSubmissionEmail } from '@/lib/email-templates'
-import { attachHcpLeadId, insertLead } from '@/lib/leads-store'
+import { attachHcpEstimate, insertLead } from '@/lib/leads-store'
+import {
+  findService,
+  getQuestionLabel,
+  isQuestionVisible,
+  type ServiceConfig,
+} from '@/components/forms/lead-form-config'
 
 export const runtime = 'nodejs'
 
@@ -44,29 +55,57 @@ function shorten(s: string, max: number): string {
   return s.length > max ? `${s.slice(0, max - 1)}…` : s
 }
 
-function buildLeadNotes(body: SubmitBody): string {
-  // HCP's /leads endpoint stores rich content only in customer.notes, which
-  // shows on the customer card but not on the Job Inbox preview. Lead-level
-  // tags are the office's at-a-glance signal; this notes block is the full
-  // detail for once they click in. The leading banner makes that obvious.
+/**
+ * Filter the qualification map to only the questions that are actually
+ * visible given the current answers. The form prunes hidden answers
+ * client-side already, but this is defense-in-depth so an SMS / voice
+ * agent (which doesn't have the same client UI) can submit with stale
+ * answers and we'll still record only what's relevant.
+ */
+function visibleQualification(
+  service: ServiceConfig | undefined,
+  answers: Record<string, string>,
+): Record<string, string> {
+  if (!service) return answers
+  const out: Record<string, string> = {}
+  for (const q of service.questions) {
+    if (!isQuestionVisible(q, answers)) continue
+    const v = answers[q.id]
+    if (isNonEmpty(v)) out[q.id] = v
+  }
+  return out
+}
+
+function buildEstimatePrivateNotes(
+  body: SubmitBody,
+  service: ServiceConfig | undefined,
+  qualification: Record<string, string>,
+  customerExisting: boolean,
+): string {
   const lines: string[] = []
 
   lines.push('====================================================================')
-  lines.push('  WEBSITE LEAD — Full details below. (Tags above show service/urgency.)')
+  lines.push('  WEBSITE LEAD — Full details below.')
   lines.push('====================================================================')
   lines.push('')
 
   const flags: string[] = []
-  flags.push(body.tracking?.gclid ? '[TZ AI AGENT or Google Ads]' : '[Web Form]')
+  flags.push(body.tracking?.gclid ? '[Web Form · Google Ads]' : '[Web Form]')
+  flags.push(customerExisting ? '[EXISTING CUSTOMER]' : '[NEW CUSTOMER]')
   if (body.ownership === 'renter') flags.push('[RENTER - LANDLORD VERIFICATION NEEDED]')
+  if (qualification.urgentNow === 'Yes — active leak') flags.push('[ACTIVE LEAK]')
+  if (qualification.medical === 'Yes') flags.push('[MEDICAL EQUIPMENT IN HOME]')
   lines.push(flags.join(' '))
   lines.push('')
 
   lines.push(`Service: ${body.serviceLabel} (${body.serviceKey})`)
   lines.push('')
+
   lines.push('--- Qualification ---')
-  Object.entries(body.qualification).forEach(([k, v]) => {
-    if (isNonEmpty(v)) lines.push(`${k}: ${v}`)
+  Object.entries(qualification).forEach(([k, v]) => {
+    if (!isNonEmpty(v)) return
+    const label = service ? getQuestionLabel(service, k) : k
+    lines.push(`${label}: ${v}`)
   })
   if (body.customerNotes && isNonEmpty(body.customerNotes)) {
     lines.push('')
@@ -74,6 +113,7 @@ function buildLeadNotes(body: SubmitBody): string {
     lines.push(body.customerNotes)
   }
   lines.push('')
+
   lines.push('--- Property ---')
   lines.push(`Ownership: ${body.ownership}`)
   if (body.ownership === 'renter') {
@@ -85,6 +125,7 @@ function buildLeadNotes(body: SubmitBody): string {
     lines.push('ACTION REQUIRED: Verify with landlord before booking.')
   }
   lines.push('')
+
   lines.push('--- Attribution ---')
   if (body.tracking?.gclid) lines.push(`GCLID: ${body.tracking.gclid}`)
   if (body.tracking?.utmSource) lines.push(`UTM source: ${body.tracking.utmSource}`)
@@ -96,6 +137,29 @@ function buildLeadNotes(body: SubmitBody): string {
   if (body.tracking?.landingAt) lines.push(`Landing at: ${body.tracking.landingAt}`)
   if (body.referralSource) lines.push(`Heard via: ${body.referralSource}`)
   return lines.join('\n')
+}
+
+function buildEstimateTags(
+  body: SubmitBody,
+  qualification: Record<string, string>,
+  customerExisting: boolean,
+): string[] {
+  const tags: string[] = ['Web Form']
+  tags.push(`Service: ${body.serviceLabel}`)
+
+  const urgency = qualification.urgency
+  if (isNonEmpty(urgency)) tags.push(`Urgency: ${shorten(urgency, 40)}`)
+
+  const scope = qualification.scope
+  if (isNonEmpty(scope)) tags.push(shorten(scope, 50))
+
+  if (customerExisting) tags.push('Existing customer')
+  if (body.ownership === 'renter') tags.push('Renter - Verify with Landlord')
+  if (qualification.medical === 'Yes') tags.push('Medical Equipment in Home')
+  if (qualification.urgentNow === 'Yes — active leak') tags.push('ACTIVE LEAK')
+  if (body.tracking?.gclid) tags.push('Google Ads')
+
+  return tags
 }
 
 export async function POST(req: NextRequest) {
@@ -134,70 +198,40 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Tags surface on the Job Inbox preview without clicking. Keep them short
-  // and high-signal: source, service, urgency, scope, and any flag fields
-  // (renter, medical equipment, active leak, Google Ads attribution).
-  const tags: string[] = ['Web Form']
-  tags.push(`Service: ${body.serviceLabel}`)
+  const service = findService(body.serviceKey)
+  const cleanQualification = visibleQualification(service, body.qualification || {})
 
-  const urgency = body.qualification?.urgency
-  if (isNonEmpty(urgency)) {
-    tags.push(`Urgency: ${shorten(urgency, 40)}`)
-  }
-
-  const scope = body.qualification?.scope
-  if (isNonEmpty(scope)) {
-    tags.push(shorten(scope, 50))
-  }
-
-  if (body.ownership === 'renter') {
-    tags.push('Renter - Verify with Landlord')
-  }
-  if (body.qualification?.medical === 'Yes') {
-    tags.push('Medical Equipment in Home')
-  }
-  if (body.qualification?.urgentNow === 'Yes — active leak') {
-    tags.push('ACTIVE LEAK')
-  }
-  if (body.tracking?.gclid) {
-    tags.push('Google Ads')
-  }
-
-  const leadPayload: LeadPayload = {
-    firstName: body.firstName.trim(),
-    lastName: body.lastName.trim(),
-    phone: body.phone,
-    email: isNonEmpty(body.email) ? body.email.trim() : undefined,
-    street: isNonEmpty(body.street) ? body.street.trim() : undefined,
-    city: isNonEmpty(body.city) ? body.city.trim() : undefined,
-    state: isNonEmpty(body.state) ? body.state.trim() : 'NY',
-    zip: isNonEmpty(body.zip) ? body.zip.trim() : undefined,
-    serviceType: body.serviceLabel,
-    source: 'Website Lead Form',
-    notes: buildLeadNotes(body),
-    tags,
-  }
+  const firstName = body.firstName.trim()
+  const lastName = body.lastName.trim()
+  const email = isNonEmpty(body.email) ? body.email.trim() : undefined
+  const phone = body.phone
+  const street = isNonEmpty(body.street) ? body.street.trim() : undefined
+  const city = isNonEmpty(body.city) ? body.city.trim() : undefined
+  const state = isNonEmpty(body.state) ? body.state.trim() : 'NY'
+  const zip = isNonEmpty(body.zip) ? body.zip.trim() : undefined
 
   // Persist to our own DB first so we keep a record even if HCP rejects.
+  // tz_leads is now the authoritative read source for the TZ Switchboard
+  // Lead Pipeline — HCP linkage is filled in below once we have ids back.
   let storedLeadId: string | null = null
   try {
     storedLeadId = await insertLead({
       source: 'web_form',
       serviceKey: body.serviceKey,
       serviceLabel: body.serviceLabel,
-      firstName: leadPayload.firstName,
-      lastName: leadPayload.lastName,
-      phone: leadPayload.phone,
-      email: leadPayload.email,
-      street: leadPayload.street,
-      city: leadPayload.city,
-      state: leadPayload.state,
-      zip: leadPayload.zip,
+      firstName,
+      lastName,
+      phone,
+      email,
+      street,
+      city,
+      state,
+      zip,
       ownership: body.ownership,
       landlordName: body.landlordName,
       landlordPhone: body.landlordPhone,
       landlordEmail: body.landlordEmail,
-      qualification: body.qualification || null,
+      qualification: cleanQualification,
       customerNotes: body.customerNotes,
       referralSource: body.referralSource,
       tracking: body.tracking || null,
@@ -206,22 +240,76 @@ export async function POST(req: NextRequest) {
     console.error('[lead-form] tz_leads insert failed (non-fatal):', e)
   }
 
-  let hcpLeadId: string | undefined
+  // HCP routing: find-or-create customer, then create an unscheduled
+  // estimate with the lead details in private_notes. This replaces the
+  // previous /leads-only flow per Tyler's 2026-04-28 routing change.
+  let hcpCustomer: HCPCustomer | null = null
+  let hcpCustomerExisting = false
+  let hcpEstimateId: string | undefined
   let hcpError: string | undefined
+
   try {
-    const lead = await createLead(leadPayload)
-    if (typeof lead?.id === 'string') hcpLeadId = lead.id
+    hcpCustomer = await findCustomerByPhone(phone)
+    if (hcpCustomer) {
+      hcpCustomerExisting = true
+    } else {
+      hcpCustomer = await createCustomerForLead({
+        firstName,
+        lastName,
+        phone,
+        email,
+        street,
+        city,
+        state,
+        zip,
+      })
+    }
   } catch (e) {
     hcpError = e instanceof Error ? e.message : String(e)
-    console.error('[lead-form] HCP createLead failed:', hcpError)
+    console.error('[lead-form] HCP customer step failed:', hcpError)
   }
 
-  // Stitch the HCP id back into our row once we have it.
-  if (storedLeadId && hcpLeadId) {
+  if (hcpCustomer && !hcpError) {
     try {
-      await attachHcpLeadId(storedLeadId, hcpLeadId)
+      const privateNotes = buildEstimatePrivateNotes(
+        body,
+        service,
+        cleanQualification,
+        hcpCustomerExisting,
+      )
+      const tags = buildEstimateTags(body, cleanQualification, hcpCustomerExisting)
+      const description = `${body.serviceLabel} — Website lead`
+      const address =
+        street && city && state && zip
+          ? { street, city, state, zip }
+          : undefined
+
+      const estimate = await createEstimateForLead({
+        customerId: hcpCustomer.id,
+        privateNotes,
+        description,
+        tags,
+        address,
+      })
+      if (typeof estimate?.id === 'string') hcpEstimateId = estimate.id
     } catch (e) {
-      console.error('[lead-form] attachHcpLeadId failed (non-fatal):', e)
+      hcpError = e instanceof Error ? e.message : String(e)
+      console.error('[lead-form] HCP createEstimate failed:', hcpError)
+    }
+  }
+
+  // Stitch the HCP linkage back into our row so the Lead Pipeline can
+  // deep-link and the office team can confirm the routing worked.
+  if (storedLeadId && hcpCustomer) {
+    try {
+      await attachHcpEstimate(storedLeadId, {
+        hcpCustomerId: hcpCustomer.id,
+        hcpEstimateId,
+        hcpCustomerExisting,
+        hcpError,
+      })
+    } catch (e) {
+      console.error('[lead-form] attachHcpEstimate failed (non-fatal):', e)
     }
   }
 
@@ -241,22 +329,22 @@ export async function POST(req: NextRequest) {
 
   if (apiKey && officeRecipients.length > 0) {
     const { subject, html, text } = renderLeadFormSubmissionEmail({
-      firstName: body.firstName,
-      lastName: body.lastName,
-      phone: body.phone,
-      email: body.email,
+      firstName,
+      lastName,
+      phone,
+      email,
       serviceType: body.serviceKey,
       serviceTypeLabel: body.serviceLabel,
-      urgency: body.qualification?.urgency,
-      street: body.street,
-      city: body.city,
-      state: body.state,
-      zip: body.zip,
+      urgency: cleanQualification.urgency,
+      street,
+      city,
+      state,
+      zip,
       ownership: body.ownership,
       landlordName: body.landlordName,
       landlordPhone: body.landlordPhone,
       landlordEmail: body.landlordEmail,
-      qualification: body.qualification || {},
+      qualification: cleanQualification,
       referralSource: body.referralSource,
       notes: body.customerNotes,
       gclid: body.tracking?.gclid,
@@ -264,7 +352,7 @@ export async function POST(req: NextRequest) {
       utmMedium: body.tracking?.utmMedium,
       utmCampaign: body.tracking?.utmCampaign,
       landingPage: body.tracking?.landingPage,
-      hcpLeadId,
+      hcpLeadId: hcpEstimateId,
       hcpError,
     })
 
@@ -297,7 +385,9 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
-    hcpLeadId: hcpLeadId || null,
+    hcpCustomerId: hcpCustomer?.id || null,
+    hcpEstimateId: hcpEstimateId || null,
+    hcpCustomerExisting,
     hcpError: hcpError || null,
   })
 }

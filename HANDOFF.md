@@ -2,7 +2,7 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-04-28, end of session 13. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
+**Last verified:** 2026-04-28, end of session 14. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
 
 ## Sync architecture (read this first)
 
@@ -114,8 +114,10 @@ All of the above are on Production and Development. Preview is intentionally ski
 - [x] ~~Tyler fills out the agent training questionnaire.~~ Submitted 2026-04-26.
 - [x] ~~Smoke test the full email flow.~~ Tyler's submission landed cleanly in `cesar@creativequalitymarketing.com` via Resend.
 - [x] ~~Get Tyler's answers on the remaining blockers.~~ Tyler doesn't have opinions on the operational gaps, so CQ Studio filled them in with industry-standard best-practice defaults. See **section 10 of `docs/agent-training-answers.md`** ("v1 Best-Practice Fills"). Tyler can override any default by editing that file. Resolved: HCP record creation flow (use `/leads` endpoint), renter / landlord workflow (soft-block, collect landlord info, office verifies), home warranty decline script (warm pivot to Wisetack / Synchrony financing), review-already-left detection (single automated send + optional manual follow-up via Switchboard), Saturday dispatch scope (emergencies follow after-hours SOP, non-emergencies book for next business day, no estimates).
-- [x] ~~Native lead form to replace Typeform.~~ Live at `/quote`. Posts to HCP `POST /leads` AND persists to our own `tz_leads` table on every submission. Branded email via Resend, GCLID + UTM capture, replaces every `TYPEFORM_URL` CTA. Renter branch tags `Renter - Landlord Verification Needed`. First real lead through it: Celeste Benard (#19), wired and visible across the stack.
-- [x] ~~Lead Pipeline (read from HCP).~~ Live at `/switchboard/lead-pipeline`. Filters, search, expand-on-click detail showing parsed qualification answers, customer notes, property, attribution. Pagination at 15 per page. HCP-side deletes auto-reflect because the page is `force-dynamic`. Recent leads card on TZ Switchboard home.
+- [x] ~~Native lead form to replace Typeform.~~ Live at `/quote`. Branded email via Resend, GCLID + UTM capture, replaces every `TYPEFORM_URL` CTA. Renter branch tags `Renter - Landlord Verification Needed`. First real lead through it: Celeste Benard (#19), wired and visible across the stack.
+- [x] ~~Form question parity with old Typeform.~~ Session 14 added every Typeform question that had been missing from the native form. HVAC: heating-only-or-both, throughout-vs-rooms, decommission existing system, NYSERDA awareness. Electrical: why-upgrading, overhead-vs-underground, switch-to-underground (conditional), utility company. Generator: full residential/commercial branch — portable-vs-standby on residential side, generator size on commercial side, plus service size + utility company on both. Conditional questions (`showWhen`) hide automatically when the parent answer doesn't match, and stale answers prune client + server side when a parent answer changes.
+- [x] ~~HCP routing rewritten: estimates instead of leads.~~ Per Tyler's 2026-04-28 call, `customer.notes` is reserved for persistent customer info ("don't wear shoes in the house"), NOT job specifics. New flow: `POST /api/leads/submit` finds the existing customer in HCP by phone (or creates a new one with name/phone/email/address only), then creates an unscheduled estimate with all job details in the estimate's `private_notes`. Tags carry service / urgency / scope / flag info on the estimate row. Existing customers requesting new work get a fresh estimate appended to their record without overwriting `customer.notes`. The `tz_leads` row is stitched with `hcp_customer_id`, `hcp_estimate_id`, `hcp_customer_existing` so the Switchboard can deep-link to the matching HCP estimate. HCP `/estimates` field shape is verified empirically on first production submission (same approach we used for `/leads` in session 12) — surface any HCP error to the office email and to the Lead Pipeline row, then iterate.
+- [x] ~~Lead Pipeline read path switched to Neon.~~ `/switchboard/lead-pipeline` now reads from `tz_leads` instead of HCP `/leads`, so the Switchboard mirrors exactly what's in HCP without doubling up on data. Every row deep-links to the HCP estimate via `hcp_estimate_id`; rows with HCP sync errors show an explicit "HCP sync error" badge plus the failure reason and a manual-recreate hint. Filters: search + service. Won/Lost filter dropped (no `pipeline_status` from Neon yet — re-add once we sync HCP estimate status back). Recent Leads card on the Switchboard home swapped over too.
 - [x] ~~Knowledge Base v1 (read-only).~~ Live at `/switchboard/knowledge-base`. Renders `docs/agent-training-answers.md` as a structured browseable view with sticky section nav, scroll-spy active state, and full markdown styling.
 - [x] ~~Neon Postgres provisioned (`tz-db`) and attached to the project.~~ Marketplace integration on Vercel. `tz_leads` table created via `migrations/001_init.sql`. `npm run migrate` applies any new migrations.
 - [ ] **Phase 3 (next): Knowledge Base v2 (edit-in-place).** Authenticated in-app editor for the answers doc. Two viable paths: commit changes back to `docs/agent-training-answers.md` via the GitHub API (cleaner: edits land in git history and trigger a redeploy) or back the editor with a `tz_kb_versions` table in Neon (faster: in-app version control, sync to git on demand). Recommendation: start DB-backed for speed, sync to git via a "publish" action. Closes "easy way to continuously edit the agents."
@@ -158,6 +160,55 @@ The endgame: **Tyler owns every paid service under his own logins and his own ca
 - **Theme cookie.** Theme persists in localStorage only. Server-rendered HTML always defaults to light, then the inline init script sets the right `data-theme` before hydrate. Acceptable. Future: cookie-based for true zero-flash SSR.
 - **proxy.ts migration.** Next 16 prefers `proxy.ts` over `middleware.ts`. Backwards-compatible. Deferred until a focused session to validate the API.
 - **Branch-preview env vars.** Vercel CLI bug around all-preview-branches; not worth the workaround since we don't use feature-branch previews.
+
+## Files added or significantly changed in session 14 (Apr 28, evening)
+
+```
+migrations/002_add_hcp_estimate_links.sql                 NEW, adds hcp_customer_id,
+                                                          hcp_estimate_id, hcp_customer_existing,
+                                                          hcp_error columns + indexes on tz_leads
+src/lib/leads-store.ts                                    MOD, adds attachHcpEstimate +
+                                                          extends StoredLead / InsertLeadInput
+src/lib/housecall-pro.ts                                  MOD, adds findCustomerByPhone,
+                                                          createCustomerForLead,
+                                                          createEstimateForLead. Old createLead
+                                                          retained for reference.
+src/app/api/leads/submit/route.ts                         REWRITE, find-or-create customer +
+                                                          create unscheduled estimate flow,
+                                                          private_notes built from labeled
+                                                          qualification answers, tags include
+                                                          existing-customer flag
+src/components/forms/lead-form-config.ts                  REWRITE, adds every Typeform
+                                                          question that had been missing per
+                                                          service. Adds showWhen conditional
+                                                          rendering, isQuestionVisible helper,
+                                                          getQuestionLabel helper
+src/components/forms/LeadForm.tsx                         MOD, filters questions by
+                                                          isQuestionVisible, prunes stale
+                                                          answers when a parent changes,
+                                                          skips required-validation on hidden
+                                                          questions
+src/components/switchboard/lead-pipeline-utils.ts         REWRITE, summarizeStoredLead reads
+                                                          from tz_leads (not HCP), builds
+                                                          hcpDeepLink to /estimates/{id} or
+                                                          /customers/{id}, renders qualification
+                                                          via service-config labels
+src/app/switchboard/(dashboard)/lead-pipeline/page.tsx    REWRITE, reads listStoredLeads()
+                                                          instead of listLeads()
+src/components/switchboard/LeadPipelineClient.tsx         REWRITE, drops won/lost filter
+                                                          (no pipeline_status from Neon),
+                                                          new HCP sync error banner inside
+                                                          expanded detail, success-tone tag
+                                                          for "Existing customer"
+src/components/switchboard/RecentLeadsCard.tsx            MOD, listStoredLeads + new
+                                                          summarizer + Existing customer chip
+docs/agent-training-answers.md                            MOD, new "Canonical Lead Intake
+                                                          Question Set" subsection in section 6
+                                                          and new section 11 "Lead Routing into
+                                                          Housecall Pro" so SMS/voice/chat
+                                                          agents share the same flow
+HANDOFF.md / README.md / MEMORY.md                        MOD, this update
+```
 
 ## Files added or significantly changed in session 13 (Apr 28)
 

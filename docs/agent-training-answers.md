@@ -509,6 +509,67 @@ AI handles "when is my appointment" and basic status. **Escalates** billing disp
 
 **Access:** someone home? immediate access if dispatched?
 
+### Canonical Lead Intake Question Set (mirrors website form)
+
+This is the baseline list of qualification questions every channel collects: the website form at `/quote`, SMS Claire, voice Claire (Vapi), and web-chat Claire. The website form is the source of truth (`src/components/forms/lead-form-config.ts`) — agents must collect at least this set before booking, and may collect the additional conversational follow-ups in the per-service subsections above when the customer engages.
+
+Each question maps directly to a key persisted in `tz_leads.qualification` (JSONB) and shown in the HCP estimate's private notes after submission.
+
+**HVAC / Mini-Split**
+- Heating only or both heating and cooling? (`heatingOrCooling`)
+- What are you looking to do? (`scope`: single room / multiple rooms / whole-home / replace / repair)
+- Throughout the home or specific rooms? (`coverage`)
+- Approximate home size (`homeSize`)
+- Current heating / cooling system (`currentSystem`)
+- Decommissioning the existing heating system? (`decommission`)
+- Aware of NYSERDA rebates? (`nyserda`)
+- Timeline (`urgency`)
+
+**Electrical**
+- What are you looking to do? (`scope`)
+- Why upgrading at this time? (`upgradeReason`, only if scope = panel upgrade)
+- Existing service overhead or underground? (`serviceStyle`, only if scope = panel upgrade)
+- Switch overhead → underground? (`undergroundConversion`, only if serviceStyle = Overhead)
+- Current service size (`serviceSize`)
+- Utility company (`utility`: Central Hudson, NYSEG, National Grid, Orange & Rockland, Other)
+- Timeline (`urgency`)
+
+**Generator**
+- Residential or commercial? (`propertyType`) — branches the rest of the flow
+- What are you looking to do? (`scope`)
+- Residential branch:
+  - Whole house or specific circuits? (`residentialCoverage`)
+  - Portable or standby (automatic)? (`residentialType`)
+  - Approximate home size (`homeSize`)
+  - Anyone in the home depends on medical equipment? (`medical`)
+- Commercial branch:
+  - Power entire space or specific circuits? (`commercialCoverage`)
+  - Sense of generator size? (`commercialGeneratorSize`)
+- Service size into the property (`serviceSize`)
+- Utility company (`utility`)
+- Fuel source available (`fuel`)
+- Timeline (`urgency`)
+
+**Plumbing**
+- What are you looking to do? (`scope`)
+- Active leak or causing damage right now? (`urgentNow`) — `Yes — active leak` triggers the ACTIVE LEAK escalation
+- Timeline (`urgency`)
+
+**EV Charger**
+- Current service size (`serviceSize`)
+- Distance from panel to charger location (`distance`)
+- Outlet (plug-in) or hardwired? (`style`)
+- Charger already purchased? (`supplied`)
+- Timeline (`urgency`)
+
+**Whole-home Surge Protection**
+- How many electrical panels? (`panels`)
+- Timeline (`urgency`)
+
+**Other / unsure** — free-text `description` plus `urgency`.
+
+**Universal contact fields collected at the end of every channel:** first name, last name, phone, email (optional), service address (street, city, state, zip), homeowner / renter, landlord info if renter, "how did you hear about us?" (`referralSource`).
+
 ---
 
 ## 7. Scheduling & Handoffs
@@ -818,6 +879,50 @@ This codifies what the existing dispatch SOP already supports without contradict
 | 8 | **Medical equipment escalation flag** | Tyler listed medical equipment as a generator backup priority; default until decided: yes, AI tags any caller mentioning medical equipment as high-priority during power outages and prioritizes them in the no-heat / generator-failure dispatch queue. |
 | 9 | **Permits in quoted ranges** | When agent quotes EV charger / panel install / generator ranges, default until decided: state "ranges typically do not include permits, which vary by township and are quoted on-site." |
 | 10 | **Customer-supplied equipment policy** | EV charger qualification asks "supplied or install only?" Default until decided: "We can install equipment you've purchased separately, with the labor warranty applying to our installation only. Manufacturer warranty terms apply per the device manufacturer." |
+
+---
+
+## 11. Lead Routing into Housecall Pro
+
+Replaces the prior /leads (Job Inbox > "API Leads") behavior as of 2026-04-28. Every channel — website form, SMS Claire, voice Claire, web-chat Claire — funnels leads through the same `POST /api/leads/submit` endpoint so routing is identical and the office never has to look in two places.
+
+**Server-side flow (`src/app/api/leads/submit/route.ts`):**
+
+1. Persist to Neon (`tz_leads`) first so the lead is recorded even if HCP is unreachable.
+2. Find existing customer in HCP by phone (`GET /customers?phone_number={normalized}`). Phone-only match — names can differ ("Mike" vs "Michael") and still be the same person.
+3. If found: keep `customer.notes` untouched (it holds persistent customer info like "don't wear shoes in the house" — never overwritten by lead data).
+4. If not found: create a new customer with name, phone, email, address only. `notes` is left blank for the same reason.
+5. Create an unscheduled estimate against that customer. Job-specific lead details go in the estimate's `private_notes` (office-only, scoped to this estimate) along with `description`, `tags`, and the service `address`. The estimate stays open / unscheduled — the office schedules from there.
+6. Stitch `hcp_customer_id`, `hcp_estimate_id`, `hcp_customer_existing` back onto the `tz_leads` row so the TZ Switchboard Lead Pipeline can deep-link and the office can confirm the routing worked.
+7. Email the office with the same details via Resend regardless of HCP outcome.
+
+**Where each piece of data lands in HCP:**
+
+| Data | HCP location |
+|---|---|
+| Name, phone, email | `customer` (created or matched by phone) |
+| Service address | `customer.addresses` on first creation; estimate-level `address` on every estimate |
+| Qualification answers | Estimate `private_notes` (formatted with section headers) |
+| Customer notes (free text from form) | Estimate `private_notes` only — NOT customer profile |
+| Tags (`Service:`, `Urgency:`, scope, flag tags) | Top-level `tags` on the estimate |
+| GCLID / UTM / referral source | Estimate `private_notes` (Attribution section) |
+
+**What customer.notes is reserved for** — and what it's NOT for:
+- ✓ Persistent identity / accommodation info ("don't wear shoes in the house", "no longer serviced", "reach via wife's phone")
+- ✗ Job-specific details (those live on the estimate)
+- ✗ Lead source / GCLID / UTM (those live on the estimate)
+
+**Tag pattern on estimates** (high-signal, surfaced in HCP estimate row):
+- `Web Form` (or `TZ AI Agent (SMS)` / `Voice` / `Chat` once those agents ship)
+- `Service: <label>`
+- `Urgency: <answer>`
+- Scope answer if present
+- `Existing customer` if HCP returned a match
+- Flag tags: `Renter - Verify with Landlord`, `Medical Equipment in Home`, `ACTIVE LEAK`, `Google Ads`
+
+**TZ Switchboard mirror** (`/switchboard/lead-pipeline`): reads from `tz_leads` (Neon), one row per submission. Each row deep-links to the matching HCP estimate via `hcp_estimate_id`. If HCP sync errored mid-flight, the row shows an "HCP sync error" badge with the error message and instructions for the office to recreate manually.
+
+**For SMS / voice / chat agents:** call the same `POST /api/leads/submit` once qualification is done, with the `qualification` map matching the keys defined in section 6's "Canonical Lead Intake Question Set." The endpoint will handle the customer + estimate routing the same way the website form does, so all channels stay consistent.
 
 ---
 

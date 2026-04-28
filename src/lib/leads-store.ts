@@ -4,9 +4,12 @@
  * of truth for analytics, search, hidden state, and historical replay
  * that HCP can't surface.
  *
- * v1: write-through only (TZ Switchboard still reads leads from HCP for
- * the Lead Pipeline view). Phase 4 onward we'll switch reads to this DB
- * with HCP as a downstream sync target.
+ * As of 2026-04-28 (session 14) tz_leads is also the primary read source
+ * for the TZ Switchboard Lead Pipeline view. HCP is still where the
+ * office team works (estimates land under each customer), but everything
+ * the office sees in HCP is mirrored here via hcp_customer_id +
+ * hcp_estimate_id, so the Switchboard view can deep-link without
+ * re-fetching from HCP every page load.
  */
 import { db } from './db'
 
@@ -14,6 +17,10 @@ export type LeadSource = 'web_form' | 'sms_agent' | 'voice_agent' | 'web_chat' |
 
 export type InsertLeadInput = {
   hcpLeadId?: string | null
+  hcpCustomerId?: string | null
+  hcpEstimateId?: string | null
+  hcpCustomerExisting?: boolean | null
+  hcpError?: string | null
   source: LeadSource
   serviceKey?: string | null
   serviceLabel?: string | null
@@ -38,6 +45,10 @@ export type InsertLeadInput = {
 export type StoredLead = {
   id: string
   hcp_lead_id: string | null
+  hcp_customer_id: string | null
+  hcp_estimate_id: string | null
+  hcp_customer_existing: boolean | null
+  hcp_error: string | null
   source: LeadSource
   service_key: string | null
   service_label: string | null
@@ -70,14 +81,21 @@ export async function insertLead(input: InsertLeadInput): Promise<string> {
   const sql = db()
   const rows = (await sql`
     INSERT INTO tz_leads (
-      hcp_lead_id, source,
+      hcp_lead_id, hcp_customer_id, hcp_estimate_id,
+      hcp_customer_existing, hcp_error,
+      source,
       service_key, service_label,
       first_name, last_name, phone, email,
       street, city, state, zip,
       ownership, landlord_name, landlord_phone, landlord_email,
       qualification, customer_notes, referral_source, tracking
     ) VALUES (
-      ${input.hcpLeadId ?? null}, ${input.source},
+      ${input.hcpLeadId ?? null},
+      ${input.hcpCustomerId ?? null},
+      ${input.hcpEstimateId ?? null},
+      ${input.hcpCustomerExisting ?? null},
+      ${input.hcpError ?? null},
+      ${input.source},
       ${input.serviceKey ?? null}, ${input.serviceLabel ?? null},
       ${input.firstName ?? null}, ${input.lastName ?? null},
       ${input.phone ?? null}, ${input.email ?? null},
@@ -131,5 +149,35 @@ export async function attachHcpLeadId(id: string, hcpLeadId: string): Promise<vo
   const sql = db()
   await sql`
     UPDATE tz_leads SET hcp_lead_id = ${hcpLeadId}, updated_at = NOW() WHERE id = ${id}
+  `
+}
+
+export type AttachHcpEstimateInput = {
+  hcpCustomerId: string
+  hcpEstimateId?: string | null
+  hcpCustomerExisting: boolean
+  hcpError?: string | null
+}
+
+export async function attachHcpEstimate(
+  id: string,
+  input: AttachHcpEstimateInput,
+): Promise<void> {
+  const sql = db()
+  await sql`
+    UPDATE tz_leads
+    SET hcp_customer_id = ${input.hcpCustomerId},
+        hcp_estimate_id = ${input.hcpEstimateId ?? null},
+        hcp_customer_existing = ${input.hcpCustomerExisting},
+        hcp_error = ${input.hcpError ?? null},
+        updated_at = NOW()
+    WHERE id = ${id}
+  `
+}
+
+export async function setLeadHcpError(id: string, message: string): Promise<void> {
+  const sql = db()
+  await sql`
+    UPDATE tz_leads SET hcp_error = ${message}, updated_at = NOW() WHERE id = ${id}
   `
 }

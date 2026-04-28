@@ -3,6 +3,9 @@
  * qualification questions per service, and the pricing footnotes shown
  * inline.
  *
+ * Question set is kept in lockstep with the old Typeform routing
+ * (https://ghfs29y37tj.typeform.com/to/HDLXmnob) so the office and the
+ * AI agents (SMS / voice / chat Claire) all collect the same fields.
  * Pricing ranges sourced from docs/agent-training-answers.md.
  * Permits are NOT included in any range (per default 10.6 #9).
  */
@@ -25,6 +28,13 @@ export type Question = {
   options?: string[]
   required?: boolean
   placeholder?: string
+  /**
+   * Optional show condition. The question only renders when the
+   * specified prior question (`when`) has the answer in `equals`.
+   * Used for the underground-conversion follow-up on electrical and
+   * the residential / commercial split on generator.
+   */
+  showWhen?: { when: string; equals: string[] }
 }
 
 export type ServiceConfig = {
@@ -60,6 +70,15 @@ const SERVICE_SIZE_OPTIONS = [
   'Not sure',
 ]
 
+const UTILITY_OPTIONS = [
+  'Central Hudson',
+  'NYSEG',
+  'National Grid',
+  'Orange & Rockland',
+  'Other',
+  'Not sure',
+]
+
 export const SERVICES: ServiceConfig[] = [
   {
     key: 'hvac',
@@ -67,6 +86,13 @@ export const SERVICES: ServiceConfig[] = [
     blurb: 'Heating, cooling, ductless mini-splits, heat pumps. Mitsubishi Diamond Elite installer.',
     priceFootnote: 'Repairs often same-day. New installs typically 1–5 weeks from approval.',
     questions: [
+      {
+        id: 'heatingOrCooling',
+        label: 'Are you interested in just heating or both heating and cooling?',
+        type: 'radio',
+        required: true,
+        options: ['Heating only', 'Cooling only', 'Both heating and cooling'],
+      },
       {
         id: 'scope',
         label: 'What are you looking to do?',
@@ -78,9 +104,14 @@ export const SERVICES: ServiceConfig[] = [
           'Whole-home heating and cooling',
           'Replace existing equipment',
           'Repair existing equipment',
-          'Add cooling only',
-          'Add heating only',
         ],
+      },
+      {
+        id: 'coverage',
+        label: 'Are you looking to install units throughout the home or in specific rooms?',
+        type: 'radio',
+        required: false,
+        options: ['Throughout the home', 'Specific rooms only', 'Not sure'],
       },
       {
         id: 'homeSize',
@@ -105,6 +136,20 @@ export const SERVICES: ServiceConfig[] = [
           'No current system',
           'Not sure',
         ],
+      },
+      {
+        id: 'decommission',
+        label: 'Are you looking to decommission your existing heating system?',
+        type: 'radio',
+        required: false,
+        options: ['Yes', 'No', 'Not sure'],
+      },
+      {
+        id: 'nyserda',
+        label: 'Are you aware of the NYSERDA rebates that might be available?',
+        type: 'radio',
+        required: false,
+        options: ['Yes', 'No', 'Want to learn more'],
       },
       {
         id: 'urgency',
@@ -139,11 +184,56 @@ export const SERVICES: ServiceConfig[] = [
         ],
       },
       {
+        id: 'upgradeReason',
+        label: 'Why are you looking to upgrade your service at this time?',
+        type: 'select',
+        required: false,
+        options: [
+          'Adding a major appliance (EV charger, hot tub, AC, etc.)',
+          'Current panel is outdated / undersized',
+          'Insurance or inspector required it',
+          'Adding a generator',
+          'Buying or selling the home',
+          'Frequent breaker trips',
+          'Other',
+        ],
+        showWhen: {
+          when: 'scope',
+          equals: ['Panel upgrade or service upgrade'],
+        },
+      },
+      {
+        id: 'serviceStyle',
+        label: 'Is your existing service overhead or underground?',
+        type: 'radio',
+        required: false,
+        options: ['Overhead', 'Underground', 'Not sure'],
+        showWhen: {
+          when: 'scope',
+          equals: ['Panel upgrade or service upgrade'],
+        },
+      },
+      {
+        id: 'undergroundConversion',
+        label: 'Are you looking to change your service from overhead to underground?',
+        type: 'radio',
+        required: false,
+        options: ['Yes', 'No', 'Maybe / open to it'],
+        showWhen: { when: 'serviceStyle', equals: ['Overhead'] },
+      },
+      {
         id: 'serviceSize',
         label: 'Current electrical service size',
         type: 'select',
         required: false,
         options: SERVICE_SIZE_OPTIONS,
+      },
+      {
+        id: 'utility',
+        label: 'Who is your utility company?',
+        type: 'select',
+        required: false,
+        options: UTILITY_OPTIONS,
       },
       {
         id: 'urgency',
@@ -161,6 +251,13 @@ export const SERVICES: ServiceConfig[] = [
     priceFootnote: 'Manual transfer switches $1,200–$2,500. Automatic transfer switches $2,500–$4,000+. Generators quoted on-site.',
     questions: [
       {
+        id: 'propertyType',
+        label: 'Is this for a residence or commercial property?',
+        type: 'radio',
+        required: true,
+        options: ['Residential', 'Commercial'],
+      },
+      {
         id: 'scope',
         label: 'What are you looking to do?',
         type: 'select',
@@ -174,11 +271,64 @@ export const SERVICES: ServiceConfig[] = [
         ],
       },
       {
+        id: 'residentialCoverage',
+        label: 'Whole house generator or power specific circuits?',
+        type: 'radio',
+        required: false,
+        options: ['Whole house', 'Specific circuits only', 'Not sure'],
+        showWhen: { when: 'propertyType', equals: ['Residential'] },
+      },
+      {
+        id: 'residentialType',
+        label: 'Portable (plug it in when there is an outage) or standby (turns on automatically)?',
+        type: 'radio',
+        required: false,
+        options: ['Portable', 'Standby (automatic)', 'Not sure'],
+        showWhen: { when: 'propertyType', equals: ['Residential'] },
+      },
+      {
         id: 'homeSize',
         label: 'Approximate home size',
         type: 'select',
-        required: true,
+        required: false,
         options: HOME_SIZE_OPTIONS,
+        showWhen: { when: 'propertyType', equals: ['Residential'] },
+      },
+      {
+        id: 'commercialCoverage',
+        label: 'Power the entire space or just specific circuits?',
+        type: 'radio',
+        required: false,
+        options: ['Entire space', 'Specific circuits only', 'Not sure'],
+        showWhen: { when: 'propertyType', equals: ['Commercial'] },
+      },
+      {
+        id: 'commercialGeneratorSize',
+        label: 'Do you have a sense of what size generator you are looking for?',
+        type: 'select',
+        required: false,
+        options: [
+          'Under 25 kW',
+          '25–50 kW',
+          '50–100 kW',
+          'Over 100 kW',
+          'Not sure',
+        ],
+        showWhen: { when: 'propertyType', equals: ['Commercial'] },
+      },
+      {
+        id: 'serviceSize',
+        label: 'Service size currently coming into the property',
+        type: 'select',
+        required: false,
+        options: SERVICE_SIZE_OPTIONS,
+      },
+      {
+        id: 'utility',
+        label: 'Who is your utility company?',
+        type: 'select',
+        required: false,
+        options: UTILITY_OPTIONS,
       },
       {
         id: 'fuel',
@@ -193,23 +343,12 @@ export const SERVICES: ServiceConfig[] = [
         ],
       },
       {
-        id: 'coverage',
-        label: 'What do you want to power?',
-        type: 'select',
-        required: false,
-        options: [
-          'Whole home',
-          'Essential circuits only',
-          'Specific items (well pump, heat, fridge, sump, etc.)',
-          'Not sure',
-        ],
-      },
-      {
         id: 'medical',
         label: 'Anyone in the home depend on medical equipment?',
         type: 'radio',
         required: false,
         options: ['Yes', 'No'],
+        showWhen: { when: 'propertyType', equals: ['Residential'] },
       },
       {
         id: 'urgency',
@@ -368,4 +507,31 @@ export const REFERRAL_SOURCES = [
 export function findService(key: string | undefined): ServiceConfig | undefined {
   if (!key) return undefined
   return SERVICES.find((s) => s.key === key)
+}
+
+/**
+ * Whether a question should render given the current answers. Used by the
+ * form (to hide irrelevant follow-ups) and validation (to skip "required"
+ * checks on hidden questions).
+ */
+export function isQuestionVisible(
+  question: Question,
+  answers: Record<string, string>,
+): boolean {
+  if (!question.showWhen) return true
+  const current = answers[question.showWhen.when]
+  if (!current) return false
+  return question.showWhen.equals.includes(current)
+}
+
+/**
+ * Human-readable map of question id → label, used when stitching answers
+ * into the HCP estimate's private_notes and the office email so labels
+ * read naturally instead of camelCase ids.
+ */
+export function getQuestionLabel(
+  service: ServiceConfig,
+  questionId: string,
+): string {
+  return service.questions.find((q) => q.id === questionId)?.label || questionId
 }

@@ -1,7 +1,10 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { listLeads } from '@/lib/housecall-pro'
-import { summarizeLead, type LeadSummary } from '@/components/switchboard/lead-pipeline-utils'
+import { listStoredLeads } from '@/lib/leads-store'
+import {
+  summarizeStoredLead,
+  type LeadSummary,
+} from '@/components/switchboard/lead-pipeline-utils'
 import LeadPipelineClient from '@/components/switchboard/LeadPipelineClient'
 
 export const metadata: Metadata = {
@@ -15,11 +18,11 @@ export default async function LeadPipelinePage() {
   let error: string | null = null
 
   try {
-    const { leads } = await listLeads({ pageSize: 100 })
-    summaries = leads.map(summarizeLead)
+    const stored = await listStoredLeads({ limit: 200 })
+    summaries = stored.map(summarizeStoredLead)
   } catch (e) {
     error = e instanceof Error ? e.message : String(e)
-    console.error('[lead-pipeline] HCP listLeads failed:', error)
+    console.error('[lead-pipeline] listStoredLeads failed:', error)
   }
 
   return (
@@ -41,14 +44,15 @@ export default async function LeadPipelinePage() {
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base max-w-3xl leading-relaxed">
           Every lead from the website form, AI agents, and other inbound
-          channels. Reads live from Housecall Pro. Click any lead to see
-          the full qualification answers, customer notes, and attribution.
+          channels. Each row mirrors a Housecall Pro estimate. Click any
+          lead to see the full qualification answers and jump to the
+          matching estimate in HCP.
         </p>
       </header>
 
       {error && (
         <div className="mb-6 rounded-xl border border-danger/30 bg-red-50 dark:bg-red-950/30 dark:border-red-900/60 p-4 text-sm text-danger dark:text-red-300">
-          <div className="font-bold mb-1">Couldn&apos;t load leads from Housecall Pro</div>
+          <div className="font-bold mb-1">Couldn&apos;t load leads</div>
           <code className="text-xs font-mono">{error}</code>
         </div>
       )}
@@ -56,12 +60,12 @@ export default async function LeadPipelinePage() {
       <LeadPipelineClient leads={summaries} />
 
       <p className="mt-10 text-xs text-gray-400 dark:text-gray-500 leading-relaxed max-w-3xl">
-        v1 reads directly from Housecall Pro. Long-term we&apos;ll persist
-        every submission to our own database (Neon Postgres via Vercel
-        Marketplace) so we can do historical analytics, structured
-        search, and feed the self-improving learning loop. See{' '}
-        <code className="font-mono">HANDOFF.md</code> for the migration
-        trigger.
+        Reads from the TZ Switchboard&apos;s own database (Neon Postgres).
+        Each form submission is also routed to Housecall Pro: existing
+        customers get a new estimate appended to their record, new
+        customers get a fresh customer + estimate. The &quot;Open in
+        Housecall Pro&quot; button on each row deep-links to the matching
+        estimate.
       </p>
     </div>
   )

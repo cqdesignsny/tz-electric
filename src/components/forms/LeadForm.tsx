@@ -6,6 +6,7 @@ import {
   REFERRAL_SOURCES,
   SERVICES,
   findService,
+  isQuestionVisible,
   type Question,
   type ServiceConfig,
 } from './lead-form-config'
@@ -112,10 +113,27 @@ export default function LeadForm({ initialServiceKey }: Props) {
   }
 
   function setQualification(id: string, value: string) {
-    setState((prev) => ({
-      ...prev,
-      qualification: { ...prev.qualification, [id]: value },
-    }))
+    setState((prev) => {
+      const nextQual: Record<string, string> = { ...prev.qualification, [id]: value }
+      const service = prev.service
+      if (service) {
+        // Prune answers whose questions are now hidden (e.g. switching
+        // propertyType from Residential to Commercial drops the residential
+        // sub-questions). Fixed-point loop handles chains where a hidden
+        // parent transitively hides a deeper child.
+        let changed = true
+        while (changed) {
+          changed = false
+          for (const q of service.questions) {
+            if (q.id in nextQual && !isQuestionVisible(q, nextQual)) {
+              delete nextQual[q.id]
+              changed = true
+            }
+          }
+        }
+      }
+      return { ...prev, qualification: nextQual }
+    })
     setErrors((prev) => {
       if (!prev[`q_${id}`]) return prev
       const next = { ...prev }
@@ -136,6 +154,7 @@ export default function LeadForm({ initialServiceKey }: Props) {
       newErrors.service = 'Please pick a service.'
     } else {
       service.questions.forEach((q) => {
+        if (!isQuestionVisible(q, state.qualification)) return
         if (q.required && !state.qualification[q.id]) {
           newErrors[`q_${q.id}`] = 'Required'
         }
@@ -367,15 +386,17 @@ function Step2Qualify({
       </p>
 
       <div className="mt-8 space-y-6">
-        {service.questions.map((q) => (
-          <QuestionField
-            key={q.id}
-            question={q}
-            value={qualification[q.id] || ''}
-            error={errors[`q_${q.id}`]}
-            onChange={(v) => onChange(q.id, v)}
-          />
-        ))}
+        {service.questions
+          .filter((q) => isQuestionVisible(q, qualification))
+          .map((q) => (
+            <QuestionField
+              key={q.id}
+              question={q}
+              value={qualification[q.id] || ''}
+              error={errors[`q_${q.id}`]}
+              onChange={(v) => onChange(q.id, v)}
+            />
+          ))}
 
         <div>
           <label className="mb-2 block text-sm font-semibold text-navy">

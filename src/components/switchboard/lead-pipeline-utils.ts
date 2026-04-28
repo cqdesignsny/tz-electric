@@ -1,95 +1,21 @@
 /**
- * Helpers for the Lead Pipeline view. Pulls structure out of the
- * customer.notes blob the lead form writes (see
- * src/app/api/leads/submit/route.ts buildLeadNotes).
- *
- * v1 reads from HCP. The long-term path replaces this with structured
- * fields from our own DB (see HANDOFF.md "What's NOT built").
+ * Helpers for the Lead Pipeline view. Reads from tz_leads (Neon) so the
+ * TZ Switchboard mirrors exactly what the office sees in Housecall Pro:
+ * every form submission persisted with its HCP customer + estimate ids,
+ * deep-linking back to HCP from each row.
  */
 
-import type { HCPLead } from '@/lib/housecall-pro'
+import {
+  findService,
+  getQuestionLabel,
+  type ServiceConfig,
+} from '@/components/forms/lead-form-config'
+import type { StoredLead } from '@/lib/leads-store'
 
-export type ParsedLeadNotes = {
-  flags: string[]
-  service: string | null
-  qualification: Array<{ key: string; value: string }>
-  customerNotes: string | null
-  property: Array<{ key: string; value: string }>
-  attribution: Array<{ key: string; value: string }>
-  raw: string
-}
-
-const SECTION_RE = /^---\s*(.+?)\s*---$/
-const FLAG_RE = /^\[(.+?)\]$/
-const KV_RE = /^([A-Za-z][\w\s/-]*?):\s*(.*)$/
-const BANNER_RE = /^={3,}|WEBSITE LEAD/i
-
-export function parseLeadNotes(notes: string | null | undefined): ParsedLeadNotes {
-  const empty: ParsedLeadNotes = {
-    flags: [],
-    service: null,
-    qualification: [],
-    customerNotes: null,
-    property: [],
-    attribution: [],
-    raw: notes || '',
-  }
-  if (!notes) return empty
-
-  const result: ParsedLeadNotes = { ...empty, raw: notes }
-  let section = 'header'
-  const lines = notes.split('\n')
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim()
-    if (!line) continue
-    if (BANNER_RE.test(line)) continue
-
-    const sectionMatch = line.match(SECTION_RE)
-    if (sectionMatch) {
-      section = sectionMatch[1].toLowerCase()
-      continue
-    }
-
-    const flagMatch = line.match(FLAG_RE)
-    if (flagMatch) {
-      result.flags.push(flagMatch[1])
-      continue
-    }
-
-    if (section === 'header' && line.toLowerCase().startsWith('service:')) {
-      result.service = line.replace(/^service:\s*/i, '')
-      continue
-    }
-
-    const kvMatch = line.match(KV_RE)
-
-    if (section === 'qualification') {
-      if (kvMatch) result.qualification.push({ key: kvMatch[1], value: kvMatch[2] })
-      continue
-    }
-    if (section === 'property') {
-      if (kvMatch) result.property.push({ key: kvMatch[1], value: kvMatch[2] })
-      continue
-    }
-    if (section === 'attribution') {
-      if (kvMatch) result.attribution.push({ key: kvMatch[1], value: kvMatch[2] })
-      continue
-    }
-    if (section === 'customer notes') {
-      result.customerNotes = result.customerNotes
-        ? `${result.customerNotes}\n${line}`
-        : line
-      continue
-    }
-  }
-
-  return result
-}
+const HCP_APP_BASE = 'https://pro.housecallpro.com/app'
 
 export type LeadSummary = {
   id: string
-  number: number
   fullName: string
   initials: string
   email: string | null
@@ -103,86 +29,165 @@ export type LeadSummary = {
   scopeTag: string | null
   flagTags: string[]
   source: string | null
-  status: string
-  pipelineStatus: string | null
   isRenter: boolean
   isActiveLeak: boolean
   isMedical: boolean
   isGoogleAds: boolean
+  isExistingHcpCustomer: boolean
+  hasHcpEstimate: boolean
+  hcpError: string | null
   createdAt: string
-  parsed: ParsedLeadNotes
-  hcpInboxUrl: string
+  qualification: Array<{ key: string; value: string }>
+  customerNotes: string | null
+  attribution: Array<{ key: string; value: string }>
+  hcpDeepLink: string
+  hcpDeepLinkLabel: string
 }
 
-const HCP_INBOX_URL = 'https://pro.housecallpro.com/app/job_inbox'
+function fullNameOrFallback(first: string | null, last: string | null): string {
+  const f = (first || '').trim()
+  const l = (last || '').trim()
+  const joined = `${f} ${l}`.trim()
+  return joined || 'Unknown'
+}
 
-export function summarizeLead(lead: HCPLead): LeadSummary {
-  const first = lead.customer.first_name?.trim() || ''
-  const last = lead.customer.last_name?.trim() || ''
-  const fullName = `${first} ${last}`.trim() || 'Unknown'
-  const initials = `${first.charAt(0)}${last.charAt(0)}`.toUpperCase() || '?'
+function initialsFor(first: string | null, last: string | null): string {
+  const f = (first || '').trim()
+  const l = (last || '').trim()
+  const result = `${f.charAt(0)}${l.charAt(0)}`.toUpperCase()
+  return result || '?'
+}
 
-  let serviceTag: string | null = null
-  let urgencyTag: string | null = null
-  let scopeTag: string | null = null
-  const flagTags: string[] = []
-  let source: string | null = null
-  let isRenter = false
-  let isActiveLeak = false
-  let isMedical = false
-  let isGoogleAds = false
+function buildAttribution(stored: StoredLead): Array<{ key: string; value: string }> {
+  const t = stored.tracking || {}
+  const out: Array<{ key: string; value: string }> = []
+  if (t.gclid) out.push({ key: 'GCLID', value: String(t.gclid) })
+  if (t.utmSource) out.push({ key: 'UTM source', value: String(t.utmSource) })
+  if (t.utmMedium) out.push({ key: 'UTM medium', value: String(t.utmMedium) })
+  if (t.utmCampaign) out.push({ key: 'UTM campaign', value: String(t.utmCampaign) })
+  if (t.utmTerm) out.push({ key: 'UTM term', value: String(t.utmTerm) })
+  if (t.utmContent) out.push({ key: 'UTM content', value: String(t.utmContent) })
+  if (t.landingPage) out.push({ key: 'Landing page', value: String(t.landingPage) })
+  if (t.landingAt) out.push({ key: 'Landed at', value: String(t.landingAt) })
+  if (stored.referral_source) out.push({ key: 'Heard via', value: stored.referral_source })
+  return out
+}
 
-  for (const tag of lead.tags) {
-    if (tag.startsWith('Service:')) serviceTag = tag.replace(/^Service:\s*/, '')
-    else if (tag.startsWith('Urgency:')) urgencyTag = tag.replace(/^Urgency:\s*/, '')
-    else if (tag === 'Web Form') source = 'Web Form'
-    else if (tag === 'TZ AI AGENT') source = 'TZ AI Agent'
-    else if (tag === 'Renter - Verify with Landlord' || tag.startsWith('Renter')) {
-      isRenter = true
-      flagTags.push('Renter')
-    } else if (tag === 'ACTIVE LEAK') {
-      isActiveLeak = true
-      flagTags.push('Active leak')
-    } else if (tag === 'Medical Equipment in Home') {
-      isMedical = true
-      flagTags.push('Medical equipment')
-    } else if (tag === 'Google Ads') {
-      isGoogleAds = true
-      flagTags.push('Google Ads')
-    } else if (!tag.startsWith('Service:') && !tag.startsWith('Urgency:') && tag !== 'Web Form' && tag !== 'TZ AI AGENT') {
-      // Treat any other tag as the scope answer (e.g. "Whole-house rewire")
-      if (!scopeTag) scopeTag = tag
+function buildQualification(
+  stored: StoredLead,
+  service: ServiceConfig | undefined,
+): Array<{ key: string; value: string }> {
+  const q = stored.qualification || {}
+  if (!service) {
+    return Object.entries(q)
+      .filter(([, v]) => typeof v === 'string' && v.trim().length > 0)
+      .map(([k, v]) => ({ key: k, value: v as string }))
+  }
+  // Render in service-defined question order so the office reads them in
+  // the same flow the customer answered them.
+  const out: Array<{ key: string; value: string }> = []
+  for (const question of service.questions) {
+    const v = q[question.id]
+    if (typeof v === 'string' && v.trim().length > 0) {
+      out.push({ key: getQuestionLabel(service, question.id), value: v })
     }
   }
+  return out
+}
 
-  const parsed = parseLeadNotes(lead.customer.notes)
-  if (!serviceTag && parsed.service) serviceTag = parsed.service.replace(/\s*\([\w-]+\)$/, '')
+function buildDeepLink(stored: StoredLead): { url: string; label: string } {
+  if (stored.hcp_estimate_id) {
+    return {
+      url: `${HCP_APP_BASE}/estimates/${stored.hcp_estimate_id}`,
+      label: 'Open estimate in Housecall Pro',
+    }
+  }
+  if (stored.hcp_customer_id) {
+    return {
+      url: `${HCP_APP_BASE}/customers/${stored.hcp_customer_id}`,
+      label: 'Open customer in Housecall Pro',
+    }
+  }
+  return {
+    url: `${HCP_APP_BASE}/customers`,
+    label: 'Open Housecall Pro',
+  }
+}
+
+function shorten(s: string, max: number): string {
+  return s.length > max ? `${s.slice(0, max - 1)}…` : s
+}
+
+export function summarizeStoredLead(stored: StoredLead): LeadSummary {
+  const service = findService(stored.service_key || undefined)
+  const q = stored.qualification || {}
+
+  const isRenter = stored.ownership === 'renter'
+  const isActiveLeak = q.urgentNow === 'Yes — active leak'
+  const isMedical = q.medical === 'Yes'
+  const isGoogleAds = !!stored.tracking?.gclid
+  const hasHcpEstimate = !!stored.hcp_estimate_id
+  const isExistingHcpCustomer = stored.hcp_customer_existing === true
+
+  const flagTags: string[] = []
+  if (isActiveLeak) flagTags.push('Active leak')
+  if (isMedical) flagTags.push('Medical equipment')
+  if (isRenter) flagTags.push('Renter')
+  if (isGoogleAds) flagTags.push('Google Ads')
+  if (isExistingHcpCustomer) flagTags.push('Existing customer')
+  if (stored.hcp_error) flagTags.push('HCP sync error')
+
+  const serviceTag = stored.service_label || service?.label || null
+  const urgencyTag = q.urgency ? shorten(q.urgency, 40) : null
+  const scopeTag = q.scope ? shorten(q.scope, 60) : null
+
+  const sourceLabel = (() => {
+    switch (stored.source) {
+      case 'web_form':
+        return 'Web Form'
+      case 'sms_agent':
+        return 'TZ AI Agent (SMS)'
+      case 'voice_agent':
+        return 'TZ AI Agent (Voice)'
+      case 'web_chat':
+        return 'TZ AI Agent (Chat)'
+      case 'manual':
+        return 'Manual'
+      default:
+        return null
+    }
+  })()
+
+  const { url: hcpDeepLink, label: hcpDeepLinkLabel } = buildDeepLink(stored)
 
   return {
-    id: lead.id,
-    number: lead.number,
-    fullName,
-    initials,
-    email: lead.customer.email,
-    phone: lead.customer.mobile_number,
-    city: lead.address?.city ?? null,
-    state: lead.address?.state ?? null,
-    street: lead.address?.street ?? null,
-    zip: lead.address?.zip ?? null,
+    id: stored.id,
+    fullName: fullNameOrFallback(stored.first_name, stored.last_name),
+    initials: initialsFor(stored.first_name, stored.last_name),
+    email: stored.email,
+    phone: stored.phone,
+    city: stored.city,
+    state: stored.state,
+    street: stored.street,
+    zip: stored.zip,
     serviceTag,
     urgencyTag,
     scopeTag,
     flagTags,
-    source,
-    status: lead.status || 'open',
-    pipelineStatus: lead.pipeline_status,
+    source: sourceLabel,
     isRenter,
     isActiveLeak,
     isMedical,
     isGoogleAds,
-    createdAt: lead.customer.created_at,
-    parsed,
-    hcpInboxUrl: HCP_INBOX_URL,
+    isExistingHcpCustomer,
+    hasHcpEstimate,
+    hcpError: stored.hcp_error,
+    createdAt: stored.created_at,
+    qualification: buildQualification(stored, service),
+    customerNotes: stored.customer_notes,
+    attribution: buildAttribution(stored),
+    hcpDeepLink,
+    hcpDeepLinkLabel,
   }
 }
 

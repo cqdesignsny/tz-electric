@@ -14,11 +14,9 @@ type Props = {
 }
 
 type ServiceFilter = 'all' | string
-type StatusFilter = 'all' | 'open' | 'won' | 'lost'
 
 export default function LeadPipelineClient({ leads }: Props) {
   const [serviceFilter, setServiceFilter] = useState<ServiceFilter>('all')
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
@@ -35,13 +33,6 @@ export default function LeadPipelineClient({ leads }: Props) {
     const q = search.trim().toLowerCase()
     return leads.filter((l) => {
       if (serviceFilter !== 'all' && l.serviceTag !== serviceFilter) return false
-      if (statusFilter !== 'all') {
-        const isWon = l.pipelineStatus?.toLowerCase().includes('won') || l.status === 'won'
-        const isLost = l.pipelineStatus?.toLowerCase().includes('lost') || !!leadIsLost(l)
-        if (statusFilter === 'won' && !isWon) return false
-        if (statusFilter === 'lost' && !isLost) return false
-        if (statusFilter === 'open' && (isWon || isLost)) return false
-      }
       if (q) {
         const hay = [
           l.fullName,
@@ -52,7 +43,7 @@ export default function LeadPipelineClient({ leads }: Props) {
           l.urgencyTag || '',
           l.city || '',
           l.zip || '',
-          l.parsed.customerNotes || '',
+          l.customerNotes || '',
         ]
           .join(' ')
           .toLowerCase()
@@ -60,7 +51,7 @@ export default function LeadPipelineClient({ leads }: Props) {
       }
       return true
     })
-  }, [leads, serviceFilter, statusFilter, search])
+  }, [leads, serviceFilter, search])
 
   const counts = useMemo(() => {
     const total = leads.length
@@ -70,7 +61,6 @@ export default function LeadPipelineClient({ leads }: Props) {
     return { total, renters, activeLeak, ads }
   }, [leads])
 
-  // Pagination derived state.
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const safePage = Math.min(page, totalPages)
   const paginated = useMemo(
@@ -78,15 +68,12 @@ export default function LeadPipelineClient({ leads }: Props) {
     [filtered, safePage],
   )
 
-  // Reset to page 1 whenever filters change so the user isn't stranded on
-  // a now-empty page after narrowing the result set.
   useEffect(() => {
     setPage(1)
-  }, [serviceFilter, statusFilter, search])
+  }, [serviceFilter, search])
 
   return (
     <div>
-      {/* Stats strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <Stat label="Total leads" value={counts.total} />
         <Stat label="Active leaks" value={counts.activeLeak} accent={counts.activeLeak > 0 ? 'danger' : 'muted'} />
@@ -94,7 +81,6 @@ export default function LeadPipelineClient({ leads }: Props) {
         <Stat label="Google Ads" value={counts.ads} />
       </div>
 
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3 mb-5">
         <div className="flex-1">
           <input
@@ -117,19 +103,8 @@ export default function LeadPipelineClient({ leads }: Props) {
             </option>
           ))}
         </select>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
-          className="rounded-xl border border-gray-300 dark:border-navy-light/60 bg-white dark:bg-[#0F1C3F] px-3 py-2.5 text-sm text-navy dark:text-white focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/30"
-        >
-          <option value="all">All statuses</option>
-          <option value="open">Open</option>
-          <option value="won">Won</option>
-          <option value="lost">Lost</option>
-        </select>
       </div>
 
-      {/* List */}
       {leads.length === 0 ? (
         <EmptyState />
       ) : filtered.length === 0 ? (
@@ -274,7 +249,6 @@ function PageButton({
   )
 }
 
-// Compact page range like 1 … 4 5 6 … 12, with neighbors of the current page.
 function paginationRange(page: number, total: number): Array<number | '…'> {
   if (total <= 7) {
     return Array.from({ length: total }, (_, i) => i + 1)
@@ -287,12 +261,6 @@ function paginationRange(page: number, total: number): Array<number | '…'> {
   if (end < total - 1) result.push('…')
   result.push(total)
   return result
-}
-
-function leadIsLost(l: LeadSummary): boolean {
-  // HCP returns lost_at on the lead, not always reflected in status. We only
-  // have summary fields; treat pipelineStatus 'Lost' as lost.
-  return (l.pipelineStatus || '').toLowerCase() === 'lost'
 }
 
 function Stat({
@@ -339,7 +307,9 @@ function LeadCard({
     ? 'border-red-400 dark:border-red-700'
     : lead.isRenter
       ? 'border-amber-300 dark:border-amber-700'
-      : 'border-gray-200 dark:border-navy-light/40'
+      : lead.hcpError
+        ? 'border-orange-300 dark:border-orange-700'
+        : 'border-gray-200 dark:border-navy-light/40'
 
   return (
     <div
@@ -360,7 +330,7 @@ function LeadCard({
               {lead.fullName}
             </h3>
             <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
-              #{lead.number} · {relativeTime(lead.createdAt)}
+              {relativeTime(lead.createdAt)}
             </span>
           </div>
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
@@ -384,11 +354,13 @@ function LeadCard({
               <Tag
                 key={t}
                 tone={
-                  t === 'Active leak'
+                  t === 'Active leak' || t === 'HCP sync error'
                     ? 'danger'
                     : t === 'Medical equipment' || t === 'Renter'
                       ? 'warning'
-                      : 'neutral'
+                      : t === 'Existing customer'
+                        ? 'success'
+                        : 'neutral'
                 }
               >
                 {t}
@@ -415,7 +387,6 @@ function LeadDetail({ lead }: { lead: LeadSummary }) {
   return (
     <div className="px-4 pb-5 sm:px-5 border-t border-gray-100 dark:border-navy-light/40 pt-5">
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Contact + address */}
         <div>
           <SectionLabel>Contact</SectionLabel>
           <KVList
@@ -439,59 +410,60 @@ function LeadDetail({ lead }: { lead: LeadSummary }) {
               ]}
             />
           </div>
+
+          {lead.source && (
+            <div className="mt-5">
+              <SectionLabel>Source</SectionLabel>
+              <KVList items={[{ k: 'Channel', v: lead.source }]} />
+            </div>
+          )}
         </div>
 
-        {/* Qualification + property + attribution */}
         <div>
-          {lead.parsed.qualification.length > 0 && (
+          {lead.qualification.length > 0 && (
             <>
               <SectionLabel>Qualification</SectionLabel>
-              <KVList
-                items={lead.parsed.qualification.map((q) => ({
-                  k: q.key,
-                  v: q.value,
-                }))}
-              />
+              <KVList items={lead.qualification.map((q) => ({ k: q.key, v: q.value }))} />
             </>
           )}
 
-          {lead.parsed.customerNotes && (
+          {lead.customerNotes && (
             <div className="mt-5">
               <SectionLabel>Customer notes</SectionLabel>
               <div className="rounded-lg bg-gray-50 dark:bg-[#0A1128] border border-gray-200 dark:border-navy-light/40 p-3 text-sm text-navy dark:text-gray-100 whitespace-pre-wrap leading-relaxed">
-                {lead.parsed.customerNotes}
+                {lead.customerNotes}
               </div>
             </div>
           )}
 
-          {lead.parsed.property.length > 0 && (
-            <div className="mt-5">
-              <SectionLabel>Property</SectionLabel>
-              <KVList
-                items={lead.parsed.property.map((p) => ({ k: p.key, v: p.value }))}
-              />
-            </div>
-          )}
-
-          {lead.parsed.attribution.length > 0 && (
+          {lead.attribution.length > 0 && (
             <div className="mt-5">
               <SectionLabel>Attribution</SectionLabel>
-              <KVList
-                items={lead.parsed.attribution.map((a) => ({ k: a.key, v: a.value }))}
-              />
+              <KVList items={lead.attribution.map((a) => ({ k: a.key, v: a.value }))} />
             </div>
           )}
         </div>
       </div>
 
+      {lead.hcpError && (
+        <div className="mt-5 rounded-xl border border-orange-300 dark:border-orange-700 bg-orange-50 dark:bg-orange-950/40 p-4 text-sm text-orange-900 dark:text-orange-200">
+          <div className="font-bold mb-1">HCP sync error</div>
+          <code className="text-xs font-mono break-all">{lead.hcpError}</code>
+          <p className="text-xs mt-2 text-orange-800 dark:text-orange-300">
+            The lead is saved here. The estimate did not make it into Housecall Pro.
+            Reach out to the customer directly and re-create the estimate manually.
+          </p>
+        </div>
+      )}
+
       <div className="mt-6 flex flex-wrap gap-2 pt-4 border-t border-gray-100 dark:border-navy-light/40">
         <a
-          href={lead.hcpInboxUrl}
+          href={lead.hcpDeepLink}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1.5 rounded-full bg-accent text-white text-xs font-bold px-4 py-2 hover:bg-accent-dark transition-colors"
         >
-          Open in Housecall Pro
+          {lead.hcpDeepLinkLabel}
           <span aria-hidden>↗</span>
         </a>
         {lead.phone && (
@@ -510,9 +482,6 @@ function LeadDetail({ lead }: { lead: LeadSummary }) {
             Email
           </a>
         )}
-        <span className="ml-auto text-[10px] text-gray-400 dark:text-gray-500 font-mono self-center">
-          HCP Lead {lead.id}
-        </span>
       </div>
     </div>
   )
@@ -561,7 +530,7 @@ function Tag({
   tone,
 }: {
   children: React.ReactNode
-  tone: 'service' | 'urgency' | 'scope' | 'danger' | 'warning' | 'neutral'
+  tone: 'service' | 'urgency' | 'scope' | 'danger' | 'warning' | 'success' | 'neutral'
 }) {
   const styles = {
     service:
@@ -574,6 +543,8 @@ function Tag({
       'bg-red-100 text-red-700 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-900/60',
     warning:
       'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-900/60',
+    success:
+      'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60',
     neutral:
       'bg-gray-100 text-gray-700 dark:bg-navy-light/40 dark:text-gray-200 border border-gray-200 dark:border-navy-light/60',
   } as const

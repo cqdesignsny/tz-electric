@@ -1,15 +1,19 @@
 import Link from 'next/link'
-import { listLeads } from '@/lib/housecall-pro'
-import { summarizeLead, relativeTime, formatPhoneForDisplay } from './lead-pipeline-utils'
+import { listStoredLeads } from '@/lib/leads-store'
+import {
+  summarizeStoredLead,
+  relativeTime,
+  formatPhoneForDisplay,
+} from './lead-pipeline-utils'
 
 export default async function RecentLeadsCard() {
-  let summaries: ReturnType<typeof summarizeLead>[] = []
+  let summaries: ReturnType<typeof summarizeStoredLead>[] = []
   let errored = false
   let weekCount = 0
 
   try {
-    const { leads } = await listLeads({ pageSize: 50 })
-    summaries = leads.map(summarizeLead)
+    const stored = await listStoredLeads({ limit: 50 })
+    summaries = stored.map(summarizeStoredLead)
     const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000
     weekCount = summaries.filter(
       (l) => new Date(l.createdAt).getTime() > oneWeekAgo,
@@ -31,8 +35,8 @@ export default async function RecentLeadsCard() {
             {errored
               ? 'Live data unavailable'
               : weekCount > 0
-                ? `${weekCount} new this week · live from Housecall Pro`
-                : 'Live from Housecall Pro'}
+                ? `${weekCount} new this week`
+                : 'Mirrored from Housecall Pro'}
           </div>
         </div>
         <Link
@@ -46,12 +50,12 @@ export default async function RecentLeadsCard() {
 
       {errored ? (
         <div className="px-5 py-6 text-sm text-gray-500 dark:text-gray-400">
-          Couldn&apos;t reach Housecall Pro right now. Open the{' '}
+          Couldn&apos;t load recent leads.{' '}
           <Link
             href="/switchboard/lead-pipeline"
             className="text-blue dark:text-blue-light hover:underline"
           >
-            Lead Pipeline
+            Open the Lead Pipeline
           </Link>{' '}
           to retry.
         </div>
@@ -109,6 +113,11 @@ export default async function RecentLeadsCard() {
                     {l.isMedical && (
                       <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
                         Medical equipment
+                      </span>
+                    )}
+                    {l.isExistingHcpCustomer && (
+                      <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300">
+                        Existing customer
                       </span>
                     )}
                   </div>

@@ -28,6 +28,16 @@ function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, '')
 }
 
+export type HCPAddress = {
+  id: string
+  type: string
+  street: string
+  street_line_2: string | null
+  city: string
+  state: string
+  zip: string
+}
+
 export type HCPCustomer = {
   id: string
   first_name: string
@@ -38,15 +48,7 @@ export type HCPCustomer = {
   work_number: string | null
   notes: string | null
   tags: string[]
-  addresses: Array<{
-    id: string
-    type: string
-    street: string
-    street_line_2: string | null
-    city: string
-    state: string
-    zip: string
-  }>
+  addresses: HCPAddress[]
 }
 
 export type CustomerData = {
@@ -67,6 +69,10 @@ export type PlanInfo = {
   amount: number
 }
 
+/**
+ * Find an existing HCP customer by phone with optional name match. Used by the
+ * plan-signup flow which needs an exact identity match before tagging.
+ */
 export async function searchCustomer(phone: string, firstName: string, lastName: string): Promise<HCPCustomer | null> {
   const normalized = normalizePhone(phone)
 
@@ -83,6 +89,30 @@ export async function searchCustomer(phone: string, firstName: string, lastName:
     return match || null
   } catch (error) {
     console.error('HCP searchCustomer error:', error)
+    return null
+  }
+}
+
+/**
+ * Find a customer by phone alone, returning the most likely match. Used by the
+ * lead-form flow: an existing TZ customer requesting new work via the website
+ * should be matched even if they enter a slightly different name (e.g.
+ * "Mike Smith" in HCP but "Michael Smith" on the form).
+ *
+ * Returns null on no match or HCP error so callers can fall through to
+ * creating a new customer.
+ */
+export async function findCustomerByPhone(phone: string): Promise<HCPCustomer | null> {
+  const normalized = normalizePhone(phone)
+  if (!normalized) return null
+
+  try {
+    const data = await hcpFetch(`/customers?phone_number=${encodeURIComponent(normalized)}`)
+    const customers: HCPCustomer[] = data.customers || []
+    if (customers.length === 0) return null
+    return customers[0]
+  } catch (error) {
+    console.error('HCP findCustomerByPhone error:', error)
     return null
   }
 }
@@ -113,7 +143,57 @@ export async function createCustomer(data: CustomerData, planInfo: PlanInfo): Pr
 }
 
 /**
- * Lead form submission. Lands in HCP Job Inbox > "API Leads" channel.
+ * Bare-bones customer creation for the lead-form flow. Deliberately leaves
+ * `notes` blank: per Tyler (2026-04-28), customer.notes is reserved for
+ * persistent customer info ("don't wear shoes in the house") and should NOT
+ * be polluted with job-specific lead details. Job details belong in the
+ * estimate's private notes.
+ */
+export type LeadCustomerInput = {
+  firstName: string
+  lastName: string
+  phone: string
+  email?: string
+  street?: string
+  city?: string
+  state?: string
+  zip?: string
+}
+
+export async function createCustomerForLead(
+  input: LeadCustomerInput,
+): Promise<HCPCustomer> {
+  const customer: Record<string, unknown> = {
+    first_name: input.firstName.trim(),
+    last_name: input.lastName.trim(),
+    mobile_number: normalizePhone(input.phone),
+  }
+  if (input.email) customer.email = input.email.trim()
+
+  if (input.street && input.city && input.state && input.zip) {
+    customer.addresses = [
+      {
+        street: input.street,
+        city: input.city,
+        state: input.state,
+        zip: input.zip,
+        type: 'service',
+      },
+    ]
+  }
+
+  return hcpFetch('/customers', {
+    method: 'POST',
+    body: JSON.stringify(customer),
+  })
+}
+
+/**
+ * Lead form submission via /leads (legacy path). Lands in HCP Job Inbox >
+ * "API Leads" channel. Retained for reference and for any agent that
+ * specifically wants the Job Inbox flow; the website lead form has moved
+ * to the create-customer + create-estimate path (see createEstimateForLead
+ * below) per Tyler's 2026-04-28 routing change.
  *
  * Payload shape was verified empirically against the live HCP API on
  * 2026-04-27 (test leads numbered 14, 15, 17). HCP silently drops
@@ -125,11 +205,6 @@ export async function createCustomer(data: CustomerData, planInfo: PlanInfo): Pr
  *   - customer.notes          (NOT top-level `notes`)
  *   - address.{street,city,state,zip}  (no `type` field)
  *   - tags (top-level array of strings)
- *
- * `description`, `source`, `lead_source`, `service_type`, customer.name,
- * customer.phone all get silently dropped. Source labeling lives in
- * tags (since lead_source needs HCP-managed UUIDs) and at the top of
- * customer.notes for office-staff visibility in Job Inbox.
  */
 export type LeadPayload = {
   firstName: string
@@ -181,10 +256,62 @@ export async function createLead(lead: LeadPayload): Promise<HCPLeadResponse> {
 }
 
 /**
- * Lead read endpoints. Used by the TZ Switchboard Lead Pipeline view to
- * show every lead from HCP without requiring a separate database. See
- * HANDOFF.md "What's NOT built" for the rationale and the long-term
- * own-database migration plan that replaces this.
+ * Create an unscheduled estimate against an existing customer. Lead/job
+ * details go in `private_notes` (office-only, scoped to this estimate)
+ * rather than customer.notes, which is reserved for persistent customer
+ * info. Tags surface on the estimate row in HCP for at-a-glance triage.
+ *
+ * NOTE on field shape: HCP's docs site (Stoplight SPA) is JS-rendered so
+ * the OpenAPI spec couldn't be statically scraped at build-time. We send
+ * a defensively wide payload (`private_notes`, `notes`, `description`,
+ * `tags`, optional `address`) under the assumption HCP silently drops
+ * fields it doesn't recognize, the same behavior verified empirically on
+ * /leads in session 12. First production submission acts as the
+ * empirical verification — surface any HCP error to the office email
+ * and iterate. Update this comment + the request body once the kept-
+ * vs-dropped fields are confirmed.
+ */
+export type EstimateInput = {
+  customerId: string
+  privateNotes: string
+  description?: string
+  tags?: string[]
+  address?: {
+    street: string
+    city: string
+    state: string
+    zip: string
+  }
+}
+
+export type HCPEstimateResponse = {
+  id?: string
+  number?: string | number
+  [key: string]: unknown
+}
+
+export async function createEstimateForLead(
+  input: EstimateInput,
+): Promise<HCPEstimateResponse> {
+  const body: Record<string, unknown> = {
+    customer_id: input.customerId,
+    private_notes: input.privateNotes,
+    notes: input.privateNotes,
+  }
+  if (input.description) body.description = input.description
+  if (input.tags && input.tags.length > 0) body.tags = input.tags
+  if (input.address) body.address = input.address
+
+  return hcpFetch('/estimates', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  })
+}
+
+/**
+ * Lead read endpoints. Retained for reference and for any code path that
+ * still wants to see the legacy /leads inbox. The TZ Switchboard Lead
+ * Pipeline view now reads from tz_leads (Neon) — see leads-store.ts.
  */
 export type HCPLead = {
   id: string
