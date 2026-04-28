@@ -122,7 +122,7 @@ export const NAV_SECTIONS: NavSection[] = [
       {
         label: 'SMS Conversations',
         slug: 'sms-conversations',
-        status: 'soon',
+        status: 'active',
         tagline: 'Inbound texts, AI replies, one-click takeover.',
         overview:
           "Every inbound SMS and every AI reply, threaded by phone number. A one-click button lets Tyler or office staff jump in and take over the thread when needed.",

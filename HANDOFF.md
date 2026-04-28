@@ -77,6 +77,26 @@ A handful of blockers remain before the SMS or voice agent can ship; see "What's
 - Sidebar nav driven by `src/components/switchboard/nav-config.ts` (single source for module list, slugs, taglines, overview copy, "what it will do" bullets, "what we need" bullets)
 - Email: branded HTML templates in `src/lib/email-templates.ts`. Reusable layout shell + per-email functions. Resend over a verified domain.
 
+### SMS Claire cutover plan (when Tyler finishes vendor signups)
+
+Scaffolding is live. Going from holding-pattern to "Claire is talking to customers" is now a small, well-defined step.
+
+**Tyler's vendor todo (one-time):**
+
+1. **Twilio account.** Sign up at twilio.com, buy a local Hudson Valley number, **start A2P 10DLC business registration immediately** — that's the long pole, 1-2 weeks of vendor review. Carriers throttle/block business SMS without it. Brand vetting fee ~$4 + ~$10/mo per campaign. Generate API credentials when the account is active (Account SID + Auth Token).
+2. **AI provider.** Two paths:
+    - **Preferred: Vercel AI Gateway.** Enable on Tyler's Vercel team (where the project lives post-migration). Auth is automatic via OIDC, no separate API key. One less paid account in the handoff.
+    - **Fallback: direct Anthropic.** Sign up at console.anthropic.com, add a payment method, generate `ANTHROPIC_API_KEY`.
+
+**Cesar's wire-up (~30 minutes once Tyler's keys land):**
+
+1. Set Vercel env vars (production): `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER`. If using direct Anthropic also set `ANTHROPIC_API_KEY`. Gateway uses OIDC automatically.
+2. Replace the TODO block in `src/app/api/agents/sms/webhook/route.ts` with the AI SDK `generateText` call (pseudocode is right there in the comment — `model: 'anthropic/claude-sonnet-4-6'`, system prompt from `buildSystemPrompt`, tools from `buildAgentTools`, message history mapped from `listMessages`).
+3. In the Twilio console, point the inbound SMS webhook for the TZ number at `https://tzelectricinc.com/api/agents/sms/webhook` (POST, application/x-www-form-urlencoded).
+4. Send a test SMS. The conversation appears in `/switchboard/sms-conversations`. Office can take over mid-thread; release sends the thread back to Claire.
+
+**Office-side outbound SMS** (Twilio API call from `/api/agents/sms/conversations` when role=office_reply): currently persists only to the transcript. Add the Twilio Messages API push (~5 lines) at the same time as the model wire-up so office takeover replies actually deliver.
+
 ### Environment variables on Vercel
 
 | Name | Set | Purpose |
@@ -125,7 +145,7 @@ All of the above are on Production and Development. Preview is intentionally ski
 - [x] ~~Knowledge Base v1 (read-only).~~ Live at `/switchboard/knowledge-base`. Renders `docs/agent-training-answers.md` as a structured browseable view with sticky section nav, scroll-spy active state, and full markdown styling.
 - [x] ~~Neon Postgres provisioned (`tz-db`) and attached to the project.~~ Marketplace integration on Vercel. `tz_leads` table created via `migrations/001_init.sql`. `npm run migrate` applies any new migrations.
 - [ ] **Phase 3 (next): Knowledge Base v2 (edit-in-place).** Authenticated in-app editor for the answers doc. Two viable paths: commit changes back to `docs/agent-training-answers.md` via the GitHub API (cleaner: edits land in git history and trigger a redeploy) or back the editor with a `tz_kb_versions` table in Neon (faster: in-app version control, sync to git on demand). Recommendation: start DB-backed for speed, sync to git via a "publish" action. Closes "easy way to continuously edit the agents."
-- [ ] **Phase 4: SMS Agent (Claire).** Twilio inbound webhook → Vercel function → Anthropic API streaming reply. Conversations persisted in Neon (new `tz_agent_conversations` and `tz_agent_messages` tables). System prompt assembled from `docs/agent-training-answers.md`. Office takeover button in `/switchboard/sms-conversations`.
+- [ ] **Phase 4: SMS Agent (Claire).** Scaffolding shipped end of session 14 — `tz_agent_conversations` + `tz_agent_messages` tables exist (migration 005), `/api/agents/sms/webhook` accepts Twilio inbound with signature verification + holding-pattern reply, `/switchboard/sms-conversations` is live with conversation list + transcript view + takeover toggle, `lib/agent-prompt.ts` composes the Claire system prompt from `docs/agent-training-answers.md`, `lib/agent-tools.ts` defines the AI SDK v6 tool surface (find_existing_customer, create_lead_with_estimate, lookup_business_hours, flag_for_office_review, escalate_emergency) with implementations wrapping the existing form/HCP pipeline. **What's left:** wiring the actual model call inside the webhook (10-line `generateText({...})` block — pseudocode is in the route's TODO comment), and the cutover env vars below.
 - [ ] **Phase 5: Web chat agent (Claire).** Same prompt and tool surface as SMS, AI SDK streaming widget on every public page, proactive popup at 15s.
 - [ ] **Phase 6: Voice agent (Claire).** Vapi assistant on a Twilio number, 15-minute max before forced handoff, runs the after-hours emergency dispatch SOP exactly.
 - [ ] **Phase 7: Self-improving learning loop.** Office flags transcripts in the SMS / chat / voice modules. Flagged items queue in the Knowledge Base. Approved edits auto-merge into the answers doc. Performance dashboard with handoff rate, false-escalation count, satisfaction proxy.
