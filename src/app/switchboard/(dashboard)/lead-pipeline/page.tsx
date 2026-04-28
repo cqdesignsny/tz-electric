@@ -7,6 +7,7 @@ import {
   type LeadSummary,
 } from '@/components/switchboard/lead-pipeline-utils'
 import LeadPipelineClient from '@/components/switchboard/LeadPipelineClient'
+import { requireModuleAccess } from '@/lib/current-user'
 
 export const metadata: Metadata = {
   title: 'Lead Pipeline',
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 export const dynamic = 'force-dynamic'
 
 export default async function LeadPipelinePage() {
+  await requireModuleAccess('lead-pipeline')
   let summaries: LeadSummary[] = []
   let error: string | null = null
   let lastSyncedAt: string | null = null

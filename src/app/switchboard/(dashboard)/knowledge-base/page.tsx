@@ -4,7 +4,7 @@ import { Marked } from 'marked'
 
 import KnowledgeBaseClient from '@/components/switchboard/KnowledgeBaseClient'
 import { loadMergedKnowledgeBase, type KbSection } from '@/lib/agent-knowledge-base'
-import { getCurrentUser } from '@/lib/current-user'
+import { getCurrentUser, requireModuleAccess } from '@/lib/current-user'
 import { canEditKnowledgeBase } from '@/lib/users'
 
 export const metadata: Metadata = {
@@ -25,6 +25,7 @@ export type RenderedKbSection = {
 }
 
 export default async function KnowledgeBasePage() {
+  await requireModuleAccess('knowledge-base')
   const cu = await getCurrentUser()
   const canEdit = canEditKnowledgeBase(cu?.role)
   const editorEmail = cu?.source === 'google' ? cu.email : null

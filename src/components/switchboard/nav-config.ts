@@ -101,7 +101,7 @@ export const NAV_SECTIONS: NavSection[] = [
       {
         label: 'Agent Training',
         slug: 'agent-training',
-        status: 'active',
+        status: 'live',
         tagline: 'Discovery questionnaire that feeds the knowledge base.',
       },
       {

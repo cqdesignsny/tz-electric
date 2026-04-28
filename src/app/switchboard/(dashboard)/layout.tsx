@@ -15,6 +15,7 @@ export default async function DashboardLayout({
         name: cu.user?.name || null,
         pictureUrl: cu.user?.picture_url || null,
         source: cu.source,
+        permissions: cu.user?.permissions || null,
       }
     : null
 

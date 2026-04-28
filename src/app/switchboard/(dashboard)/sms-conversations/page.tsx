@@ -8,6 +8,7 @@ import {
   type AgentMessage,
 } from '@/lib/agent-conversations'
 import SmsConversationsClient from '@/components/switchboard/SmsConversationsClient'
+import { requireModuleAccess } from '@/lib/current-user'
 
 export const metadata: Metadata = {
   title: 'SMS Conversations',
@@ -22,6 +23,7 @@ export default async function SmsConversationsPage({
 }: {
   searchParams: Promise<SearchParams>
 }) {
+  await requireModuleAccess('sms-conversations')
   const { id } = await searchParams
 
   let conversations: AgentConversation[] = []

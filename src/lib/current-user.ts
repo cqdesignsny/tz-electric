@@ -79,3 +79,20 @@ export async function requireGoogleUser(): Promise<CurrentUser> {
   }
   return cu
 }
+
+/**
+ * Page-level access guard. Imports `redirect` lazily so this module stays
+ * usable from non-page contexts. Call at the top of any module page.
+ */
+import { redirect } from 'next/navigation'
+import { canAccessModule } from './users'
+import type { ModuleSlug } from './modules'
+
+export async function requireModuleAccess(slug: ModuleSlug): Promise<CurrentUser> {
+  const cu = await getCurrentUser()
+  if (!cu) redirect('/switchboard/login?next=/switchboard')
+  if (!canAccessModule(cu.user || { role: cu.role, permissions: null }, slug)) {
+    redirect('/switchboard?denied=' + encodeURIComponent(slug))
+  }
+  return cu
+}

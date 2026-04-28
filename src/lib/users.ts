@@ -10,6 +10,7 @@
 
 import { db } from './db'
 import { ADMIN_EMAILS, OWNER_EMAILS } from './auth-config'
+import { findModule, type ModuleSlug } from './modules'
 
 export type UserRole = 'owner' | 'admin' | 'office' | 'viewer' | 'disabled'
 
@@ -23,6 +24,7 @@ export type TzUser = {
   hd: string | null
   last_login_at: string | null
   login_count: number
+  permissions: Record<string, boolean> | null
   invited_by: string | null
   disabled_at: string | null
   notes: string | null
@@ -209,4 +211,68 @@ export function canActOnLeads(role: UserRole | undefined | null): boolean {
 
 export function canTakeOverConversation(role: UserRole | undefined | null): boolean {
   return role === 'owner' || role === 'admin' || role === 'office'
+}
+
+/**
+ * Whether a user can access a specific Switchboard module. Resolution:
+ *   1. Owners can access everything (including ownerOnly modules).
+ *   2. ownerOnly modules: only owners. No override grants access.
+ *   3. Per-user explicit override (true/false) wins over role default.
+ *   4. Otherwise, role default from MODULES catalog.
+ */
+export function canAccessModule(
+  user: { role?: UserRole | string | null; permissions?: Record<string, boolean> | null } | null | undefined,
+  slug: ModuleSlug | string,
+): boolean {
+  if (!user || !user.role) return false
+  const role = user.role as UserRole
+
+  if (role === 'disabled') return false
+  if (role === 'owner') return true
+
+  const mod = findModule(slug)
+  if (!mod) return false
+
+  if (mod.ownerOnly) return false
+
+  const explicit = user.permissions?.[slug]
+  if (typeof explicit === 'boolean') return explicit
+
+  return mod.defaultRoles.includes(role)
+}
+
+export type SetPermissionsInput = {
+  email: string
+  permissions: Record<string, boolean>
+  actor: { email: string; role: UserRole }
+}
+
+export async function setUserPermissions(input: SetPermissionsInput): Promise<TzUser> {
+  if (input.actor.role !== 'owner') {
+    throw new Error('Only owners can change user permissions')
+  }
+  const target = input.email.toLowerCase()
+  const sql = db()
+  const rows = (await sql`
+    UPDATE tz_users
+    SET permissions = ${JSON.stringify(input.permissions)}::jsonb,
+        updated_at = NOW()
+    WHERE email = ${target}
+    RETURNING *
+  `) as TzUser[]
+  if (rows.length === 0) throw new Error(`No user with email ${target}`)
+
+  await sql`
+    INSERT INTO tz_audit_log (actor_email, actor_role, action, target_type, target_id, metadata)
+    VALUES (
+      ${input.actor.email.toLowerCase()},
+      ${input.actor.role},
+      ${'user.permissions_changed'},
+      ${'user'},
+      ${target},
+      ${JSON.stringify({ permissions: input.permissions })}::jsonb
+    )
+  `
+
+  return rows[0]
 }

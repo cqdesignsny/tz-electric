@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 import { NAV_SECTIONS, navHref, type NavItem } from './nav-config'
+import { canAccessModule } from '@/lib/users'
 
 export type SidebarUser = {
   email: string
@@ -13,6 +14,8 @@ export type SidebarUser = {
   pictureUrl: string | null
   /** 'google' = real Google sign-in. 'password' = legacy shared-password fallback (no identity). */
   source: 'google' | 'password'
+  /** Per-user permission overrides. Null = use role defaults. */
+  permissions: Record<string, boolean> | null
 }
 
 type SidebarProps = {
@@ -29,23 +32,33 @@ export default function Sidebar({ user, onNavigate }: SidebarProps) {
       aria-label="TZ Switchboard navigation"
     >
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-7">
-        {NAV_SECTIONS.map((section) => (
-          <div key={section.label}>
-            <div className="text-[10px] uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500 font-semibold mb-2 px-3">
-              {section.label}
+        {NAV_SECTIONS.map((section) => {
+          // Filter items by per-user module access. The dashboard root
+          // (slug: '') is always shown — it's the landing page for any
+          // signed-in user.
+          const visibleItems = section.items.filter((item) => {
+            if (!item.slug) return true
+            return canAccessModule(user, item.slug)
+          })
+          if (visibleItems.length === 0) return null
+          return (
+            <div key={section.label}>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-gray-400 dark:text-gray-500 font-semibold mb-2 px-3">
+                {section.label}
+              </div>
+              <ul className="space-y-0.5">
+                {visibleItems.map((item) => (
+                  <SidebarItem
+                    key={item.label}
+                    item={item}
+                    active={pathname === navHref(item)}
+                    onNavigate={onNavigate}
+                  />
+                ))}
+              </ul>
             </div>
-            <ul className="space-y-0.5">
-              {section.items.map((item) => (
-                <SidebarItem
-                  key={item.label}
-                  item={item}
-                  active={pathname === navHref(item)}
-                  onNavigate={onNavigate}
-                />
-              ))}
-            </ul>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <div className="border-t border-gray-200 dark:border-navy-light/40 px-4 py-4">
