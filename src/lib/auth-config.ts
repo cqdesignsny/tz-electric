@@ -46,14 +46,14 @@ export const authConfig: NextAuthConfig = {
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
-      // Restrict OAuth consent to organization workspace where possible;
-      // the signIn callback below is the authoritative gate.
+      // No `hd` hint here on purpose — both tzelectricinc.com (TZ team) and
+      // creativequalitymarketing.com (CQ Studio) need to sign in, and `hd`
+      // would filter Google's account picker to a single Workspace. The
+      // signIn callback is the authoritative gate; it rejects anything
+      // outside ALLOWED_EMAIL_DOMAINS.
       authorization: {
         params: {
           prompt: 'select_account',
-          // hd parameter is a soft hint to Google; we still verify the
-          // workspace domain client-side.
-          hd: 'tzelectricinc.com',
         },
       },
     }),
