@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createLead, type LeadPayload } from '@/lib/housecall-pro'
 import { renderLeadFormSubmissionEmail } from '@/lib/email-templates'
+import { attachHcpLeadId, insertLead } from '@/lib/leads-store'
 
 export const runtime = 'nodejs'
 
@@ -177,6 +178,34 @@ export async function POST(req: NextRequest) {
     tags,
   }
 
+  // Persist to our own DB first so we keep a record even if HCP rejects.
+  let storedLeadId: string | null = null
+  try {
+    storedLeadId = await insertLead({
+      source: 'web_form',
+      serviceKey: body.serviceKey,
+      serviceLabel: body.serviceLabel,
+      firstName: leadPayload.firstName,
+      lastName: leadPayload.lastName,
+      phone: leadPayload.phone,
+      email: leadPayload.email,
+      street: leadPayload.street,
+      city: leadPayload.city,
+      state: leadPayload.state,
+      zip: leadPayload.zip,
+      ownership: body.ownership,
+      landlordName: body.landlordName,
+      landlordPhone: body.landlordPhone,
+      landlordEmail: body.landlordEmail,
+      qualification: body.qualification || null,
+      customerNotes: body.customerNotes,
+      referralSource: body.referralSource,
+      tracking: body.tracking || null,
+    })
+  } catch (e) {
+    console.error('[lead-form] tz_leads insert failed (non-fatal):', e)
+  }
+
   let hcpLeadId: string | undefined
   let hcpError: string | undefined
   try {
@@ -185,6 +214,15 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     hcpError = e instanceof Error ? e.message : String(e)
     console.error('[lead-form] HCP createLead failed:', hcpError)
+  }
+
+  // Stitch the HCP id back into our row once we have it.
+  if (storedLeadId && hcpLeadId) {
+    try {
+      await attachHcpLeadId(storedLeadId, hcpLeadId)
+    } catch (e) {
+      console.error('[lead-form] attachHcpLeadId failed (non-fatal):', e)
+    }
   }
 
   // Send branded email regardless of HCP outcome so the office sees every lead.

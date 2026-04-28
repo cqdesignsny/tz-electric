@@ -2,7 +2,7 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-04-27, mid-session 12. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
+**Last verified:** 2026-04-28, end of session 13. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
 
 ## Sync architecture (read this first)
 
@@ -90,6 +90,16 @@ A handful of blockers remain before the SMS or voice agent can ship; see "What's
 
 All of the above are on Production and Development. Preview is intentionally skipped (Vercel CLI bug around all-preview-branches; we don't use feature-branch previews here so this is fine).
 
+### Database (Neon Postgres)
+
+- **Provider:** Neon, attached to the `tz-electric` Vercel project via the Marketplace integration. DB name: `tz-db`. Provisioned on 2026-04-28.
+- **Env vars (auto-injected by Vercel):** `DATABASE_URL`, `DATABASE_URL_UNPOOLED`, `POSTGRES_URL`, `POSTGRES_URL_NON_POOLING`, `POSTGRES_PRISMA_URL`, `POSTGRES_URL_NO_SSL`, plus `PG*` and `POSTGRES_*` host/user/password/database split. All set on Production, Preview, and Development. Pull locally with `vercel env pull .env.local --yes`.
+- **Driver:** `@neondatabase/serverless` HTTP client at runtime (in `src/lib/db.ts`). Pool client in `scripts/migrate.mjs` for migrations. No `@vercel/postgres` (sunset).
+- **Schema:** all TZ tables prefixed `tz_` so the DB can host other things alongside without naming collisions. Applied migrations are tracked in a `_migrations` table for idempotent reruns.
+- **Migrations:** put new SQL files in `migrations/` numbered like `002_add_xxx.sql`. Run `npm run migrate` from the repo root. The script reads `DATABASE_URL_UNPOOLED` from `.env.local` (Pool client over WebSocket; needed because some statements don't play nice with PgBouncer transaction mode).
+- **Current tables:** `tz_leads` (every form submission, will eventually hold AI agent intakes too — see Phase 4 in the buildout). Indexed on `created_at`, `source`, `email`, `phone`, `hcp_lead_id`, and `hidden`.
+- **Read path today:** the TZ Switchboard Lead Pipeline still reads from HCP (the fast path). `tz_leads` is being populated via write-through so we have history when we flip the read path in Phase 4 / 7.
+
 ### Resend setup
 
 - **Account owner:** `tzelectricoffice@gmail.com` (TZ side, not CQ)
@@ -104,9 +114,15 @@ All of the above are on Production and Development. Preview is intentionally ski
 - [x] ~~Tyler fills out the agent training questionnaire.~~ Submitted 2026-04-26.
 - [x] ~~Smoke test the full email flow.~~ Tyler's submission landed cleanly in `cesar@creativequalitymarketing.com` via Resend.
 - [x] ~~Get Tyler's answers on the remaining blockers.~~ Tyler doesn't have opinions on the operational gaps, so CQ Studio filled them in with industry-standard best-practice defaults. See **section 10 of `docs/agent-training-answers.md`** ("v1 Best-Practice Fills"). Tyler can override any default by editing that file. Resolved: HCP record creation flow (use `/leads` endpoint), renter / landlord workflow (soft-block, collect landlord info, office verifies), home warranty decline script (warm pivot to Wisetack / Synchrony financing), review-already-left detection (single automated send + optional manual follow-up via Switchboard), Saturday dispatch scope (emergencies follow after-hours SOP, non-emergencies book for next business day, no estimates).
-- [ ] **Native lead form to replace Typeform (active priority, in progress).** `/quote` page, 3-step (service type → quick qualification → contact + address), posts to HCP `POST /leads`, branded email via Resend reusing `renderEmailLayout()`, GCLID + UTM capture, replaces every `TYPEFORM_URL` CTA site-wide.
-- [ ] Knowledge Base v1 (read-only) at `/switchboard/knowledge-base`. Renders `docs/agent-training-answers.md` as a structured browsable view, broken out by category. Sets up Tyler / Cesar to review the full answer set without opening the file.
-- [ ] Knowledge Base v2 (edit-in-place). Authenticated WYSIWYG editor commits changes to the answers doc via the GitHub API. Version history and diffs come from git. Closes the loop on "easy way to continuously edit the agents."
+- [x] ~~Native lead form to replace Typeform.~~ Live at `/quote`. Posts to HCP `POST /leads` AND persists to our own `tz_leads` table on every submission. Branded email via Resend, GCLID + UTM capture, replaces every `TYPEFORM_URL` CTA. Renter branch tags `Renter - Landlord Verification Needed`. First real lead through it: Celeste Benard (#19), wired and visible across the stack.
+- [x] ~~Lead Pipeline (read from HCP).~~ Live at `/switchboard/lead-pipeline`. Filters, search, expand-on-click detail showing parsed qualification answers, customer notes, property, attribution. Pagination at 15 per page. HCP-side deletes auto-reflect because the page is `force-dynamic`. Recent leads card on TZ Switchboard home.
+- [x] ~~Knowledge Base v1 (read-only).~~ Live at `/switchboard/knowledge-base`. Renders `docs/agent-training-answers.md` as a structured browseable view with sticky section nav, scroll-spy active state, and full markdown styling.
+- [x] ~~Neon Postgres provisioned (`tz-db`) and attached to the project.~~ Marketplace integration on Vercel. `tz_leads` table created via `migrations/001_init.sql`. `npm run migrate` applies any new migrations.
+- [ ] **Phase 3 (next): Knowledge Base v2 (edit-in-place).** Authenticated in-app editor for the answers doc. Two viable paths: commit changes back to `docs/agent-training-answers.md` via the GitHub API (cleaner: edits land in git history and trigger a redeploy) or back the editor with a `tz_kb_versions` table in Neon (faster: in-app version control, sync to git on demand). Recommendation: start DB-backed for speed, sync to git via a "publish" action. Closes "easy way to continuously edit the agents."
+- [ ] **Phase 4: SMS Agent (Claire).** Twilio inbound webhook → Vercel function → Claude API streaming reply. Conversations persisted in Neon (new `tz_agent_conversations` and `tz_agent_messages` tables). System prompt assembled from `docs/agent-training-answers.md`. Office takeover button in `/switchboard/sms-conversations`.
+- [ ] **Phase 5: Web chat agent (Claire).** Same prompt and tool surface as SMS, AI SDK streaming widget on every public page, proactive popup at 15s.
+- [ ] **Phase 6: Voice agent (Claire).** Vapi assistant on a Twilio number, 15-minute max before forced handoff, runs the after-hours emergency dispatch SOP exactly.
+- [ ] **Phase 7: Self-improving learning loop.** Office flags transcripts in the SMS / chat / voice modules. Flagged items queue in the Knowledge Base. Approved edits auto-merge into the answers doc. Performance dashboard with handoff rate, false-escalation count, satisfaction proxy.
 
 ## Account handoff plan (everything paid moves to Tyler)
 
@@ -142,6 +158,42 @@ The endgame: **Tyler owns every paid service under his own logins and his own ca
 - **Theme cookie.** Theme persists in localStorage only. Server-rendered HTML always defaults to light, then the inline init script sets the right `data-theme` before hydrate. Acceptable. Future: cookie-based for true zero-flash SSR.
 - **proxy.ts migration.** Next 16 prefers `proxy.ts` over `middleware.ts`. Backwards-compatible. Deferred until a focused session to validate the API.
 - **Branch-preview env vars.** Vercel CLI bug around all-preview-branches; not worth the workaround since we don't use feature-branch previews.
+
+## Files added or significantly changed in session 13 (Apr 28)
+
+```
+package.json                                              MOD, adds @neondatabase/serverless, marked,
+                                                          dotenv (dev), and `npm run migrate` script
+migrations/001_init.sql                                   NEW, initial schema: tz_leads + indexes,
+                                                          plus _migrations tracking table on first run
+scripts/migrate.mjs                                       NEW, idempotent migration runner over
+                                                          migrations/*.sql using @neondatabase/serverless
+                                                          Pool + dotenv from .env.local
+src/lib/db.ts                                             NEW, Neon HTTP client (singleton)
+src/lib/leads-store.ts                                    NEW, insertLead / listStoredLeads /
+                                                          setLeadHidden / attachHcpLeadId
+src/app/api/leads/submit/route.ts                         MOD, write-through: persists to tz_leads
+                                                          before HCP, stitches HCP lead id back when
+                                                          available, surfaces hcpError in the email
+src/app/switchboard/(dashboard)/knowledge-base/page.tsx   REWRITE, server component reads
+                                                          docs/agent-training-answers.md, parses
+                                                          sections by ## heading, renders each via
+                                                          marked into a styled .kb-prose container
+src/components/switchboard/KnowledgeBaseNav.tsx           NEW, client component, sticky section nav
+                                                          with IntersectionObserver scroll-spy
+src/app/globals.css                                       MOD, adds .kb-prose styles for headings,
+                                                          paragraphs, lists, blockquotes, code,
+                                                          tables, hr, strikethrough, dark variants
+src/components/switchboard/nav-config.ts                  MOD, Knowledge Base status: 'live'
+src/components/switchboard/LeadPipelineClient.tsx         MOD, paginate at 15 per page, compact
+                                                          page-number range, scroll-to-top on page
+                                                          change, filter changes reset page to 1
+src/lib/housecall-pro.ts                                  MOD (earlier in session), uses verified
+                                                          /leads payload shape (customer.first_name,
+                                                          customer.mobile_number, customer.notes,
+                                                          tags) — see commit 8e47054
+HANDOFF.md / README.md / MEMORY.md                        MOD, this update
+```
 
 ## Files added or significantly changed in session 12 (Apr 27)
 

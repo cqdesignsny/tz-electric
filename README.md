@@ -207,11 +207,12 @@ All scripts loaded directly in `(public)/layout.tsx` so they only fire on the pu
 | Service | Status | Details |
 |---|---|---|
 | Stripe | Live | Payment processing for maintenance plan signups |
-| Housecall Pro | Live | Customer creation and tagging on plan signup via API |
+| Housecall Pro | Live | Customer creation, lead capture (`/leads`), and tagging via API |
 | Resend | Live | Outbound email, account under `tzelectricoffice@gmail.com`, domain `tzelectricinc.com` verified (SPF + DKIM) |
 | Trust Index | Live | Google reviews widget on homepage + reviews page |
-| Typeform (lead form) | Active | `ghfs29y37tj.typeform.com/to/HDLXmnob`, to be replaced with native form |
-| Typeform (job app) | Active | `ghfs29y37tj.typeform.com/to/hsBm2HUf`, to be replaced with native form |
+| Neon Postgres (`tz-db`) | Live | Vercel Marketplace integration. `tz_leads` write-through on every form submission. Migrations in `migrations/`, run with `npm run migrate`. |
+| Native lead form | Live | `/quote`, replaces the old Typeform popup. Posts to HCP `/leads` and `tz_leads`. GCLID + UTM capture, branded email via Resend. |
+| Typeform (job app) | Active | `ghfs29y37tj.typeform.com/to/hsBm2HUf`, to be replaced with native form (Phase later) |
 
 ## Career Pages
 
@@ -240,10 +241,10 @@ The buildout runs in seven phases. Each phase is small enough to ship in 1–2 s
 - Replaces every `TYPEFORM_URL` CTA site-wide. Header, hero, service pages, area pages, financing, contact, footer, FloatingCTA.
 - Renter detection branch: soft-blocks the auto-book, collects landlord info, tags the lead, routes to office.
 
-**Phase 2: Lead Pipeline (read from HCP) + Knowledge Base v1 (read-only)**
-- **Lead Pipeline (`/switchboard/lead-pipeline`):** live data view that reads `GET /leads` from HCP, lists every lead with service / urgency / scope tags surfaced in the row, click-to-expand for the full customer notes block (qualification answers, customer notes, attribution, GCLID). Filters by service / urgency / status / source. The dashboard home gets a "Recent leads" card and a "X new leads this week" stat tile.
-- **Fast-path now, long-term path later.** This phase reads from HCP as the single source of truth. We will add an own-database persistence layer (Neon Postgres via Vercel Marketplace) when we start Phase 4 (SMS agent transcripts). At that point: provision DB, persist every new form / AI submission, backfill from HCP, switch the TZ Switchboard reads to the local DB with HCP as a sync target. **Required before Phase 7.** Not optional. See `HANDOFF.md` "What's NOT built" for the migration trigger.
-- **Knowledge Base (`/switchboard/knowledge-base`):** parses `docs/agent-training-answers.md` and renders it as a structured browsable view: category tabs, section anchors, search. No editing yet, just a clean way for Tyler / Cesar to review the full answer set in-app.
+**Phase 2: Lead Pipeline (live) + Knowledge Base v1 (live)**
+- **Lead Pipeline (`/switchboard/lead-pipeline`):** live data view reading `GET /leads` from HCP. Filters (search, service, status), pagination at 15 per page, expand-on-click detail with parsed qualification answers, customer notes, property, and attribution. Recent leads card on the dashboard home. HCP-side deletions auto-reflect because the page is `force-dynamic`.
+- **Knowledge Base v1 (`/switchboard/knowledge-base`):** server-rendered view of `docs/agent-training-answers.md` with sticky section nav, scroll-spy active state, and full markdown styling. Read-only.
+- **Neon Postgres (`tz-db`) provisioned and wired.** Marketplace integration on the Vercel project. Initial schema (`tz_leads`) applied via `migrations/001_init.sql` and the `npm run migrate` runner. Form submissions write-through to both HCP and `tz_leads` going forward. The TZ Switchboard still reads leads from HCP for now; Phase 4 onward, reads switch to Neon with HCP as a downstream sync target.
 
 **Phase 3: Knowledge Base v2 (edit-in-place)**
 - Authenticated WYSIWYG editor over each section.

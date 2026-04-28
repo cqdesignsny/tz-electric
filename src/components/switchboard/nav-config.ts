@@ -92,7 +92,7 @@ export const NAV_SECTIONS: NavSection[] = [
       {
         label: 'Knowledge Base',
         slug: 'knowledge-base',
-        status: 'soon',
+        status: 'live',
         tagline: 'The brain every AI agent reads from.',
         overview:
           'Editable source of truth that every agent (voice, SMS, chat, email) consults before responding. Built initially from the Agent Training questionnaire, then maintained over time as TZ evolves.',
