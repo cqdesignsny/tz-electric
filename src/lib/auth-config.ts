@@ -22,10 +22,17 @@ import { upsertUserOnSignIn } from './users'
 export const ALLOWED_EMAIL_DOMAINS = ['tzelectricinc.com', 'creativequalitymarketing.com']
 
 /** Email allowlist for owner role. Other emails default to 'office' on first login. */
-export const OWNER_EMAILS = ['tyler@tzelectricinc.com', 'terry@tzelectricinc.com']
+export const OWNER_EMAILS = [
+  'tyler@tzelectricinc.com',
+  'terry@tzelectricinc.com',
+  // Cesar keeps owner-equivalent access so he can act on behalf of TZ when
+  // Tyler asks. Move to admin / remove entirely after the full account
+  // handoff if the team prefers tighter scoping.
+  'cesar@creativequalitymarketing.com',
+]
 
-/** Email allowlist for admin role. */
-export const ADMIN_EMAILS = ['cesar@creativequalitymarketing.com']
+/** Email allowlist for admin role. (Reserved for future TZ tech leads.) */
+export const ADMIN_EMAILS: string[] = []
 
 function getDomainFromEmail(email: string | null | undefined): string | null {
   if (!email) return null
