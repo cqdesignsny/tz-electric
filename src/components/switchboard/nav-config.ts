@@ -34,6 +34,21 @@ export const NAV_SECTIONS: NavSection[] = [
         tagline: 'Overview, status, and recent activity.',
       },
       {
+        label: 'User Access',
+        slug: 'users',
+        status: 'live',
+        tagline: 'Manage who has access to the TZ Switchboard.',
+        overview:
+          'Owners (Tyler, Terry) can invite, promote, demote, or disable users. Sign-in is via Google Workspace; roles are owner, admin, office, or viewer.',
+        willDo: [
+          'Invite new users by @tzelectricinc.com email',
+          'Promote / demote between owner, admin, office, viewer',
+          'Disable accounts immediately on the next page load',
+          'Show last sign-in time per user',
+        ],
+        needs: [],
+      },
+      {
         label: 'Lead Pipeline',
         slug: 'lead-pipeline',
         status: 'live',

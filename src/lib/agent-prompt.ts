@@ -14,12 +14,11 @@
  *     can include short URLs. Customer expects faster turn pace than email.
  */
 
-import { promises as fs } from 'node:fs'
-import path from 'node:path'
-
+import {
+  loadMergedKnowledgeBase,
+  renderMergedKbToMarkdown,
+} from './agent-knowledge-base'
 import type { AgentChannel } from './agent-conversations'
-
-const KB_PATH = path.join(process.cwd(), 'docs', 'agent-training-answers.md')
 
 export type BuildSystemPromptInput = {
   channel: AgentChannel
@@ -67,14 +66,9 @@ const TAKEOVER_NOTICE = [
   'A human office staff member has taken over this conversation. You must NOT generate any reply. Return an empty response. The office is responding directly. You will resume only when takeover is released.',
 ].join('\n')
 
-let cachedKb: { mtimeMs: number; content: string } | null = null
-
 async function readKnowledgeBase(): Promise<string> {
-  const stat = await fs.stat(KB_PATH)
-  if (cachedKb && cachedKb.mtimeMs === stat.mtimeMs) return cachedKb.content
-  const content = await fs.readFile(KB_PATH, 'utf-8')
-  cachedKb = { mtimeMs: stat.mtimeMs, content }
-  return content
+  const kb = await loadMergedKnowledgeBase()
+  return renderMergedKbToMarkdown(kb)
 }
 
 export async function buildSystemPrompt(input: BuildSystemPromptInput): Promise<string> {
@@ -124,11 +118,5 @@ export async function buildSystemPrompt(input: BuildSystemPromptInput): Promise<
   return sections.join('\n\n')
 }
 
-/**
- * Reset the in-memory KB cache. Useful when a deploy ships a new
- * agent-training-answers.md and we want the next request to pick it up
- * without a cold start.
- */
-export function clearKnowledgeBaseCache(): void {
-  cachedKb = null
-}
+// KB caching now lives inside agent-knowledge-base.ts and is invalidated
+// automatically on every override upsert / clear.

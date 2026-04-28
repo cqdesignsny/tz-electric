@@ -1,68 +1,58 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
 import { Marked } from 'marked'
-import KnowledgeBaseNav from '@/components/switchboard/KnowledgeBaseNav'
+
+import KnowledgeBaseClient from '@/components/switchboard/KnowledgeBaseClient'
+import { loadMergedKnowledgeBase, type KbSection } from '@/lib/agent-knowledge-base'
+import { getCurrentUser } from '@/lib/current-user'
+import { canEditKnowledgeBase } from '@/lib/users'
 
 export const metadata: Metadata = {
   title: 'Knowledge Base',
 }
 
-export const dynamic = 'force-static'
+export const dynamic = 'force-dynamic'
 
-type Section = {
-  id: string
-  number: string
-  title: string
-  html: string
+export type RenderedKbSection = {
+  path: string
+  level: number
+  heading: string
+  baseContent: string
+  effectiveContent: string
+  baseHtml: string
+  effectiveHtml: string
+  override: KbSection['override']
 }
 
-function slugify(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-}
+export default async function KnowledgeBasePage() {
+  const cu = await getCurrentUser()
+  const canEdit = canEditKnowledgeBase(cu?.role)
+  const editorEmail = cu?.source === 'google' ? cu.email : null
 
-export default function KnowledgeBasePage() {
-  const docPath = join(process.cwd(), 'docs', 'agent-training-answers.md')
-  let raw = ''
-  let readErr: string | null = null
+  let kb
+  let loadErr: string | null = null
   try {
-    raw = readFileSync(docPath, 'utf-8')
+    kb = await loadMergedKnowledgeBase()
   } catch (e) {
-    readErr = e instanceof Error ? e.message : String(e)
+    loadErr = e instanceof Error ? e.message : String(e)
   }
 
-  // Strip out the leading frontmatter / preamble (everything before the first `## ` H2).
-  const firstH2 = raw.indexOf('\n## ')
-  const preamble = firstH2 >= 0 ? raw.slice(0, firstH2).trim() : raw.trim()
-  const body = firstH2 >= 0 ? raw.slice(firstH2 + 1) : ''
-
-  // Split into sections at every `## ` heading (top-level sections of the doc).
-  const sections: Section[] = []
-  const sectionRe = /^## (.+)$/gm
-  const matches: { idx: number; title: string }[] = []
-  let m: RegExpExecArray | null
-  while ((m = sectionRe.exec(body)) !== null) {
-    matches.push({ idx: m.index, title: m[1].trim() })
-  }
-  matches.forEach((match, i) => {
-    const start = match.idx
-    const end = i + 1 < matches.length ? matches[i + 1].idx : body.length
-    const slice = body.slice(start, end).replace(/^## .+\n/, '').trim()
-    const numberMatch = match.title.match(/^([\d.]+)\.?\s+(.+)$/)
-    const number = numberMatch ? numberMatch[1] : ''
-    const title = numberMatch ? numberMatch[2] : match.title
-    const id = slugify(`${number ? number + '-' : ''}${title}`)
-    const md = new Marked()
-    sections.push({ id, number, title, html: md.parse(slice, { async: false }) as string })
+  const md = new Marked()
+  const sections: RenderedKbSection[] = (kb?.sections || []).map((s) => {
+    const effective = s.override?.content || s.baseContent
+    return {
+      path: s.path,
+      level: s.level,
+      heading: s.heading,
+      baseContent: s.baseContent,
+      effectiveContent: effective,
+      baseHtml: md.parse(s.baseContent || '', { async: false }) as string,
+      effectiveHtml: md.parse(effective || '', { async: false }) as string,
+      override: s.override,
+    }
   })
-
   const preambleHtml =
-    preamble.length > 0 ? (new Marked()).parse(preamble, { async: false }) as string : ''
+    kb?.preamble ? (new Marked()).parse(kb.preamble, { async: false }) as string : ''
 
   return (
     <div className="px-4 sm:px-6 md:px-10 lg:px-12 py-8 md:py-10 lg:py-12 max-w-[1400px] mx-auto w-full">
@@ -82,71 +72,36 @@ export default function KnowledgeBasePage() {
           Knowledge Base
         </h1>
         <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base leading-relaxed">
-          Everything Tyler shared in the agent training questionnaire plus the
-          v1 best-practice fills. This is what the SMS, voice, and web chat
-          agents will load as their system prompt context. v1 is read-only.
-          Phase 3 turns this into an in-app editor that commits changes back
-          to the file via the GitHub API.
+          Every policy, price, script, and SOP the AI agents (SMS, voice, web chat) load as their system prompt context. The base content lives in git; <strong>any edit you make here lands as a per-section override that always wins</strong>, even if CQ Studio later updates the base.
         </p>
       </header>
 
-      {readErr && (
+      {loadErr && (
         <div className="mb-6 rounded-xl border border-danger/30 bg-red-50 dark:bg-red-950/30 dark:border-red-900/60 p-4 text-sm text-danger dark:text-red-300">
-          <div className="font-bold mb-1">Couldn&apos;t load the answers doc</div>
-          <code className="text-xs font-mono">{readErr}</code>
+          <div className="font-bold mb-1">Couldn&apos;t load the knowledge base</div>
+          <code className="text-xs font-mono">{loadErr}</code>
         </div>
       )}
 
-      <div className="grid lg:grid-cols-[260px_1fr] gap-8">
-        <KnowledgeBaseNav
-          sections={sections.map((s) => ({ id: s.id, number: s.number, title: s.title }))}
-        />
-
-        <div className="min-w-0">
-          {preambleHtml && (
-            <div
-              className="kb-prose mb-12"
-              dangerouslySetInnerHTML={{ __html: preambleHtml }}
-            />
-          )}
-
-          {sections.map((s) => (
-            <section
-              key={s.id}
-              id={s.id}
-              className="scroll-mt-24 pb-12 mb-12 border-b border-gray-200 dark:border-navy-light/40 last:border-b-0"
-            >
-              <div className="flex items-baseline gap-3 mb-5 flex-wrap">
-                {s.number && (
-                  <span className="inline-flex items-center px-2 py-0.5 text-xs font-bold rounded-md bg-blue/10 text-blue dark:bg-blue-light/20 dark:text-blue-light font-mono">
-                    {s.number}
-                  </span>
-                )}
-                <h2 className="text-2xl md:text-3xl font-bold text-navy dark:text-white">
-                  {s.title}
-                </h2>
-                <a
-                  href={`#${s.id}`}
-                  className="ml-auto text-xs text-gray-400 dark:text-gray-500 hover:text-blue dark:hover:text-blue-light font-mono transition-colors"
-                  aria-label="Anchor link"
-                >
-                  #
-                </a>
-              </div>
-              <div
-                className="kb-prose"
-                dangerouslySetInnerHTML={{ __html: s.html }}
-              />
-            </section>
-          ))}
+      {!canEdit && (
+        <div className="mb-6 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-900 dark:text-amber-200">
+          You&apos;re viewing in read-only mode. Owners and admins can edit sections in place.
         </div>
-      </div>
+      )}
+      {canEdit && !editorEmail && (
+        <div className="mb-6 rounded-xl border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 p-3 text-sm text-amber-900 dark:text-amber-200">
+          Editing requires signing in with your TZ Electric Google account so we can attribute changes. Use the Google sign-in on the login page.
+        </div>
+      )}
+
+      <KnowledgeBaseClient
+        preambleHtml={preambleHtml}
+        sections={sections}
+        canEdit={canEdit && !!editorEmail}
+      />
 
       <p className="mt-12 text-xs text-gray-400 dark:text-gray-500 max-w-3xl leading-relaxed">
-        Want to change something? For now, edit{' '}
-        <code className="font-mono">docs/agent-training-answers.md</code> in
-        the repo and push. The next deploy will rebuild this page. Phase 3
-        adds an in-app editor.
+        Tyler-authored edits are sticky. CQ Studio updates the base content via deploy; your overrides survive every deploy and continue to render until you revert them. The agents (SMS / voice / web chat) load this exact merged content as their system prompt on every conversation.
       </p>
     </div>
   )

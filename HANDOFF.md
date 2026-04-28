@@ -97,6 +97,44 @@ Scaffolding is live. Going from holding-pattern to "Claire is talking to custome
 
 **Office-side outbound SMS** (Twilio API call from `/api/agents/sms/conversations` when role=office_reply): currently persists only to the transcript. Add the Twilio Messages API push (~5 lines) at the same time as the model wire-up so office takeover replies actually deliver.
 
+### Google OAuth + per-user auth cutover plan
+
+The Switchboard now accepts Google sign-in alongside the legacy shared password (transition fallback). To turn on the Google flow:
+
+**Cesar's one-time Google Cloud Console setup (~10 min):**
+
+1. https://console.cloud.google.com → APIs & Services → Credentials.
+2. Create OAuth 2.0 Client ID (Web application).
+3. Authorized JavaScript origins: `https://tzelectricinc.com`
+4. Authorized redirect URIs: `https://tzelectricinc.com/api/auth/callback/google`
+5. Save the Client ID + Client Secret.
+6. (Optional but recommended) → APIs & Services → OAuth consent screen → Internal user type → restrict to Workspace.
+
+**Cesar's Vercel env adds:**
+
+```
+vercel env add AUTH_GOOGLE_ID production         # Google OAuth Client ID
+vercel env add AUTH_GOOGLE_SECRET production     # Google OAuth Client Secret
+vercel env add AUTH_SECRET production            # `openssl rand -hex 32`
+vercel env add AUTH_TRUST_HOST production --value 'true'   # so NextAuth honors x-forwarded-host on Vercel
+```
+
+Trigger a redeploy after the env vars land. The login page will show the Google button alongside the password fallback. First sign-in with `tyler@tzelectricinc.com` and `terry@tzelectricinc.com` auto-assigns owner role; everyone else lands as `office` and can be promoted by an owner from `/switchboard/users`.
+
+**Role allowlists (hardcoded in `src/lib/auth-config.ts`):**
+
+- `OWNER_EMAILS`: `tyler@tzelectricinc.com`, `terry@tzelectricinc.com`
+- `ADMIN_EMAILS`: `cesar@creativequalitymarketing.com`
+- Allowed sign-in domains: `tzelectricinc.com`, `creativequalitymarketing.com`
+
+Domain allowlist enforcement is in the NextAuth `signIn` callback AND in middleware (defense in depth). Editing the allowlists requires a deploy (intentional — these are the bootstrap identities).
+
+**Editable KB (Tyler-overrides-win):**
+
+`/switchboard/knowledge-base` shows the merged base + overrides view. Owners and admins see Edit / Revert buttons on every section; Tyler-authored overrides land in `tz_kb_overrides` keyed by section path and always win on render and in agent prompts. Every override write also stamps `tz_audit_log` and appends to `tz_kb_override_history` for diff display. Editing requires a Google session (the password fallback can read but not write — anonymous edits would have no attribution).
+
+The agent prompt assembler (`src/lib/agent-prompt.ts`) reads the merged content on every prompt build via `loadMergedKnowledgeBase()`. The cache busts automatically on every override upsert.
+
 ### Environment variables on Vercel
 
 | Name | Set | Purpose |
