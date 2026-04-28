@@ -1,9 +1,10 @@
 # TZ Electric AI Agent Training Answers
 
-**Source:** Tyler Zitz, owner. Submitted via `/switchboard/agent-training` on 2026-04-26 11:46 AM.
-**Follow-up answers (gaps):** delivered 2026-04-27 by Cesar.
+This document is the canonical knowledge base the AI agents (voice SMS web chat) load as their system context every conversation.
 
-This document is the canonical knowledge base the AI agents (voice, SMS, web chat) load as their system context. If anything below conflicts with the live SOP at TZ, treat the live SOP as authoritative and update this file.
+**Authorship:** Tyler Zitz, owner. Original answers submitted via `/switchboard/agent-training` 2026-04-26.
+
+**How edits work:** the base content lives in this file. Anything Tyler edits in-place via the TZ Switchboard at `/switchboard/knowledge-base` lands as a per-section override and **always wins** over future code-side updates. Cesar / CQ Studio can update the base via deploy, but Tyler's overrides stay sticky until Tyler revisits them. If anything below conflicts with the live SOP at TZ, treat the live SOP as authoritative and update this file (or override the section).
 
 ---
 
@@ -405,27 +406,35 @@ AI handles "when is my appointment" and basic status. **Escalates** billing disp
 
 ### Renter / Tenant Calls
 
-**Require landlord approval before booking.**
+**Require landlord approval before booking. Soft-block at the point of capture.**
 
-> **OPEN — workflow not specified.** Should AI verify landlord approval (collect landlord info and route to office), or block the booking until customer provides written approval? Need decision.
+The form / AI asks "Are you the homeowner or are you renting?" upfront. If renting, an extra step collects landlord name, phone, and email, plus a confirmation: "I have my landlord's permission for this work / they've authorized the visit."
+
+The submission posts to the standard lead pipeline (see section 11) tagged `Renter - Verify with Landlord`. The office calls the landlord before booking. AI / form **never auto-books a renter without office sign-off.**
+
+For voice and SMS specifically, Claire branches early: "Got it. Before we can book, our team will need to verify with your landlord. Can I get their name and best phone number?"
 
 ### Home Warranty Companies (AHS, Choice, First American, etc.)
 
-**No.** TZ does not work with home warranty companies. AI should politely decline.
+**No.** TZ does not work directly with home warranty companies. Decline warm, pivot to financing — never bash the warranty company.
 
-> **OPEN — decline script not provided.** Suggest: "We don't work directly with home warranty companies, but we'd still be glad to help you with your service needs as a direct customer. Would you like me to share our pricing or schedule an appointment?"
+**Decline script:**
+
+> "We don't work directly with home warranty companies. We've found we can serve our customers faster and with higher quality working direct. We'd still love to help you out, and if cost is a concern we offer financing through Wisetack and Synchrony with quick approvals. Would you like me to set up a Field Assessment or a Diagnostic visit?"
+
+The pivot to financing is intentional: customers reach out to warranty companies because they're cost-sensitive, and a flat decline without an alternative loses the lead.
 
 ---
 
 ## 6. Intake & Qualification
 
-### HCP Required Fields
+### Lead Routing
 
-> **OPEN — Tyler's answer was cut off mid-sentence.** Literal text: "to, I'm copying and pasting this into an AI prompt." This blocks clean HCP record creation. Must capture before SMS / voice agents go live: required vs optional fields, custom fields TZ uses, how to apply lead source / tags.
+For the full record-creation flow (HCP estimate + Job Inbox card + Switchboard mirror), see **section 11**. The agent does not need to construct HCP requests — it calls the `create_lead_with_estimate` tool with the customer's qualification answers and the platform handles the rest.
 
 ### Tag for AI-Created Records
 
-**`TZ AI AGENT`**
+**`TZ AI AGENT`** is applied automatically to every record an agent creates, alongside the channel-specific tag (`Web Form`, `Channel: Agent SMS`, `Channel: Agent VOICE`, `Channel: Agent CHAT`).
 
 ### HVAC / Mini-Split Qualification Questions
 
@@ -739,11 +748,11 @@ Route to voicemail.
 
 **Send window:** between **5:00 PM and 9:00 PM** only (don't text customers outside reasonable evening hours).
 
-**Frequency:** once or twice. Tyler is concerned about following up on customers who already left a review. Need detection logic, or a simple "first send only, no auto-follow-up unless office flags it" approach.
+**Frequency:** single send only. No automated follow-up.
 
-> **OPEN — review-already-left detection.** Three options: (a) Skip auto-follow-up, send single ask only. (b) Office staff manually flag "reviewed" in HCP; AI checks before second send. (c) Pull live Google review status via Trust Index API or Google Place Details on customer name match (likely flaky). Recommend (b) for v1, fall back to (a) if too much office overhead.
+A "Reviews Requested" view in the TZ Switchboard shows every customer who got the first ask. Office staff can one-click "Send follow-up reminder" or "Mark as reviewed" if they know the customer already left one. Judgment stays with the human.
 
-**Suggested first message template (Tyler approved direction, open to refinement):**
+**First message template:**
 
 > Hi [First Name], thank you for trusting the TZ team with your home today.
 >
@@ -753,7 +762,7 @@ Route to voicemail.
 >
 > Thank you again for supporting a locally owned and operated business.
 
-> **OPEN — review platforms.** Google only, or also Nextdoor / BBB / Facebook? Single review link or platform menu?
+> **Open question for Tyler — review platforms.** Default is Google only. If Tyler wants Nextdoor / BBB / Facebook in the rotation, share a menu link instead of a single review URL.
 
 ---
 
@@ -789,9 +798,11 @@ Route to voicemail.
 
 ### Saturday Phone Coverage
 
-**AI handles all Saturday calls.**
+**AI handles all Saturday calls.** Scope:
 
-> **OPEN — Saturday dispatch scope.** "Handles all Saturday calls" needs clarification: does AI dispatch a tech on Saturday for emergencies, or only intake and book for Monday? Per the on-call rotation, the weekly on-call tech IS available for emergencies including Saturday, so I assume: Saturday emergencies follow the after-hours emergency dispatch SOP, Saturday non-emergencies get booked for next business day. Confirm.
+- **Saturday emergencies** (per emergency criteria in section 3): follow the after-hours emergency dispatch SOP and contact the on-call tech per the weekly rotation. The rotation already covers Saturdays.
+- **Saturday non-emergencies:** take intake, schedule for next business day or earliest available.
+- **Saturday quotes / estimates:** not bookable by AI. Estimates remain Mon–Fri 8:30 AM – 3:00 PM only.
 
 ### Best Electrician Recognition
 
@@ -807,93 +818,47 @@ Route to voicemail.
 
 ---
 
-## 10. v1 Best-Practice Fills (CQ Studio judgment)
+## 10. Standing Policies (referenced across sections)
 
-Tyler couldn't fill in five of the gaps Cesar flagged, so CQ Studio made the calls based on industry-standard practice for multi-trade home-services contractors. These are designed to be safe, customer-respectful defaults. Tyler can override any of them by editing this file. The matching items have been struck from the open-items table below.
+A few cross-cutting policies that the agent applies regardless of channel.
 
-### 10.1 HCP record creation (resolves blocker 1)
+### Permits in Quoted Ranges
 
-Production lead capture (web form, SMS, voice, web chat) creates **HCP Leads** via `POST /leads`, NOT customer records. Leads land in HCP Job Inbox in the "API Leads" channel where the office triages and converts to customers when work is booked. Plan-signup payments (Stripe webhook) keep using `POST /customers` because those are paying customers immediately.
+When the agent quotes EV charger, panel install, or generator ranges, always add: "Ranges typically do not include permits, which vary by township and are quoted on-site."
 
-Required fields the agent / form sends on every submission:
-- `first_name`, `last_name`, `mobile_number`
-- `email` (asked, optional but strongly preferred)
-- `address` (street, city, state, zip)
-- `lead_source`: "Website Lead Form" or "TZ AI Agent" depending on channel
-- `service_type`: HVAC, Electrical, Generator, Plumbing, EV Charger, Surge Protection, Other
-- `notes`: rich context block. Always includes GCLID, UTM source/medium/campaign, page that triggered the form, service type and urgency, qualification answers, timestamp. AI-generated leads also include the conversation summary or transcript link.
-- `tags`: `Web Form` (always for the form), `TZ AI AGENT` (Tyler's specified tag, used for any AI-generated record), `Renter - Landlord Verification Needed` (when applicable, see 10.2)
+### Customer-Supplied Equipment
 
-Why Leads not Customers: a lead is a prospect, not a customer until work is booked. Creating customer records on every web submission clutters HCP and creates duplicates when the office later books the actual job.
+For EV chargers and similar customer-purchased gear: "We can install equipment you've purchased separately, with the labor warranty applying to our installation only. Manufacturer warranty terms apply per the device manufacturer."
 
-### 10.2 Renter / landlord workflow (resolves blocker 2)
+### Medical Equipment Priority
 
-Soft-block at the point of capture. Form / AI asks "Are you the homeowner or are you renting?" upfront. If renting, an extra panel collects landlord name, phone, and email, plus a checkbox: "I have my landlord's permission for this work / they've authorized the visit."
-
-Submission still posts to HCP Leads but tagged `Renter - Landlord Verification Needed`. The office calls the landlord before booking. AI / form **never auto-books a renter without office sign-off.**
-
-For voice and SMS specifically, Claire branches early: "Got it. Before we can book, our team will need to verify with your landlord. Can I get their name and best phone number?"
-
-Industry rationale: work on the structure (panels, HVAC installs, plumbing) typically requires owner authorization for permits, insurance, lien rights, and warranty registration. A booked job without owner sign-off creates a bad job (work blocked at the door, wasted truck roll). This is the standard pattern at Service Champions, ARS, and most multi-state HVAC contractors.
-
-### 10.3 Home warranty decline script (resolves blocker 3)
-
-Decline warm, pivot to financing. Don't bash the warranty company.
-
-> "We don't work directly with home warranty companies. We've found we can serve our customers faster and with higher quality working direct. We'd still love to help you out, and if cost is a concern we offer financing through Wisetack and Synchrony with quick approvals. Would you like me to set up a Field Assessment or a Diagnostic visit?"
-
-The pivot to financing is intentional: customers go to home warranty companies because they're cost-sensitive, declining without an alternative loses the lead. This is the standard playbook from Nexstar Network and Service Roundtable training.
-
-### 10.4 Review-already-left detection (resolves blocker 4)
-
-Single send only. No automated follow-up. Optional manual second send via the TZ Switchboard.
-
-- **First send:** 48 hours after job completion, between 5:00–9:00 PM (per Tyler).
-- **No automated follow-up** to avoid pestering customers who already reviewed (Tyler's specific concern).
-- **Manual second send via TZ Switchboard:** the "Reviews Requested" view in the Switchboard shows every customer who got the first ask. Office staff can one-click "Send follow-up reminder" or "Mark as reviewed" if they know the customer already left a review. Judgment stays with the human.
-- **Future automation:** when the Google Business Profile API can reliably webhook review events, wire that to flip an HCP custom field `review_left = true` and unlock automated follow-ups. Don't build that now, the API is unreliable and the manual flow is fine for v1.
-
-### 10.5 Saturday dispatch scope (resolves blocker 5)
-
-Codify what the on-call rotation calendar already implies.
-
-- **Saturday emergencies** (per Tyler's emergency criteria in section 3): AI follows the after-hours emergency dispatch SOP and contacts the on-call tech per the weekly rotation, which already covers Saturdays.
-- **Saturday non-emergencies:** AI takes intake, schedules for next business day or earliest available.
-- **Saturday quotes / estimates:** not bookable by AI, per Tyler's existing rule (estimates Mon–Fri 8:30 AM – 3:00 PM only).
-
-This codifies what the existing dispatch SOP already supports without contradicting Tyler's "AI handles all Saturday calls" instruction.
+If a caller mentions medical equipment in the home (oxygen, CPAP, dialysis, etc.) — especially during power outages or generator failures — tag them as high-priority and prioritize them in the dispatch queue. The intake form captures this on the generator service flow; the agent should ask about it in any electrical / generator / power-loss conversation.
 
 ---
 
-## 10.6 Open Items (still owed)
+## 10.5 Open Questions for Tyler
 
-| # | Item | Why it matters |
+Short list of items the agent uses defaults for today but Tyler can refine when he has time.
+
+| Item | Default in use | Tyler's call |
 |---|---|---|
-| ~~1~~ | ~~HCP required fields~~ | **Resolved by 10.1.** |
-| 2 | **Drain cleaning rate** ("Custome..." cut off) | Customers will ask. Recommend treating as custom-quoted only until Tyler confirms a published rate. |
-| ~~3~~ | ~~Renter/landlord approval workflow~~ | **Resolved by 10.2.** |
-| ~~4~~ | ~~Home warranty decline script~~ | **Resolved by 10.3.** |
-| ~~5~~ | ~~Review-already-left detection~~ | **Resolved by 10.4.** |
-| 6 | **Review platform scope** | Google only? Nextdoor / BBB / Facebook? Single link or menu? Default until decided: Google only. |
-| ~~7~~ | ~~Saturday dispatch scope~~ | **Resolved by 10.5.** |
-| 8 | **Medical equipment escalation flag** | Tyler listed medical equipment as a generator backup priority; default until decided: yes, AI tags any caller mentioning medical equipment as high-priority during power outages and prioritizes them in the no-heat / generator-failure dispatch queue. |
-| 9 | **Permits in quoted ranges** | When agent quotes EV charger / panel install / generator ranges, default until decided: state "ranges typically do not include permits, which vary by township and are quoted on-site." |
-| 10 | **Customer-supplied equipment policy** | EV charger qualification asks "supplied or install only?" Default until decided: "We can install equipment you've purchased separately, with the labor warranty applying to our installation only. Manufacturer warranty terms apply per the device manufacturer." |
+| **Drain cleaning rate** | Custom-quoted only ("Tyler's answer was cut off mid-sentence — let me check with the office and follow up.") | Confirm whether to publish a rate or keep custom-quoted. |
+| **Review platform scope** | Google only, single review link. | Add Nextdoor / BBB / Facebook to a menu link if desired. |
 
 ---
 
 ## 11. Lead Routing into Housecall Pro
 
-Replaces the prior /leads (Job Inbox > "API Leads") behavior as of 2026-04-28. Every channel — website form, SMS Claire, voice Claire, web-chat Claire — funnels leads through the same `POST /api/leads/submit` endpoint so routing is identical and the office never has to look in two places.
+Every channel — website form, SMS Claire, voice Claire, web-chat Claire — funnels leads through the same backend so routing is identical and the office sees new work in three coordinated places: the customer's HCP record (as a new estimate), HCP Job Inbox > "API Leads" (as a fresh lead card), and the TZ Switchboard Lead Pipeline (as the office-facing mirror).
 
-**Server-side flow (`src/app/api/leads/submit/route.ts`):**
+**Server-side flow (`src/app/api/leads/submit/route.ts`, also called by the agents' `create_lead_with_estimate` tool):**
 
 1. Persist to Neon (`tz_leads`) first so the lead is recorded even if HCP is unreachable.
 2. Find existing customer in HCP by **any of phone, email, or name** (the three lookups fire in parallel; first hit wins, with phone preferred over email over name). Catches the "same person, mistyped name" / "shared household email" / "new phone" cases that phone-only would miss.
 3. If found: keep `customer.notes` untouched (it holds persistent customer info like "don't wear shoes in the house" — never overwritten by lead data). The estimate's private notes record which signal matched (`Matched existing customer by: phone|email|name`) so the office can sanity-check.
 4. If not found: create a new customer with name, phone, email, address only. `notes` is left blank for the same reason.
-5. Create an unscheduled estimate against that customer. Job-specific lead details go in the estimate's `private_notes` (office-only, scoped to this estimate) along with `description`, `tags`, and the service `address`. The estimate stays open / unscheduled — the office schedules from there.
-6. Drop a Job Inbox entry alongside the estimate via `POST /leads` with top-level `customer_id` referencing the existing customer (no duplicate). Same triage tags go on the inbox lead so the office sees service / urgency / scope / flags on the inbox card and can quickly notice new leads in HCP's "API Leads" channel. Inbox lead failure is non-fatal — the estimate stays the source of truth.
+5. **Create an unscheduled estimate** against that customer (`work_status: needs scheduling`). Job-specific lead details go in the estimate option's office-internal notes (added via a follow-up `POST /estimates/{eid}/options/{oid}/notes` call). Tags carry service / urgency / scope / flags on the option row so the office can triage at a glance.
+6. **Drop a Job Inbox card** via `POST /leads` with top-level `customer_id` referencing the same customer (no duplicate). Same triage tags go on the inbox card so the office spots new leads instantly in HCP's "API Leads" channel and can click through to the customer's record.
 7. Stitch `hcp_customer_id`, `hcp_estimate_id`, `hcp_lead_id`, `hcp_customer_existing` back onto the `tz_leads` row so the TZ Switchboard Lead Pipeline can deep-link and the office can confirm the routing worked.
 8. Email the office with the same details via Resend regardless of HCP outcome.
 
