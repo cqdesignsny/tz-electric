@@ -1,6 +1,7 @@
 import { COMPANY } from '@/lib/constants'
 import { createMetadata } from '@/lib/metadata'
 import Button from '@/components/ui/Button'
+import ConversionTracker from '@/components/forms/ConversionTracker'
 
 export const metadata = createMetadata({
   title: 'Thank You | TZ Electric Inc',
@@ -9,10 +10,35 @@ export const metadata = createMetadata({
   noIndex: true,
 })
 
-export default function ThankYouPage() {
+type SearchParams = {
+  service?: string
+  serviceKey?: string
+  ownership?: string
+  channel?: string
+  value?: string
+  leadId?: string
+}
+
+export default async function ThankYouPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>
+}) {
+  const params = await searchParams
+  const value = params.value ? Number.parseFloat(params.value) : null
+
   return (
     <section className="min-h-[80vh] flex items-center justify-center bg-gradient-to-b from-navy via-navy-light to-navy relative overflow-hidden">
-      {/* Animated background glow */}
+      {/* Conversion firing: GTM dataLayer + GA4 generate_lead + Meta Pixel Lead. */}
+      <ConversionTracker
+        leadId={params.leadId || null}
+        service={params.service || null}
+        serviceKey={params.serviceKey || null}
+        channel={params.channel || null}
+        value={typeof value === 'number' && !Number.isNaN(value) ? value : null}
+        ownership={params.ownership || null}
+      />
+
       <div className="absolute inset-0">
         <div
           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-20 blur-[120px]"
@@ -25,7 +51,6 @@ export default function ThankYouPage() {
       </div>
 
       <div className="container-site relative z-10 text-center py-16">
-        {/* Checkmark animation */}
         <div className="mx-auto w-24 h-24 rounded-full bg-success/20 flex items-center justify-center mb-8 ring-4 ring-success/30">
           <svg
             className="w-12 h-12 text-success"
@@ -77,7 +102,7 @@ export default function ThankYouPage() {
                 3
               </div>
               <p className="text-gray-300 text-sm">
-                We&apos;ll schedule a time that works for you — no pressure, just honest guidance.
+                We&apos;ll schedule a time that works for you. No pressure, just honest guidance.
               </p>
             </div>
           </div>

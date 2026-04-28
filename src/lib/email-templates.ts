@@ -333,6 +333,7 @@ type LeadFormSubmissionOptions = {
   qualification: Record<string, string>
   referralSource?: string
   notes?: string
+  channel?: string
   gclid?: string
   utmSource?: string
   utmMedium?: string
@@ -410,8 +411,9 @@ export function renderLeadFormSubmissionEmail(
     : ''
 
   const trackingBits: string[] = []
+  if (opts.channel) trackingBits.push(`<strong>Channel:</strong> ${escapeHtml(opts.channel)}`)
   if (opts.gclid) trackingBits.push(`<strong>GCLID:</strong> ${escapeHtml(opts.gclid)}`)
-  if (opts.utmSource) trackingBits.push(`<strong>Source:</strong> ${escapeHtml(opts.utmSource)}`)
+  if (opts.utmSource) trackingBits.push(`<strong>UTM source:</strong> ${escapeHtml(opts.utmSource)}`)
   if (opts.utmMedium) trackingBits.push(`<strong>Medium:</strong> ${escapeHtml(opts.utmMedium)}`)
   if (opts.utmCampaign) trackingBits.push(`<strong>Campaign:</strong> ${escapeHtml(opts.utmCampaign)}`)
   if (opts.landingPage) trackingBits.push(`<strong>Landing:</strong> ${escapeHtml(opts.landingPage)}`)
@@ -517,6 +519,7 @@ export function renderLeadFormSubmissionEmail(
     '',
     opts.notes ? `Customer notes: ${opts.notes}` : null,
     '',
+    opts.channel ? `Channel: ${opts.channel}` : null,
     opts.gclid ? `GCLID: ${opts.gclid}` : null,
     opts.utmSource ? `UTM source: ${opts.utmSource}` : null,
     opts.utmCampaign ? `UTM campaign: ${opts.utmCampaign}` : null,

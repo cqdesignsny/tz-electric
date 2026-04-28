@@ -40,7 +40,11 @@ export type InsertLeadInput = {
   qualification?: Record<string, string> | null
   customerNotes?: string | null
   referralSource?: string | null
-  tracking?: Record<string, string | undefined> | null
+  tracking?: Record<string, unknown> | null
+  attributionChannel?: string | null
+  attributionFirstTouch?: Record<string, unknown> | null
+  attributionReferrer?: string | null
+  attributionValueCents?: number | null
 }
 
 export type StoredLead = {
@@ -71,7 +75,11 @@ export type StoredLead = {
   qualification: Record<string, string> | null
   customer_notes: string | null
   referral_source: string | null
-  tracking: Record<string, string | undefined> | null
+  tracking: Record<string, unknown> | null
+  attribution_channel: string | null
+  attribution_first_touch: Record<string, unknown> | null
+  attribution_referrer: string | null
+  attribution_value_cents: number | null
   hidden: boolean
   created_at: string
   updated_at: string
@@ -92,7 +100,8 @@ export async function insertLead(input: InsertLeadInput): Promise<string> {
       first_name, last_name, phone, email,
       street, city, state, zip,
       ownership, landlord_name, landlord_phone, landlord_email,
-      qualification, customer_notes, referral_source, tracking
+      qualification, customer_notes, referral_source, tracking,
+      attribution_channel, attribution_first_touch, attribution_referrer, attribution_value_cents
     ) VALUES (
       ${input.hcpLeadId ?? null},
       ${input.hcpCustomerId ?? null},
@@ -111,7 +120,11 @@ export async function insertLead(input: InsertLeadInput): Promise<string> {
       ${input.qualification ? JSON.stringify(input.qualification) : null}::jsonb,
       ${input.customerNotes ?? null},
       ${input.referralSource ?? null},
-      ${input.tracking ? JSON.stringify(input.tracking) : null}::jsonb
+      ${input.tracking ? JSON.stringify(input.tracking) : null}::jsonb,
+      ${input.attributionChannel ?? null},
+      ${input.attributionFirstTouch ? JSON.stringify(input.attributionFirstTouch) : null}::jsonb,
+      ${input.attributionReferrer ?? null},
+      ${input.attributionValueCents ?? null}
     )
     RETURNING id
   `) as Array<{ id: string }>

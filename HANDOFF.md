@@ -118,6 +118,7 @@ All of the above are on Production and Development. Preview is intentionally ski
 - [x] ~~Form question parity with old Typeform.~~ Session 14 added every Typeform question that had been missing from the native form. HVAC: heating-only-or-both, throughout-vs-rooms, decommission existing system, NYSERDA awareness. Electrical: why-upgrading, overhead-vs-underground, switch-to-underground (conditional), utility company. Generator: full residential/commercial branch — portable-vs-standby on residential side, generator size on commercial side, plus service size + utility company on both. Conditional questions (`showWhen`) hide automatically when the parent answer doesn't match, and stale answers prune client + server side when a parent answer changes.
 - [x] ~~HCP routing rewritten: estimates instead of leads.~~ Per Tyler's 2026-04-28 call, `customer.notes` is reserved for persistent customer info ("don't wear shoes in the house"), NOT job specifics. New flow: `POST /api/leads/submit` finds the existing customer in HCP (by ANY of phone, email, or full name — see "Existing customer match" below), or creates a new one with name/phone/email/address only and `notes=null`. Then creates an unscheduled estimate with `work_status: needs scheduling`. Office-internal lead details land on the option's notes via a secondary `POST /estimates/{eid}/options/{oid}/notes` call (HCP drops `notes` on options at create time — verified empirically). Tags land on `option.tags` and surface on the estimate row in HCP. The `tz_leads` row is stitched with `hcp_customer_id`, `hcp_estimate_id`, `hcp_customer_existing`, `hcp_match_via`, `hcp_error` so the Switchboard can deep-link to the matching HCP estimate. **Empirical HCP findings logged in `src/lib/housecall-pro.ts`** so the next agent doesn't have to rediscover them.
 - [x] ~~Job Inbox visibility for new leads.~~ Per Tyler's 2026-04-28 follow-up: office staff also need new leads to land in HCP's Job Inbox > "API Leads" channel so they don't have to refresh the Estimates list to notice them. After the estimate succeeds we also `POST /leads` with **top-level `customer_id`** referencing the existing customer (verified empirically — top-level works, nested `customer.id` returns 400, and sending a `customer` object creates duplicate customer records). Same triage tags go on the inbox lead so the team sees service / urgency / scope / flags on the inbox card. The lead id is stored on `tz_leads.hcp_lead_id` for record-keeping. Inbox lead failure is non-fatal: the estimate is still the source of truth.
+- [x] ~~Attribution + thank-you conversion firing.~~ Form redirect now passes `service`, `serviceKey`, `channel`, `value`, `leadId`, `ownership` to `/thank-you`. The page renders a `<ConversionTracker />` client component that fires three events on mount: (1) GTM `dataLayer.push({event:'lead_submitted', ...})` so any tag in the GTM container can trigger from this signal without a code change; (2) GA4 `generate_lead` (the recommended event for lead conversions; if GA4 ↔ Google Ads is linked and `generate_lead` is marked as a conversion in GA4, it imports automatically — no Google Ads conversion label needed in code); (3) Meta Pixel `Lead` standard event for Facebook + Instagram ad reporting. Optional direct Google Ads conversion fallback: set `NEXT_PUBLIC_GOOGLE_ADS_CONVERSION_LABEL=AW-16641031492/LABEL` if you want to fire alongside the GA4 import. Client tracking now captures every common click ID (gclid, gbraid, wbraid, fbclid, msclkid, ttclid, li_fat_id, lsa_id) plus document.referrer, with first-touch (90-day) and last-touch (30-day) cookie sets. Server-side `deriveChannel()` reduces the snapshot to a single label like `Google Ads`, `Meta Ads (Instagram)`, `Bing Organic`, `Direct`, `Referral - example.com`. Channel is persisted on `tz_leads.attribution_channel` (migration 004), tagged onto both the HCP estimate option and the Job Inbox lead (`Channel: Google Ads`), shown on the office email, and surfaced on the Lead Pipeline as a colored chip + filter + dedicated stat cards (Paid / Organic / Referral / Direct). Per-service lead value (`leadValueCents`) drives the conversion event's `value` so Smart Bidding has a meaningful target — Generator/HVAC/Panel $400, EV charger $250, Plumbing $200, Surge $100, default $250. Tune by editing `src/lib/attribution.ts` once we have a few months of HCP Won/Lost data.
 - [x] ~~Existing customer match: phone OR email OR name.~~ Originally phone-only; Tyler called that too weak (returning customers can mistype name or use a new phone). `findExistingCustomer` now fires three lookups in parallel and dedupes; phone is preferred over email over name. **Two HCP quirks worth knowing:** (1) `?phone_number=` is silently ignored — HCP returns the same first 10 customers regardless of input, so we filter client-side by exact normalized phone match against `mobile_number`/`home_number`/`work_number`; (2) `?q=<query>` actually does match across email/name, but loosely, so we filter client-side for exact email or full-name match before accepting.
 - [x] ~~Two-way Won/Lost status sync.~~ The office flips estimates Won/Lost in HCP via the option-level approval buttons. Lead Pipeline page reads the latest `work_status` + `option.approval_status` for any rows whose `estimate_status_synced_at` is older than 5 minutes (capped at 30 rows per page load, sequential). Manual "Refresh statuses" button bypasses the throttle. Won/Lost/Open filter is back, won leads get an emerald accent, lost leads dim, and a status badge surfaces on each row.
 - [x] ~~Lead Pipeline read path switched to Neon.~~ `/switchboard/lead-pipeline` now reads from `tz_leads` instead of HCP `/leads`, so the Switchboard mirrors exactly what's in HCP without doubling up on data. Every row deep-links to the HCP estimate via `hcp_estimate_id`; rows with HCP sync errors show an explicit "HCP sync error" badge plus the failure reason and a manual-recreate hint. Filters: search + service. Won/Lost filter dropped (no `pipeline_status` from Neon yet — re-add once we sync HCP estimate status back). Recent Leads card on the Switchboard home swapped over too.
@@ -153,6 +154,63 @@ The endgame: **Tyler owns every paid service under his own logins and his own ca
 1. **Now to migration day:** finish building TZ Switchboard modules + AI agents under our Vercel and Anthropic accounts. Tyler fills out the questionnaire; we build the agent knowledge base.
 2. **Migration day (single focused session):** Tyler provisions every account above. We do the cutover in one sitting, transfer Vercel project, swap each env var to his keys, redeploy, smoke test login + lead form + agents.
 3. **After migration:** Tyler's card pays all infra directly. We keep shipping code from the GitHub repo and Vercel autodeploys to his team.
+
+## TZ Switchboard Reports module: roadmap
+
+`/switchboard/reports` is a Coming-Soon module page today. The plan, in order of payoff, is to build it out into TZ's primary marketing + ops reporting surface. Inspiration: CQ Signal — every feed of report data lives under one admin module.
+
+### Phase R1: Lead reports (data we have today, ~1-2 days)
+
+Data source: `tz_leads` (Neon). Everything below is already persisted.
+
+Sections:
+
+- **Lead volume over time.** Daily / weekly / monthly counts. Stacked by `attribution_channel` (Google Ads, Meta, Direct, Organic, etc.).
+- **Channel breakdown.** Pie / bar of total leads by channel for the selected period. Click through to a filtered Lead Pipeline view.
+- **Service mix.** Counts per service key (HVAC, Generator, Electrical, etc.). Useful for capacity planning.
+- **Funnel by channel.** Once Phase R2 lands, columns: Leads → Estimates Won → Lost → Open. For now: Leads → Estimates Created → HCP Sync Errors.
+- **Self-reported vs derived source.** Side-by-side comparison of `referral_source` (what the customer answered "How did you hear about us?") vs `attribution_channel` (what the click ID / referrer says). Disagreements highlight customers misremembering, ad campaigns picking up organic credit, etc.
+- **Lead value at risk.** Sum of `attribution_value_cents` for currently open estimates. Gives the office a "$$$ in the pipeline right now" number.
+
+Implementation: server component reads tz_leads with a date range, renders charts via a small Recharts wrapper. No new dependencies if we use `recharts` (already common in Next.js apps). Filters: date range, channel, service.
+
+### Phase R2: HCP Won/Lost integration (depends on Phase 4-ish status sync maturity)
+
+We already sync `estimate_status` (open/won/lost) periodically. Reports gain:
+
+- **Close rate by channel.** Won / (Won + Lost) per channel. Tells you which channels send buyers vs lookers.
+- **Average time-to-won.** Days between lead created and estimate marked Won.
+- **Won lead value.** Sum of estimate `total_amount` for won estimates (need to also sync `total_amount` from HCP into tz_leads — small extension to lead-status-sync).
+
+### Phase R3: Ad cost integration → CPL, CPA, ROAS (~1 week)
+
+External APIs to plug in:
+
+- **Google Ads API.** Pulls campaign-level cost. Match to leads via `gclid`. Produces cost-per-lead and cost-per-Won by campaign / ad group.
+- **Meta Marketing API.** Same idea, match via `fbclid` or campaign UTM. Produces FB / IG ad reporting.
+- **Microsoft Advertising API** (later, if Bing budget is non-trivial).
+
+Vercel-native fit: store API tokens as encrypted env vars, run a daily cron that pulls cost data into a new `tz_ad_spend` table (campaign_id, date, cost, impressions, clicks). Reports JOIN tz_leads to tz_ad_spend on campaign_id + date.
+
+This is where the real ROAS reporting lives: "$X spent on Google Ads this month, Y leads, Z Won estimates worth $W booked revenue, ROAS = W ÷ X."
+
+### Phase R4: AI agent reporting (lights up as agents ship)
+
+Once SMS Claire / voice Claire / chat Claire are live, every conversation gets persisted to `tz_agent_conversations` + `tz_agent_messages` tables (Phase 4 of the buildout in `What's open right now`). Agent reporting then layers on top:
+
+- **Conversation volume by channel** (SMS, voice, chat). Same channel attribution applied — if a Google Ads click led to a chat that booked a job, the Google Ads campaign gets credit.
+- **Agent → human handoff rate.** How often Claire pulls in a human. Per skill, per service, per time of day.
+- **Agent close rate.** Conversations that ended in a booked estimate / job, by channel.
+- **Agent satisfaction proxy.** Customer sentiment from transcripts (Anthropic API summarization of the conversation).
+- **First-response time.** SLA tracking for SMS / chat.
+- **Cost per conversation.** Anthropic API spend ÷ conversation count, broken out by channel so we know which traffic source is profitable to staff with AI.
+
+### Implementation notes for whoever builds this
+
+- All reporting reads should be from Neon, not HCP, for speed. Sync HCP → Neon in the background (already doing this for estimate status).
+- Date range component: standard, top-right of every report. Default last 30 days.
+- Export: CSV download per report. Tyler's bookkeeper / accountant should be able to grab raw data.
+- Permissions: shared password gates `/switchboard/reports` like every other module today. When we move to Clerk per-user auth, lock revenue reports to admin role only.
 
 ## What's NOT built (intentionally deferred)
 

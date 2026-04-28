@@ -8,6 +8,7 @@ import {
 } from '@/lib/housecall-pro'
 import { renderLeadFormSubmissionEmail } from '@/lib/email-templates'
 import { attachHcpEstimate, attachHcpLeadId, insertLead } from '@/lib/leads-store'
+import { deriveChannel, leadValueCents } from '@/lib/attribution'
 import {
   findService,
   getQuestionLabel,
@@ -38,13 +39,22 @@ type SubmitBody = {
   customerNotes?: string
   tracking?: {
     gclid?: string
+    gbraid?: string
+    wbraid?: string
+    fbclid?: string
+    msclkid?: string
+    ttclid?: string
+    liFatId?: string
+    lsaId?: string
     utmSource?: string
     utmMedium?: string
     utmCampaign?: string
     utmTerm?: string
     utmContent?: string
+    referrer?: string
     landingPage?: string
     landingAt?: string
+    firstTouch?: Record<string, string | undefined>
   }
 }
 
@@ -91,7 +101,7 @@ function buildEstimatePrivateNotes(
   lines.push('')
 
   const flags: string[] = []
-  flags.push(body.tracking?.gclid ? '[Web Form · Google Ads]' : '[Web Form]')
+  flags.push('[Web Form]')
   flags.push(customerExisting ? '[EXISTING CUSTOMER]' : '[NEW CUSTOMER]')
   if (body.ownership === 'renter') flags.push('[RENTER - LANDLORD VERIFICATION NEEDED]')
   if (qualification.urgentNow === 'Yes — active leak') flags.push('[ACTIVE LEAK]')
@@ -127,16 +137,41 @@ function buildEstimatePrivateNotes(
   }
   lines.push('')
 
-  lines.push('--- Attribution ---')
-  if (body.tracking?.gclid) lines.push(`GCLID: ${body.tracking.gclid}`)
-  if (body.tracking?.utmSource) lines.push(`UTM source: ${body.tracking.utmSource}`)
-  if (body.tracking?.utmMedium) lines.push(`UTM medium: ${body.tracking.utmMedium}`)
-  if (body.tracking?.utmCampaign) lines.push(`UTM campaign: ${body.tracking.utmCampaign}`)
-  if (body.tracking?.utmTerm) lines.push(`UTM term: ${body.tracking.utmTerm}`)
-  if (body.tracking?.utmContent) lines.push(`UTM content: ${body.tracking.utmContent}`)
-  if (body.tracking?.landingPage) lines.push(`Landing page: ${body.tracking.landingPage}`)
-  if (body.tracking?.landingAt) lines.push(`Landing at: ${body.tracking.landingAt}`)
-  if (body.referralSource) lines.push(`Heard via: ${body.referralSource}`)
+  lines.push('--- Attribution (last touch) ---')
+  const t = body.tracking
+  if (t?.gclid) lines.push(`GCLID: ${t.gclid}`)
+  if (t?.gbraid) lines.push(`GBRAID: ${t.gbraid}`)
+  if (t?.wbraid) lines.push(`WBRAID: ${t.wbraid}`)
+  if (t?.fbclid) lines.push(`FBCLID: ${t.fbclid}`)
+  if (t?.msclkid) lines.push(`MSCLKID: ${t.msclkid}`)
+  if (t?.ttclid) lines.push(`TTCLID: ${t.ttclid}`)
+  if (t?.liFatId) lines.push(`LinkedIn FAT ID: ${t.liFatId}`)
+  if (t?.lsaId) lines.push(`LSA ID: ${t.lsaId}`)
+  if (t?.utmSource) lines.push(`UTM source: ${t.utmSource}`)
+  if (t?.utmMedium) lines.push(`UTM medium: ${t.utmMedium}`)
+  if (t?.utmCampaign) lines.push(`UTM campaign: ${t.utmCampaign}`)
+  if (t?.utmTerm) lines.push(`UTM term: ${t.utmTerm}`)
+  if (t?.utmContent) lines.push(`UTM content: ${t.utmContent}`)
+  if (t?.referrer) lines.push(`Referrer: ${t.referrer}`)
+  if (t?.landingPage) lines.push(`Landing page: ${t.landingPage}`)
+  if (t?.landingAt) lines.push(`Landing at: ${t.landingAt}`)
+  const ft = t?.firstTouch
+  if (ft && Object.values(ft).some(Boolean)) {
+    lines.push('')
+    lines.push('--- Attribution (first touch) ---')
+    if (ft.gclid) lines.push(`First-touch GCLID: ${ft.gclid}`)
+    if (ft.fbclid) lines.push(`First-touch FBCLID: ${ft.fbclid}`)
+    if (ft.utmSource) lines.push(`First-touch UTM source: ${ft.utmSource}`)
+    if (ft.utmMedium) lines.push(`First-touch UTM medium: ${ft.utmMedium}`)
+    if (ft.utmCampaign) lines.push(`First-touch UTM campaign: ${ft.utmCampaign}`)
+    if (ft.referrer) lines.push(`First-touch referrer: ${ft.referrer}`)
+    if (ft.landingPage) lines.push(`First-touch landing page: ${ft.landingPage}`)
+    if (ft.landingAt) lines.push(`First-touch landing at: ${ft.landingAt}`)
+  }
+  if (body.referralSource) {
+    lines.push('')
+    lines.push(`Heard via (self-reported): ${body.referralSource}`)
+  }
   return lines.join('\n')
 }
 
@@ -144,8 +179,10 @@ function buildEstimateTags(
   body: SubmitBody,
   qualification: Record<string, string>,
   customerExisting: boolean,
+  channel: string,
 ): string[] {
   const tags: string[] = ['Web Form']
+  tags.push(`Channel: ${channel}`)
   tags.push(`Service: ${body.serviceLabel}`)
 
   const urgency = qualification.urgency
@@ -158,7 +195,6 @@ function buildEstimateTags(
   if (body.ownership === 'renter') tags.push('Renter - Verify with Landlord')
   if (qualification.medical === 'Yes') tags.push('Medical Equipment in Home')
   if (qualification.urgentNow === 'Yes — active leak') tags.push('ACTIVE LEAK')
-  if (body.tracking?.gclid) tags.push('Google Ads')
 
   return tags
 }
@@ -211,6 +247,11 @@ export async function POST(req: NextRequest) {
   const state = isNonEmpty(body.state) ? body.state.trim() : 'NY'
   const zip = isNonEmpty(body.zip) ? body.zip.trim() : undefined
 
+  // Derive single-label attribution channel and per-service lead value for
+  // ROAS reporting + the conversion event on /thank-you.
+  const channel = deriveChannel(body.tracking)
+  const valueCents = leadValueCents(body.serviceKey)
+
   // Persist to our own DB first so we keep a record even if HCP rejects.
   // tz_leads is now the authoritative read source for the TZ Switchboard
   // Lead Pipeline — HCP linkage is filled in below once we have ids back.
@@ -235,7 +276,12 @@ export async function POST(req: NextRequest) {
       qualification: cleanQualification,
       customerNotes: body.customerNotes,
       referralSource: body.referralSource,
-      tracking: body.tracking || null,
+      tracking: (body.tracking as Record<string, unknown> | undefined) || null,
+      attributionChannel: channel,
+      attributionFirstTouch:
+        (body.tracking?.firstTouch as Record<string, unknown> | undefined) || null,
+      attributionReferrer: body.tracking?.referrer || null,
+      attributionValueCents: valueCents,
     })
   } catch (e) {
     console.error('[lead-form] tz_leads insert failed (non-fatal):', e)
@@ -290,7 +336,7 @@ export async function POST(req: NextRequest) {
         cleanQualification,
         hcpCustomerExisting,
       )
-      const tags = buildEstimateTags(body, cleanQualification, hcpCustomerExisting)
+      const tags = buildEstimateTags(body, cleanQualification, hcpCustomerExisting, channel)
       const description = `${body.serviceLabel} — Website lead`
       const address =
         street && city && state && zip
@@ -392,6 +438,7 @@ export async function POST(req: NextRequest) {
       qualification: cleanQualification,
       referralSource: body.referralSource,
       notes: body.customerNotes,
+      channel,
       gclid: body.tracking?.gclid,
       utmSource: body.tracking?.utmSource,
       utmMedium: body.tracking?.utmMedium,
@@ -430,10 +477,13 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     ok: true,
+    leadId: storedLeadId,
     hcpCustomerId: hcpCustomer?.id || null,
     hcpEstimateId: hcpEstimateId || null,
     hcpInboxLeadId: hcpInboxLeadId || null,
     hcpCustomerExisting,
     hcpError: hcpError || null,
+    channel,
+    valueCents,
   })
 }

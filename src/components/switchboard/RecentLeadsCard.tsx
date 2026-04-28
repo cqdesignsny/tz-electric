@@ -93,6 +93,7 @@ export default async function RecentLeadsCard() {
                   <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 truncate">
                     {[
                       l.serviceTag,
+                      l.channel,
                       l.scopeTag,
                       l.phone ? formatPhoneForDisplay(l.phone) : null,
                     ]

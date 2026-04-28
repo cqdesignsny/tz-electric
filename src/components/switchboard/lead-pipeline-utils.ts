@@ -10,6 +10,7 @@ import {
   getQuestionLabel,
   type ServiceConfig,
 } from '@/components/forms/lead-form-config'
+import { channelGroup as channelGroupOf } from '@/lib/attribution'
 import type { EstimateStatusCategory } from '@/lib/housecall-pro'
 import { parseStoredStatus } from '@/lib/lead-status-sync'
 import type { StoredLead } from '@/lib/leads-store'
@@ -31,6 +32,9 @@ export type LeadSummary = {
   scopeTag: string | null
   flagTags: string[]
   source: string | null
+  channel: string | null
+  channelGroup: 'paid' | 'organic' | 'direct' | 'referral' | 'unknown'
+  valueCents: number | null
   isRenter: boolean
   isActiveLeak: boolean
   isMedical: boolean
@@ -191,6 +195,9 @@ export function summarizeStoredLead(stored: StoredLead): LeadSummary {
     scopeTag,
     flagTags,
     source: sourceLabel,
+    channel: stored.attribution_channel,
+    channelGroup: channelGroupOf(stored.attribution_channel),
+    valueCents: stored.attribution_value_cents,
     isRenter,
     isActiveLeak,
     isMedical,

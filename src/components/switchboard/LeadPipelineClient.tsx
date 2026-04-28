@@ -16,10 +16,12 @@ type Props = {
 
 type ServiceFilter = 'all' | string
 type StatusFilter = 'all' | 'open' | 'won' | 'lost'
+type ChannelFilter = 'all' | string
 
 export default function LeadPipelineClient({ leads, lastSyncedAt }: Props) {
   const [serviceFilter, setServiceFilter] = useState<ServiceFilter>('all')
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [channelFilter, setChannelFilter] = useState<ChannelFilter>('all')
   const [search, setSearch] = useState('')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
@@ -34,11 +36,20 @@ export default function LeadPipelineClient({ leads, lastSyncedAt }: Props) {
     return Array.from(set).sort()
   }, [leads])
 
+  const channels = useMemo(() => {
+    const set = new Set<string>()
+    leads.forEach((l) => {
+      if (l.channel) set.add(l.channel)
+    })
+    return Array.from(set).sort()
+  }, [leads])
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase()
     return leads.filter((l) => {
       if (serviceFilter !== 'all' && l.serviceTag !== serviceFilter) return false
       if (statusFilter !== 'all' && l.estimateStatus !== statusFilter) return false
+      if (channelFilter !== 'all' && l.channel !== channelFilter) return false
       if (q) {
         const hay = [
           l.fullName,
@@ -47,6 +58,7 @@ export default function LeadPipelineClient({ leads, lastSyncedAt }: Props) {
           l.serviceTag || '',
           l.scopeTag || '',
           l.urgencyTag || '',
+          l.channel || '',
           l.city || '',
           l.zip || '',
           l.customerNotes || '',
@@ -57,7 +69,7 @@ export default function LeadPipelineClient({ leads, lastSyncedAt }: Props) {
       }
       return true
     })
-  }, [leads, serviceFilter, statusFilter, search])
+  }, [leads, serviceFilter, statusFilter, channelFilter, search])
 
   const counts = useMemo(() => {
     const total = leads.length
@@ -66,7 +78,11 @@ export default function LeadPipelineClient({ leads, lastSyncedAt }: Props) {
     const lost = leads.filter((l) => l.estimateStatus === 'lost').length
     const renters = leads.filter((l) => l.isRenter).length
     const activeLeak = leads.filter((l) => l.isActiveLeak).length
-    return { total, open, won, lost, renters, activeLeak }
+    const paid = leads.filter((l) => l.channelGroup === 'paid').length
+    const organic = leads.filter((l) => l.channelGroup === 'organic').length
+    const direct = leads.filter((l) => l.channelGroup === 'direct').length
+    const referral = leads.filter((l) => l.channelGroup === 'referral').length
+    return { total, open, won, lost, renters, activeLeak, paid, organic, direct, referral }
   }, [leads])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
@@ -78,7 +94,7 @@ export default function LeadPipelineClient({ leads, lastSyncedAt }: Props) {
 
   useEffect(() => {
     setPage(1)
-  }, [serviceFilter, statusFilter, search])
+  }, [serviceFilter, statusFilter, channelFilter, search])
 
   async function refreshStatuses() {
     setRefreshing(true)
@@ -114,6 +130,13 @@ export default function LeadPipelineClient({ leads, lastSyncedAt }: Props) {
           value={counts.activeLeak}
           accent={counts.activeLeak > 0 ? 'danger' : 'muted'}
         />
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+        <Stat label="Paid" value={counts.paid} accent={counts.paid > 0 ? 'success' : 'muted'} />
+        <Stat label="Organic" value={counts.organic} />
+        <Stat label="Referral" value={counts.referral} />
+        <Stat label="Direct" value={counts.direct} accent="muted" />
       </div>
 
       <div className="flex items-center justify-between gap-3 mb-5 text-xs text-gray-500 dark:text-gray-400">
@@ -166,6 +189,18 @@ export default function LeadPipelineClient({ leads, lastSyncedAt }: Props) {
           {services.map((s) => (
             <option key={s} value={s}>
               {s}
+            </option>
+          ))}
+        </select>
+        <select
+          value={channelFilter}
+          onChange={(e) => setChannelFilter(e.target.value)}
+          className="rounded-xl border border-gray-300 dark:border-navy-light/60 bg-white dark:bg-[#0F1C3F] px-3 py-2.5 text-sm text-navy dark:text-white focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/30"
+        >
+          <option value="all">All channels</option>
+          {channels.map((c) => (
+            <option key={c} value={c}>
+              {c}
             </option>
           ))}
         </select>
@@ -420,6 +455,21 @@ function LeadCard({
             {lead.serviceTag && (
               <Tag tone="service">{lead.serviceTag}</Tag>
             )}
+            {lead.channel && (
+              <Tag
+                tone={
+                  lead.channelGroup === 'paid'
+                    ? 'success'
+                    : lead.channelGroup === 'organic'
+                      ? 'service'
+                      : lead.channelGroup === 'referral'
+                        ? 'scope'
+                        : 'neutral'
+                }
+              >
+                {lead.channel}
+              </Tag>
+            )}
             {lead.urgencyTag && (
               <Tag tone="urgency">Urgency: {lead.urgencyTag}</Tag>
             )}
@@ -509,12 +559,22 @@ function LeadDetail({ lead }: { lead: LeadSummary }) {
             />
           </div>
 
-          {lead.source && (
-            <div className="mt-5">
-              <SectionLabel>Source</SectionLabel>
-              <KVList items={[{ k: 'Channel', v: lead.source }]} />
-            </div>
-          )}
+          <div className="mt-5">
+            <SectionLabel>Attribution</SectionLabel>
+            <KVList
+              items={[
+                { k: 'Channel', v: lead.channel || 'Unknown' },
+                { k: 'Source', v: lead.source || 'Unknown' },
+                {
+                  k: 'Lead value',
+                  v:
+                    typeof lead.valueCents === 'number'
+                      ? `$${(lead.valueCents / 100).toFixed(0)}`
+                      : 'Default',
+                },
+              ]}
+            />
+          </div>
         </div>
 
         <div>

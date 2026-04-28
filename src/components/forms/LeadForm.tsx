@@ -213,15 +213,27 @@ export default function LeadForm({ initialServiceKey }: Props) {
         }),
       })
 
-      const json = await res.json().catch(() => ({}))
+      const json = (await res.json().catch(() => ({}))) as {
+        ok?: boolean
+        error?: string
+        leadId?: string | null
+        channel?: string | null
+        valueCents?: number | null
+      }
       if (!res.ok || json.ok === false) {
         throw new Error(json.error || 'Submission failed.')
       }
 
       const params = new URLSearchParams({
         service: state.service?.label || '',
+        serviceKey: state.service?.key || '',
         ownership: state.ownership,
       })
+      if (json.leadId) params.set('leadId', json.leadId)
+      if (json.channel) params.set('channel', json.channel)
+      if (typeof json.valueCents === 'number') {
+        params.set('value', (json.valueCents / 100).toFixed(2))
+      }
       router.push(`/thank-you?${params.toString()}`)
     } catch (e) {
       setSubmitError(
