@@ -2,23 +2,30 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import Sidebar from './Sidebar'
+import Sidebar, { type SidebarUser } from './Sidebar'
 import TopBar from './TopBar'
 import { ThemeProvider } from './ThemeProvider'
 
-export default function DashboardShell({
-  children,
-}: {
+type Props = {
   children: React.ReactNode
-}) {
+  sidebarUser?: SidebarUser | null
+}
+
+export default function DashboardShell({ children, sidebarUser }: Props) {
   return (
     <ThemeProvider>
-      <ShellContent>{children}</ShellContent>
+      <ShellContent sidebarUser={sidebarUser}>{children}</ShellContent>
     </ThemeProvider>
   )
 }
 
-function ShellContent({ children }: { children: React.ReactNode }) {
+function ShellContent({
+  children,
+  sidebarUser,
+}: {
+  children: React.ReactNode
+  sidebarUser?: SidebarUser | null
+}) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -47,7 +54,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
         {/* Desktop sidebar */}
         <aside className="hidden md:block w-64 flex-shrink-0 border-r border-gray-200 dark:border-navy-light/40 bg-white dark:bg-[#0A1128]">
           <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
-            <Sidebar />
+            <Sidebar user={sidebarUser ?? null} />
           </div>
         </aside>
 
@@ -60,7 +67,7 @@ function ShellContent({ children }: { children: React.ReactNode }) {
               aria-hidden
             />
             <aside className="md:hidden fixed top-16 left-0 bottom-0 w-72 max-w-[85vw] bg-white dark:bg-[#0A1128] z-40 shadow-2xl flex flex-col">
-              <Sidebar onNavigate={() => setMobileOpen(false)} />
+              <Sidebar user={sidebarUser ?? null} onNavigate={() => setMobileOpen(false)} />
             </aside>
           </>
         )}

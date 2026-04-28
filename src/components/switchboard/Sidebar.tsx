@@ -1,14 +1,26 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
+import { signOut } from 'next-auth/react'
 import { usePathname } from 'next/navigation'
 import { NAV_SECTIONS, navHref, type NavItem } from './nav-config'
 
+export type SidebarUser = {
+  email: string
+  role: string
+  name: string | null
+  pictureUrl: string | null
+  /** 'google' = real Google sign-in. 'password' = legacy shared-password fallback (no identity). */
+  source: 'google' | 'password'
+}
+
 type SidebarProps = {
+  user: SidebarUser | null
   onNavigate?: () => void
 }
 
-export default function Sidebar({ onNavigate }: SidebarProps) {
+export default function Sidebar({ user, onNavigate }: SidebarProps) {
   const pathname = usePathname()
 
   return (
@@ -16,7 +28,6 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
       className="flex flex-col h-full"
       aria-label="TZ Switchboard navigation"
     >
-      {/* Nav sections */}
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-7">
         {NAV_SECTIONS.map((section) => (
           <div key={section.label}>
@@ -38,7 +49,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
       </div>
 
       <div className="border-t border-gray-200 dark:border-navy-light/40 px-4 py-4">
-        <LogoutButton />
+        <UserCard user={user} />
       </div>
     </nav>
   )
@@ -111,23 +122,68 @@ function StatusPill({ status }: { status: NavItem['status'] }) {
   return null
 }
 
-function LogoutButton() {
+function UserCard({ user }: { user: SidebarUser | null }) {
   const handleLogout = async () => {
+    if (user?.source === 'google') {
+      await signOut({ callbackUrl: '/switchboard/login', redirect: true })
+      return
+    }
     try {
       await fetch('/api/switchboard/auth/logout', { method: 'POST' })
     } catch {
-      // ignore, proceed to redirect
+      // ignore
     }
     window.location.href = '/switchboard/login'
   }
 
+  if (!user) {
+    return (
+      <button
+        onClick={handleLogout}
+        className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-navy-light/40 transition-colors"
+      >
+        Sign out
+      </button>
+    )
+  }
+
+  const displayName =
+    user.name || user.email.split('@')[0].replace(/\./g, ' ')
+  const initials = (user.name || user.email)
+    .split(/\s+|@/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s) => s.charAt(0).toUpperCase())
+    .join('')
+
   return (
-    <div className="space-y-2">
-      <div className="text-xs px-1">
-        <div className="font-semibold text-charcoal dark:text-gray-200">
-          Admin session
+    <div>
+      <div className="flex items-center gap-3 px-1 mb-3">
+        {user.pictureUrl ? (
+          <Image
+            src={user.pictureUrl}
+            alt=""
+            width={36}
+            height={36}
+            className="rounded-full flex-shrink-0"
+            unoptimized
+          />
+        ) : (
+          <div className="w-9 h-9 rounded-full bg-blue text-white flex items-center justify-center text-xs font-bold flex-shrink-0">
+            {initials || '?'}
+          </div>
+        )}
+        <div className="min-w-0 flex-1">
+          <div className="text-sm font-semibold text-charcoal dark:text-gray-100 truncate">
+            {displayName}
+          </div>
+          <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate flex items-center gap-1">
+            <span className="capitalize">{user.role}</span>
+            {user.source === 'password' && (
+              <span className="text-amber-600 dark:text-amber-400">· legacy</span>
+            )}
+          </div>
         </div>
-        <div className="text-gray-400 dark:text-gray-500">Signed in</div>
       </div>
       <button
         onClick={handleLogout}

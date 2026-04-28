@@ -22,6 +22,7 @@ export type TzUser = {
   google_sub: string | null
   hd: string | null
   last_login_at: string | null
+  login_count: number
   invited_by: string | null
   disabled_at: string | null
   notes: string | null
@@ -57,7 +58,7 @@ export async function upsertUserOnSignIn(input: UpsertUserInput): Promise<TzUser
   // Upsert by email. On conflict, only refresh profile + last_login,
   // never role (so we don't undo an owner's manual promotion/demotion).
   const rows = (await sql`
-    INSERT INTO tz_users (email, name, picture_url, google_sub, hd, role, last_login_at)
+    INSERT INTO tz_users (email, name, picture_url, google_sub, hd, role, last_login_at, login_count)
     VALUES (
       ${email},
       ${input.name},
@@ -65,7 +66,8 @@ export async function upsertUserOnSignIn(input: UpsertUserInput): Promise<TzUser
       ${input.googleSub},
       ${input.hd},
       ${defaultRole},
-      NOW()
+      NOW(),
+      1
     )
     ON CONFLICT (email) DO UPDATE SET
       name          = COALESCE(EXCLUDED.name, tz_users.name),
@@ -73,6 +75,7 @@ export async function upsertUserOnSignIn(input: UpsertUserInput): Promise<TzUser
       google_sub    = COALESCE(EXCLUDED.google_sub, tz_users.google_sub),
       hd            = COALESCE(EXCLUDED.hd, tz_users.hd),
       last_login_at = NOW(),
+      login_count   = tz_users.login_count + 1,
       updated_at    = NOW()
     RETURNING *
   `) as TzUser[]

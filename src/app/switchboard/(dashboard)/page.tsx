@@ -1,10 +1,18 @@
 import Link from 'next/link'
 import { NAV_SECTIONS, navHref, type NavItem } from '@/components/switchboard/nav-config'
 import RecentLeadsCard from '@/components/switchboard/RecentLeadsCard'
+import { getCurrentUser } from '@/lib/current-user'
 
 export const dynamic = 'force-dynamic'
 
-export default function DashboardHome() {
+export default async function DashboardHome() {
+  const cu = await getCurrentUser()
+  const firstName = (cu?.user?.name || '').trim().split(/\s+/)[0]
+  const greetingTarget =
+    firstName ||
+    (cu?.email ? cu.email.split('@')[0].replace(/\./g, ' ').replace(/^\w/, (c) => c.toUpperCase()) : null)
+  const timeGreeting = getTimeGreeting()
+
   const allItems = NAV_SECTIONS.flatMap((s) => s.items)
   const todoModules = allItems.filter(
     (i) => i.status === 'active' && i.slug !== '',
@@ -17,7 +25,7 @@ export default function DashboardHome() {
       {/* Welcome */}
       <div className="mb-10">
         <div className="text-xs uppercase tracking-[0.2em] text-blue dark:text-blue-light/80 font-mono mb-2">
-          Welcome
+          {greetingTarget ? `${timeGreeting}, ${greetingTarget}` : 'Welcome'}
         </div>
         <h1 className="text-3xl md:text-4xl font-bold text-navy dark:text-white">
           TZ Switchboard
@@ -28,6 +36,17 @@ export default function DashboardHome() {
           web chat, or email. Click any card to see what we&apos;re
           planning to build inside it.
         </p>
+        {cu?.source === 'google' && cu.user && (
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-blue/5 dark:bg-blue-light/10 border border-blue/15 dark:border-blue-light/20 px-3 py-1 text-xs text-blue dark:text-blue-light">
+            <span aria-hidden>●</span>
+            Signed in as {cu.user.name || cu.email}
+            {cu.user.login_count > 1 && (
+              <span className="text-gray-500 dark:text-gray-400">
+                · sign-in #{cu.user.login_count}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Things to do */}
@@ -169,6 +188,20 @@ function ModuleCard({
       </div>
     </Link>
   )
+}
+
+function getTimeGreeting(): string {
+  const hourLocal = Number.parseInt(
+    new Date().toLocaleString('en-US', {
+      hour: '2-digit',
+      hour12: false,
+      timeZone: 'America/New_York',
+    }),
+    10,
+  )
+  if (hourLocal < 12) return 'Good morning'
+  if (hourLocal < 17) return 'Good afternoon'
+  return 'Good evening'
 }
 
 function StatusBadge({ status }: { status: NavItem['status'] }) {

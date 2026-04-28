@@ -4,6 +4,20 @@ import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import type { TzUser, UserRole } from '@/lib/users'
 
+function relativeTime(iso: string): string {
+  const then = new Date(iso).getTime()
+  const now = Date.now()
+  const diffSec = Math.round((now - then) / 1000)
+  if (diffSec < 60) return 'just now'
+  const diffMin = Math.round(diffSec / 60)
+  if (diffMin < 60) return `${diffMin}m ago`
+  const diffHr = Math.round(diffMin / 60)
+  if (diffHr < 24) return `${diffHr}h ago`
+  const diffDay = Math.round(diffHr / 24)
+  if (diffDay < 30) return `${diffDay}d ago`
+  return `${Math.round(diffDay / 30)}mo ago`
+}
+
 const ROLE_OPTIONS: UserRole[] = ['owner', 'admin', 'office', 'viewer', 'disabled']
 
 type Props = {
@@ -113,6 +127,7 @@ export default function UsersClient({ users, actorEmail }: Props) {
             <tr>
               <th className="text-left px-4 py-3">User</th>
               <th className="text-left px-4 py-3">Role</th>
+              <th className="text-left px-4 py-3">Sign-ins</th>
               <th className="text-left px-4 py-3">Last sign-in</th>
               <th className="text-left px-4 py-3">Status</th>
             </tr>
@@ -149,15 +164,35 @@ export default function UsersClient({ users, actorEmail }: Props) {
                       ))}
                     </select>
                   </td>
-                  <td className="px-4 py-3 text-xs text-gray-500 dark:text-gray-400">
-                    {u.last_login_at
-                      ? new Date(u.last_login_at).toLocaleString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: '2-digit',
-                        })
-                      : 'Never'}
+                  <td className="px-4 py-3">
+                    {u.login_count > 0 ? (
+                      <span className="text-sm font-semibold text-navy dark:text-white">
+                        {u.login_count}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] uppercase tracking-wider text-gray-400 dark:text-gray-500">
+                        Pending
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-xs">
+                    {u.last_login_at ? (
+                      <>
+                        <div className="text-navy dark:text-white">
+                          {relativeTime(u.last_login_at)}
+                        </div>
+                        <div className="text-[10px] text-gray-400 dark:text-gray-500">
+                          {new Date(u.last_login_at).toLocaleString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                          })}
+                        </div>
+                      </>
+                    ) : (
+                      <span className="text-gray-400 dark:text-gray-500">Never</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     {u.disabled_at || u.role === 'disabled' ? (
