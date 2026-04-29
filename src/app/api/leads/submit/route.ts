@@ -188,7 +188,8 @@ function buildEstimateTags(
   const urgency = qualification.urgency
   if (isNonEmpty(urgency)) tags.push(`Urgency: ${shorten(urgency, 40)}`)
 
-  const scope = qualification.scope
+  const scope =
+    qualification.scope || qualification.scopeCooling || qualification.scopeHeating
   if (isNonEmpty(scope)) tags.push(shorten(scope, 50))
 
   if (customerExisting) tags.push('Existing customer')

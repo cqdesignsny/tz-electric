@@ -102,6 +102,36 @@ export default function LeadForm({ initialServiceKey }: Props) {
     captureLeadTracking()
   }, [])
 
+  // Wire browser history so back/forward step through the form instead of
+  // leaving the /quote page. On mount we install a step:1 baseline beneath the
+  // current entry; if the user landed at step 2 via ?service=, we layer step:2
+  // on top so back from step 2 reaches the picker, not the referring page.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const url = new URL(window.location.href)
+    if (initialService) {
+      const fullUrl = url.toString()
+      url.searchParams.delete('service')
+      window.history.replaceState({ leadFormStep: 1 }, '', url.toString())
+      window.history.pushState({ leadFormStep: 2 }, '', fullUrl)
+    } else {
+      window.history.replaceState({ leadFormStep: 1 }, '', url.toString())
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    function onPopState(e: PopStateEvent) {
+      const histStep = (e.state as { leadFormStep?: number } | null)?.leadFormStep
+      if (histStep === 1 || histStep === 2 || histStep === 3) {
+        setStep(histStep)
+      }
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+  }, [])
+
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setState((prev) => ({ ...prev, [key]: value }))
     setErrors((prev) => {
@@ -143,8 +173,34 @@ export default function LeadForm({ initialServiceKey }: Props) {
   }
 
   function pickService(service: ServiceConfig) {
-    setState((prev) => ({ ...prev, service, qualification: {} }))
+    setState((prev) => ({
+      ...prev,
+      service,
+      // Preserve answers if the user backed out and re-picked the same service.
+      qualification: prev.service?.key === service.key ? prev.qualification : {},
+    }))
     setStep(2)
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('service', service.key)
+      window.history.pushState({ leadFormStep: 2 }, '', url.toString())
+    }
+  }
+
+  function goToStep3() {
+    if (!validateStep2()) return
+    setStep(3)
+    if (typeof window !== 'undefined') {
+      window.history.pushState({ leadFormStep: 3 }, '', window.location.href)
+    }
+  }
+
+  function goBack() {
+    if (typeof window !== 'undefined') {
+      window.history.back()
+    } else {
+      setStep((prev) => (prev === 3 ? 2 : 1) as 1 | 2 | 3)
+    }
   }
 
   function validateStep2(): boolean {
@@ -258,10 +314,8 @@ export default function LeadForm({ initialServiceKey }: Props) {
             onChange={setQualification}
             onCustomerNotesChange={(v) => update('customerNotes', v)}
             customerNotes={state.customerNotes}
-            onBack={() => setStep(1)}
-            onNext={() => {
-              if (validateStep2()) setStep(3)
-            }}
+            onBack={goBack}
+            onNext={goToStep3}
           />
         )}
 
@@ -270,7 +324,7 @@ export default function LeadForm({ initialServiceKey }: Props) {
             state={state}
             errors={errors}
             update={update}
-            onBack={() => setStep(2)}
+            onBack={goBack}
             onSubmit={submit}
             submitting={submitting}
             submitError={submitError}
