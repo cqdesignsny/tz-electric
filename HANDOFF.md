@@ -2,7 +2,27 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-04-28, mid-session 15 (auth + editable KB in progress). All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
+**Last verified:** 2026-04-28, end of session 16 (Vercel + Neon handoff to TZ Electric team complete). All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
+
+## Picking up on a different machine
+
+The project is portable across machines because the auto-sync + Google sign-in flow doesn't tie work to a specific laptop. To resume:
+
+1. **Pull the latest from GitHub** (canonical) onto whatever machine you're working from.
+   ```bash
+   git -C "/Path/To/tz-site" pull
+   # or fresh clone
+   git clone https://github.com/cqdesignsny/tz-electric.git
+   ```
+2. **Local dev only — install + pull env vars.** Skip if you're just reviewing.
+   ```bash
+   cd tz-site
+   npm install --cache /tmp/npm-cache-tz   # or just `npm install` if your cache is healthy
+   vercel link                              # pick TZ Electric team → tz-electric project
+   vercel env pull .env.local --yes         # writes the dev-tier secrets locally
+   ```
+3. **Sign in to the live Switchboard** at https://tzelectricinc.com/switchboard/login with your Google account (`tyler@tzelectricinc.com`, `terry@tzelectricinc.com`, or `cesar@creativequalitymarketing.com` — all owners). The site is live and serves from Tyler's Vercel infrastructure regardless of which machine you came from.
+4. **Per-machine SSD/Dropbox sync paths** — the SSD at `/Volumes/CQ-PRO-4TB/CQ Marketing/...` and Dropbox at `~/.../Dropbox/TZ Electric Inc/TZ-Site-2026/tz-site` only matter when you're working on the desktop with the SSD plugged in. On a laptop, just use a regular clone of the GitHub repo. The post-commit hook is what keeps SSD ↔ Dropbox in sync; if you commit from a clone-only setup, GitHub gets the push and the next time the SSD or Dropbox copies pull, they catch up.
 
 ## Sync architecture (read this first)
 
@@ -195,11 +215,17 @@ The `tz-electric` project has been transferred from `cq-marketings-projects` to 
 - [x] ~~Lead Pipeline read path switched to Neon.~~ `/switchboard/lead-pipeline` now reads from `tz_leads` instead of HCP `/leads`, so the Switchboard mirrors exactly what's in HCP without doubling up on data. Every row deep-links to the HCP estimate via `hcp_estimate_id`; rows with HCP sync errors show an explicit "HCP sync error" badge plus the failure reason and a manual-recreate hint. Filters: search + service. Won/Lost filter dropped (no `pipeline_status` from Neon yet — re-add once we sync HCP estimate status back). Recent Leads card on the Switchboard home swapped over too.
 - [x] ~~Knowledge Base v1 (read-only).~~ Live at `/switchboard/knowledge-base`. Renders `docs/agent-training-answers.md` as a structured browseable view with sticky section nav, scroll-spy active state, and full markdown styling.
 - [x] ~~Neon Postgres provisioned (`tz-db`) and attached to the project.~~ Marketplace integration on Vercel. `tz_leads` table created via `migrations/001_init.sql`. `npm run migrate` applies any new migrations.
-- [ ] **Phase 3 (next): Knowledge Base v2 (edit-in-place).** Authenticated in-app editor for the answers doc. Two viable paths: commit changes back to `docs/agent-training-answers.md` via the GitHub API (cleaner: edits land in git history and trigger a redeploy) or back the editor with a `tz_kb_versions` table in Neon (faster: in-app version control, sync to git on demand). Recommendation: start DB-backed for speed, sync to git via a "publish" action. Closes "easy way to continuously edit the agents."
-- [ ] **Phase 4: SMS Agent (Claire).** Scaffolding shipped end of session 14 — `tz_agent_conversations` + `tz_agent_messages` tables exist (migration 005), `/api/agents/sms/webhook` accepts Twilio inbound with signature verification + holding-pattern reply, `/switchboard/sms-conversations` is live with conversation list + transcript view + takeover toggle, `lib/agent-prompt.ts` composes the Claire system prompt from `docs/agent-training-answers.md`, `lib/agent-tools.ts` defines the AI SDK v6 tool surface (find_existing_customer, create_lead_with_estimate, lookup_business_hours, flag_for_office_review, escalate_emergency) with implementations wrapping the existing form/HCP pipeline. **What's left:** wiring the actual model call inside the webhook (10-line `generateText({...})` block — pseudocode is in the route's TODO comment), and the cutover env vars below.
-- [ ] **Phase 5: Web chat agent (Claire).** Same prompt and tool surface as SMS, AI SDK streaming widget on every public page, proactive popup at 15s.
-- [ ] **Phase 6: Voice agent (Claire).** Vapi assistant on a Twilio number, 15-minute max before forced handoff, runs the after-hours emergency dispatch SOP exactly.
-- [ ] **Phase 7: Self-improving learning loop.** Office flags transcripts in the SMS / chat / voice modules. Flagged items queue in the Knowledge Base. Approved edits auto-merge into the answers doc. Performance dashboard with handoff rate, false-escalation count, satisfaction proxy.
+- [x] ~~Knowledge Base v2 (edit-in-place).~~ Live at `/switchboard/knowledge-base`. Owners + admins see Edit / Revert per section. Tyler-authored overrides land in `tz_kb_overrides` (Neon) and always win on render and in agent prompts — even if CQ later updates the base markdown. `tz_kb_override_history` keeps every revision; `tz_audit_log` stamps every edit.
+- [x] ~~Switchboard auth: Google OAuth + per-user roles + per-module access overrides.~~ Domain-restricted to `tzelectricinc.com` + `creativequalitymarketing.com`. Owners (Tyler, Terry, Cesar) can promote / demote / disable users from `/switchboard/users` and toggle module access per-user via Customize access. Login_count + last sign-in tracked per user.
+- [x] ~~Vercel + Neon handoff to TZ Electric team.~~ Project + domain transferred to Tyler's TZ team (`team_rgs4fNAHW2dNT1fCPsjf5aVg`, owned by `tzelectricoffice@gmail.com`, Pro plan). Neon migrated from CQ Marketplace to TZ-DB Marketplace via `pg_dump 17` → `psql` restore — schema + data identical pre/post. Old CQ Neon deleted by Cesar. Stripe + HCP secret env vars converted to Vercel `sensitive` type for production+preview.
+
+### Next on deck: AI agents (Claire), in this order
+
+1. **Web chat Claire (FIRST — no external blockers).** Public-site widget on every page with proactive popup at 15s. Reuses `agent-prompt.ts` (channel `web_chat` framing already defined: medium-length plain-text replies, line breaks ok), `agent-tools.ts` tool surface (`find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`), and `agent-conversations.ts` persistence. Tyler's Vercel Pro plan includes AI Gateway access via OIDC, so no separate Anthropic API key needed. Estimated ~1-3 hours. Build path: new chat widget React component (likely `@ai-sdk/react`'s `useChat`), new public-site mount in `(public)/layout.tsx`, new `/api/agents/web-chat/stream` route hooking up `streamText` with the existing tool surface.
+2. **Voice Claire via Vapi (SECOND).** Same `agent-prompt.ts` (channel `voice` already framed: 1-2 sentence turns, digit-spelling for phone/email, the Tyler-approved opener line, 15-min max before forced handoff). Same tool surface. Vapi handles audio + transcription + TTS; we build the tool endpoints. Tyler signs up at vapi.ai, connects his Twilio number once it lands, points Vapi assistant at our `/api/agents/voice/*` tool routes. Estimated ~2-3 hours once Tyler has a Vapi account.
+3. **SMS Claire (THIRD — long pole, 1-2 week vendor wait).** Scaffolding fully shipped end of session 14: webhook signature verification, conversation persistence, takeover UI at `/switchboard/sms-conversations`. Blocked on Twilio A2P 10DLC carrier review (1-2 weeks regardless of how fast we move). Cutover when vendor unblocks: replace one TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call (pseudocode is right there in the comment), set `TWILIO_*` env vars on Vercel, point Twilio webhook at the existing route. ~30 min once Tyler shares creds.
+
+After all three agents: Phase R1 reports (~2 hr, charts off `tz_leads`), then Phase 7 self-improving learning loop (transcript flagging → approved edits land as KB overrides via the existing override mechanism).
 
 ## Account handoff plan (everything paid moves to Tyler)
 

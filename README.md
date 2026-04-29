@@ -222,72 +222,27 @@ All scripts loaded directly in `(public)/layout.tsx` so they only fire on the pu
 - Apply buttons currently link to Typeform (will be replaced with native form)
 - Data source: `src/lib/careers-data.ts`
 
-## Remaining Work
+## What's shipped
 
-### Priority
-- [ ] **Native forms to replace Typeform.** Multi-step lead capture + job application forms directly on the site. Wire to Housecall Pro CRM for instant lead delivery. Include GCLID tracking (Google Click ID) for Smart Bidding optimization. Eliminates Typeform subscription and improves ad conversion tracking. Reuses `renderEmailLayout()` for the lead notification.
+The voice persona for all customer-facing agents is **Claire** (female voice, warm/neighborly, identifies as AI in the opener). Source of truth for behavior: [`docs/agent-training-answers.md`](docs/agent-training-answers.md), with Tyler-authored overrides on top via the in-app editor.
 
-### AI Agent Buildout Roadmap
+- ✓ **Native lead form** at `/quote`. Three-step (service → qualification → contact). Replaces every Typeform CTA. Renter detection + landlord-info branch. Branded Resend email. Multi-channel attribution (gclid, gbraid, wbraid, fbclid, msclkid, ttclid, li_fat_id, lsa_id + UTMs + referrer + first-touch / last-touch cookies). Conversion firing on `/thank-you` (GTM dataLayer + GA4 `generate_lead` + Meta Pixel `Lead`, value tiered by service).
+- ✓ **HCP routing rewritten** as a triple-write per submission: find-or-create customer (matched by phone OR email OR full name), create unscheduled estimate with `work_status: needs scheduling` and lead details in option-internal notes, drop a Job Inbox card via `/leads` with top-level `customer_id`. Customer profile notes stay reserved for persistent customer info, never job specifics. All three records mirror back to `tz_leads` on Neon.
+- ✓ **Lead Pipeline** at `/switchboard/lead-pipeline`. Reads from `tz_leads`. Two-way Won/Lost status sync (server polls HCP `option.approval_status`, throttled 5 min, manual Refresh bypasses). Channel chip + filter, paid/organic/referral/direct stat cards, deep-link to HCP estimate.
+- ✓ **Knowledge Base** at `/switchboard/knowledge-base`. Owners + admins click Edit on any section to write a per-section override into `tz_kb_overrides` (Neon). Tyler-authored overrides always win on render and in agent prompts even if CQ later updates the base markdown. Every edit stamps `tz_kb_override_history` + `tz_audit_log`.
+- ✓ **Switchboard auth.** Google OAuth via NextAuth.js v5, domain-restricted to `tzelectricinc.com` + `creativequalitymarketing.com`. Per-user roles (`owner` / `admin` / `office` / `viewer` / `disabled`). Owner-only `/switchboard/users` page with invite, role grant/revoke, disable, login_count + last sign-in tracking, **per-user module access overrides** ("Customize access" button gives a checkbox panel per user). Sidebar filters modules by access; each protected page calls `requireModuleAccess(slug)` and bounces denied visitors. Sidebar shows the signed-in user's avatar + name + role. Dashboard home greets by first name with time-aware salutation + sign-in count.
+- ✓ **Account handoff to TZ team.** Vercel project + domain transferred to `tzelectricoffice@gmail.com` (Pro plan). Neon migrated from CQ Marketplace to TZ-DB Marketplace via `pg_dump 17` → `psql` restore. Old CQ Neon deleted. Stripe + HCP secrets converted to Vercel `sensitive` type. Every paid resource for tz-electric is on Tyler's billing.
+- ✓ **SMS Claire scaffolding.** Webhook signature verification, conversation persistence (`tz_agent_conversations` + `tz_agent_messages`), takeover UI at `/switchboard/sms-conversations`, system prompt assembler with channel-aware framing (sms / voice / web_chat), AI SDK v6 tool surface (`find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`). Just needs the model call + Twilio creds to go live.
 
-The voice persona for all customer-facing agents is **Claire** (female voice, warm/neighborly, identifies as AI in the opener). Source of truth for behavior: [`docs/agent-training-answers.md`](docs/agent-training-answers.md). Operational gaps Tyler couldn't fill have v1 best-practice defaults in section 10 of that doc.
+## What's next (in build order)
 
-The buildout runs in seven phases. Each phase is small enough to ship in 1–2 sessions, and each builds on the prior.
+Cesar's preferred sequence is web chat first, voice second, SMS last (because A2P 10DLC carrier review is the only 1-2 week external blocker). After all three: Phase R1 reports, then Phase 7 self-improving learning loop.
 
-**Phase 1: Native Lead Form (active)**
-- `/quote` page replaces the Typeform popup. Multi-step: service type → quick qualification → contact + address.
-- Posts to HCP `POST /leads`, lands in Job Inbox > "API Leads" channel.
-- Captures GCLID (30-day cookie) and UTM source/medium/campaign for Google Ads Smart Bidding attribution.
-- Sends a branded HTML email via Resend (reuses `renderEmailLayout()`).
-- Replaces every `TYPEFORM_URL` CTA site-wide. Header, hero, service pages, area pages, financing, contact, footer, FloatingCTA.
-- Renter detection branch: soft-blocks the auto-book, collects landlord info, tags the lead, routes to office.
-
-**Phase 2: Lead Pipeline (live) + Knowledge Base v1 (live)**
-- **Lead Pipeline (`/switchboard/lead-pipeline`):** live data view reading `GET /leads` from HCP. Filters (search, service, status), pagination at 15 per page, expand-on-click detail with parsed qualification answers, customer notes, property, and attribution. Recent leads card on the dashboard home. HCP-side deletions auto-reflect because the page is `force-dynamic`.
-- **Knowledge Base v1 (`/switchboard/knowledge-base`):** server-rendered view of `docs/agent-training-answers.md` with sticky section nav, scroll-spy active state, and full markdown styling. Read-only.
-- **Neon Postgres (`tz-db`) provisioned and wired.** Marketplace integration on the Vercel project. Initial schema (`tz_leads`) applied via `migrations/001_init.sql` and the `npm run migrate` runner. Form submissions write-through to both HCP and `tz_leads` going forward. The TZ Switchboard still reads leads from HCP for now; Phase 4 onward, reads switch to Neon with HCP as a downstream sync target.
-
-**Phase 3: Knowledge Base v2 (edit-in-place)**
-- Authenticated WYSIWYG editor over each section.
-- Save commits the change directly to `docs/agent-training-answers.md` via the GitHub API and triggers a Vercel redeploy.
-- Version history view = `git log` on that file. Diff view between any two versions.
-- Edits flow through the same git history as code, so the agents always load whatever's in the deployed file.
-
-**Phase 4: SMS Agent (Claire)**
-- Twilio inbound webhook → Vercel function → Anthropic API streaming reply.
-- System prompt assembled at request time from `docs/agent-training-answers.md`.
-- Conversation history persisted in Vercel storage (Postgres or KV from the Marketplace).
-- Takeover button in `/switchboard/sms-conversations`: any office staff can pause Claire mid-thread and respond as themselves; Claire resumes when they release the thread.
-- Tools: `lookupCustomer`, `createLead`, `bookField Assessment`, `escalateEmergency` (calls the dispatch SOP), `transferToHuman`.
-- 24/7 coverage. Confirmation text after key actions per Tyler's wording.
-
-**Phase 5: Web Chat Agent (Claire)**
-- Persistent chat widget on all public pages. Proactive popup after ~15 seconds (Tyler's spec).
-- Same system prompt as SMS, same tool surface, same conversation store, same takeover UX.
-- Built on the AI SDK for streaming.
-- Replaces the gap left by the Podium webchat removal.
-
-**Phase 6: Voice Agent (Claire)**
-- Vapi assistant with the Claire voice profile, configured against `/api/vapi/*` tool endpoints (same tools as SMS / chat).
-- 15-minute max call duration before forced handoff per Tyler's spec.
-- Inbound on a dedicated Twilio number.
-- Strictly follows the after-hours emergency dispatch SOP (15-minute retry loop, escalation to Ty Stein → Tyler Zitz, 7 AM / 7:30 AM morning follow-ups). The dispatch logic is durable workflow material so it survives function restarts.
-
-**Phase 7: Self-Improving Learning Loop**
-- Every conversation transcript logged to durable storage with metadata (channel, duration, outcome, handoff y/n, tools called).
-- Office staff flag transcripts in `/switchboard/sms-conversations` and the analogous voice / chat views: "Claire got this wrong" or "this answer should be in the KB."
-- Flagged items queue in `/switchboard/knowledge-base` as suggested edits with the relevant section pre-selected.
-- Cesar / Tyler approve or reject. Approved edits flow through the Phase 3 editor → commit → redeploy.
-- `/switchboard/reports` shows per-agent KPIs: handoff rate, false-escalation count, customer satisfaction proxy (sentiment + booking conversion), top failure modes.
-- This is the full audit-and-improve loop. Architecture decisions in Phases 4-6 set us up for it (transcript capture, tool-call logging, conversation IDs).
-
-### Module status (per `nav-config.ts`)
-- Lead Pipeline (live view of all captured leads from Phase 1 onward)
-- Reports (calls, leads, conversions, revenue per channel; populated as agents go live)
-- Email Assistant for Tyler's inbox (later phase, not in the seven above)
-- Office Operations agent (later phase)
-- Warehouse & Inventory agent (later phase)
-- Sales & Outbound agent (later phase)
-- Trainual integration for human staff training (deep-link only, depends on Tyler setting up Trainual)
+1. **Web chat Claire.** New widget on every public page with a 15-second proactive popup. Reuses the existing prompt assembler + tools surface. Tyler's Vercel Pro plan includes AI Gateway via OIDC, so no separate API key. Estimated 1-3 hours.
+2. **Voice Claire (Vapi).** Tyler signs up at vapi.ai, connects his Twilio number when it lands. Same prompt + tools. Estimated 2-3 hours after Vapi account is ready.
+3. **SMS Claire.** Replace the TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call (pseudocode is in the route's comments), set `TWILIO_*` env vars, point Twilio inbound webhook at the existing route. ~30 min once A2P 10DLC approves and Tyler shares creds.
+4. **Phase R1 reports** at `/switchboard/reports`. Charts off `tz_leads`: lead volume over time stacked by channel, channel breakdown pie, service mix, funnel by channel, lead value at risk. ~2 hours, all data already in place.
+5. **Phase 7 self-improving learning loop.** Office flags transcripts in the agent conversation views; flagged items become proposed KB overrides; owners approve and they merge into `tz_kb_overrides` via the existing override mechanism. Reports module gains agent KPIs: handoff rate, false-escalation count, sentiment proxy, top failure modes.
 
 ### Backlog
 - [ ] Blog content migration from old Webflow site
