@@ -148,6 +148,17 @@ The agent prompt assembler (`src/lib/agent-prompt.ts`) reads the merged content 
 
 All of the above are on Production and Development. Preview is intentionally skipped (Vercel CLI bug around all-preview-branches; we don't use feature-branch previews here so this is fine).
 
+### Vercel ownership (post-handoff 2026-04-28)
+
+The `tz-electric` project has been transferred from `cq-marketings-projects` to a new **TZ Electric** Vercel team owned by `tzelectricoffice@gmail.com` (Pro plan, Tyler's card). Cesar (`cqdesignsny@gmail.com`) is a Member with full project access.
+
+- Project id (unchanged): `prj_wtBcaXPS6KOeXJniJroHRYnxiDtm`
+- New team id: `team_rgs4fNAHW2dNT1fCPsjf5aVg` (slug `tz-electric`)
+- Old team (still has other CQ projects, no longer hosts tz-electric): `team_nSvXagrumMTVvAjEfQW5vPnw`
+- Domain: `tzelectricinc.com` followed the project automatically. No DNS changes.
+- All ~30 env vars (Stripe, Resend, HCP, Switchboard auth, AUTH_*, full Neon connection set) preserved as encrypted snapshots through the transfer.
+- Neon database is still the original one (host `ep-square-art-an7zqf5v.c-6.us-east-1.aws.neon.tech`); the Marketplace integration that provisioned it stayed on the CQ team. The env vars survived as static snapshots, so the connection works. Until we do a proper data migration to a TZ-billed Neon, the database is on CQ's billing — small monthly cost, not urgent. An empty `TZ-DB` was created in TZ's Marketplace by accident during transfer; safe to delete from Storage → TZ-DB → Remove.
+
 ### Database (Neon Postgres)
 
 - **Provider:** Neon, attached to the `tz-electric` Vercel project via the Marketplace integration. DB name: `tz-db`. Provisioned on 2026-04-28.
