@@ -157,7 +157,8 @@ The `tz-electric` project has been transferred from `cq-marketings-projects` to 
 - Old team (still has other CQ projects, no longer hosts tz-electric): `team_nSvXagrumMTVvAjEfQW5vPnw`
 - Domain: `tzelectricinc.com` followed the project automatically. No DNS changes.
 - All ~30 env vars (Stripe, Resend, HCP, Switchboard auth, AUTH_*, full Neon connection set) preserved as encrypted snapshots through the transfer.
-- Neon database is still the original one (host `ep-square-art-an7zqf5v.c-6.us-east-1.aws.neon.tech`); the Marketplace integration that provisioned it stayed on the CQ team. The env vars survived as static snapshots, so the connection works. Until we do a proper data migration to a TZ-billed Neon, the database is on CQ's billing — small monthly cost, not urgent. An empty `TZ-DB` was created in TZ's Marketplace by accident during transfer; safe to delete from Storage → TZ-DB → Remove.
+- Neon database **migrated to TZ-DB on 2026-04-28** (same session as the team transfer). Production now points at `ep-aged-meadow-amvorazs.c-5.us-east-1.aws.neon.tech` (the TZ Marketplace-provisioned database). Schema + data copied via `pg_dump` (PG 17) → `psql` restore — verified row counts identical (1 user, 1 lead, 8 migrations). Canonical env vars (`DATABASE_URL`, `POSTGRES_*`, `PG*`, `NEON_PROJECT_ID`) all overwrite the original CQ-side snapshots and now point at TZ-DB. SSD `.env.local` re-pulled to match.
+- **CLEANUP STEP for Cesar (billing):** the old Neon database on CQ's Marketplace is still alive and billable. Once Cesar confirms TZ-DB is serving correctly, remove the old store from CQ's Vercel team → Storage → (the old Neon database) → Remove. Until then, CQ keeps paying the small Neon line item.
 
 ### Database (Neon Postgres)
 
