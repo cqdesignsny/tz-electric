@@ -15,10 +15,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@ai-sdk/anthropic": "^2.0.0",
-    "@ai-sdk/react": "^2.0.0",
+    "@ai-sdk/anthropic": "^3.0.73",
+    "@ai-sdk/react": "^3.0.173",
     "@neondatabase/serverless": "^1.1.0",
-    "ai": "^6.0.0",
+    "ai": "^6.0.171",
     "clsx": "^2.1.1",
     "framer-motion": "^12.35.2",
     "marked": "^18.0.2",

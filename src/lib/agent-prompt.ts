@@ -55,8 +55,8 @@ const CHANNEL_FRAMING: Record<AgentChannel, string> = {
     '',
     '- Replies can be slightly longer than SMS but still concise. 2-4 sentences per turn unless the customer asks for detail.',
     '- Plain text with line breaks. Avoid markdown beyond bare URLs.',
-    '- The widget is on the public website, so the customer can already see basic service info — focus on diagnosing their need, not repeating brochure copy.',
-    '- Open the conversation with a friendly greeting that identifies you as AI.',
+    '- The widget is on the public website, so the customer can already see basic service info. Focus on diagnosing their need, not repeating brochure copy.',
+    '- The chat panel already shows a static welcome message that identifies you as an AI assistant for TZ Electric. Do NOT repeat the greeting in your first reply. Pick up from where the customer is: if they describe a need, jump into qualifying questions. If they just say hi, respond with a brief warm acknowledgement and ask what you can help with.',
   ].join('\n'),
 }
 

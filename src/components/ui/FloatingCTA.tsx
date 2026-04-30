@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { COMPANY, QUOTE_URL } from '@/lib/constants'
 
-const HIDDEN_PATHS = ['/switchboard', '/internal']
+const HIDDEN_PATHS = ['/switchboard', '/internal', '/claire']
 
 export default function FloatingCTA() {
   const [visible, setVisible] = useState(false)
