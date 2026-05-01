@@ -179,7 +179,7 @@ function ClaireChatInner() {
       )}
 
       {showEmptyState ? (
-        <div className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:px-6">
+        <div className="flex-1 flex flex-col items-center px-4 pt-10 pb-12 sm:px-6 sm:pt-16">
           <div className="w-full max-w-3xl">
             <div className="flex flex-col items-center text-center">
               <ChatThemeToggle />
@@ -325,29 +325,33 @@ function Dot({ delay }: { delay: string }) {
 }
 
 function ClairePortrait({ size }: { size: 'avatar' | 'hero' }) {
-  // 'avatar' is the small version next to message rows; 'hero' is the
-  // large one on the empty state. Both use the same source — Next/Image
-  // serves a properly sized variant.
+  // The source photo has headroom above her hair (TZ logo, ceiling) and
+  // a desk/nameplate below her shoulders. We zoom in and anchor at the
+  // top so her face sits in the center of the round crop.
   if (size === 'hero') {
     return (
-      <Image
-        src={CLAIRE_PIC}
-        alt="Claire, AI assistant for TZ Electric"
-        width={144}
-        height={144}
-        priority
-        className="h-32 w-32 rounded-full object-cover ring-4 ring-white shadow-lg sm:h-36 sm:w-36 dark:ring-white/10"
-      />
+      <div className="relative h-32 w-32 overflow-hidden rounded-full ring-4 ring-white shadow-lg sm:h-36 sm:w-36 dark:ring-white/10">
+        <Image
+          src={CLAIRE_PIC}
+          alt="Claire, AI assistant for TZ Electric"
+          fill
+          sizes="(min-width: 640px) 144px, 128px"
+          priority
+          className="origin-top scale-[1.4] object-cover"
+        />
+      </div>
     )
   }
   return (
-    <Image
-      src={CLAIRE_PIC}
-      alt="Claire"
-      width={72}
-      height={72}
-      className="h-9 w-9 flex-shrink-0 rounded-full object-cover ring-2 ring-white shadow-sm dark:ring-white/10"
-    />
+    <div className="relative h-9 w-9 flex-shrink-0 overflow-hidden rounded-full ring-2 ring-white shadow-sm dark:ring-white/10">
+      <Image
+        src={CLAIRE_PIC}
+        alt="Claire"
+        fill
+        sizes="36px"
+        className="origin-top scale-[1.4] object-cover"
+      />
+    </div>
   )
 }
 

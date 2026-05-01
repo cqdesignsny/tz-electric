@@ -1,26 +1,70 @@
 'use client'
 
-import { useChatTheme } from './ChatThemeProvider'
+import { useChatTheme, type ChatTheme } from './ChatThemeProvider'
 
 /**
- * Two-state light/dark toggle for the /claire chat page. Click flips
- * between explicit light and dark and persists the choice. System
- * preference is honored only on first visit (until the user picks).
+ * Light / Dark labeled segmented toggle for the /claire chat page.
+ * Both labels are always visible so it's obvious what the control does;
+ * the active option is filled in. Click either segment to switch.
  */
 export default function ChatThemeToggle() {
-  const { theme, toggle } = useChatTheme()
-  const isDark = theme === 'dark'
+  const { theme, setTheme } = useChatTheme()
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Color theme"
+      className="inline-flex items-center gap-0.5 rounded-full border border-gray-200 bg-white p-0.5 shadow-sm dark:border-white/10 dark:bg-white/5"
+    >
+      <Segment
+        label="Light"
+        value="light"
+        active={theme === 'light'}
+        onClick={() => setTheme('light')}
+        icon={<SunIcon />}
+      />
+      <Segment
+        label="Dark"
+        value="dark"
+        active={theme === 'dark'}
+        onClick={() => setTheme('dark')}
+        icon={<MoonIcon />}
+      />
+    </div>
+  )
+}
+
+function Segment({
+  label,
+  value,
+  active,
+  onClick,
+  icon,
+}: {
+  label: string
+  value: ChatTheme
+  active: boolean
+  onClick: () => void
+  icon: React.ReactNode
+}) {
   return (
     <button
       type="button"
-      onClick={toggle}
-      aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-      className="inline-flex items-center justify-center w-9 h-9 rounded-full border border-gray-200 bg-white text-navy hover:bg-gray-50 transition-colors dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+      role="radio"
+      aria-checked={active}
+      aria-label={label}
+      onClick={onClick}
+      data-theme-value={value}
+      className={[
+        'inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors',
+        active
+          ? 'bg-navy text-white shadow-sm dark:bg-blue-light dark:text-navy'
+          : 'text-gray-500 hover:text-navy dark:text-gray-400 dark:hover:text-white',
+      ].join(' ')}
     >
-      <span aria-hidden className="w-4 h-4">
-        {isDark ? <SunIcon /> : <MoonIcon />}
+      <span aria-hidden className="w-3.5 h-3.5">
+        {icon}
       </span>
+      {label}
     </button>
   )
 }
