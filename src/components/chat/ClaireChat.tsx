@@ -148,12 +148,10 @@ function ClaireChatInner() {
     ta.style.height = `${Math.min(ta.scrollHeight, 192)}px`
   }, [input])
 
-  // Autoscroll thread on new tokens / new messages.
-  useEffect(() => {
-    const el = threadRef.current
-    if (!el) return
-    el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
-  }, [messages, isThinking])
+  // Auto-scroll intentionally NOT applied. Cesar wants the thread to
+  // stay anchored where the visitor is reading instead of yanking the
+  // viewport down on every streamed token. The thread is scrollable;
+  // visitors scroll themselves to follow new replies.
 
   function send(text: string) {
     const trimmed = text.trim()
@@ -176,19 +174,32 @@ function ClaireChatInner() {
   }
 
   return (
-    <div className="relative flex flex-col bg-gray-50 text-charcoal dark:bg-[#070D1F] dark:text-gray-100 min-h-[calc(100vh-80px)]">
-      {/* Floating theme toggle for the thread view. Empty state has its own
-          centered toggle, so suppress this one there. */}
+    <div
+      className="flex flex-col bg-gray-50 text-charcoal dark:bg-[#070D1F] dark:text-gray-100"
+      // Fixed height = viewport minus an estimate of the public-site
+      // chrome above (mobile has the phone-strip + nav, desktop just nav).
+      // Keeps the composer pinned and the thread internally scrollable —
+      // iMessage-style, no hunting for the input on first load.
+      style={{
+        height: 'calc(100dvh - var(--public-header, 120px))',
+      }}
+    >
+      {/* Slim top strip with the theme toggle — thread view only.
+          The empty state has its own centered toggle above the portrait. */}
       {!showEmptyState && (
-        <div className="pointer-events-auto absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
-          <ChatThemeToggle />
+        <div className="border-b border-gray-200 bg-white/80 backdrop-blur dark:border-white/5 dark:bg-[#0A1228]/80">
+          <div className="mx-auto flex max-w-3xl justify-end px-4 py-2 sm:px-6">
+            <ChatThemeToggle />
+          </div>
         </div>
       )}
 
-      {showEmptyState ? (
-        <div className="flex-1 flex flex-col items-center px-4 pt-10 pb-12 sm:px-6 sm:pt-16">
-          <div className="w-full max-w-3xl">
-            <div className="flex flex-col items-center text-center">
+      {/* Body: empty state OR thread. Both scroll internally so the
+          composer below stays put. */}
+      <div ref={threadRef} className="flex-1 overflow-y-auto">
+        {showEmptyState ? (
+          <div className="px-4 pt-8 pb-6 sm:px-6 sm:pt-12">
+            <div className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
               <ChatThemeToggle />
               <div className="mt-6">
                 <ClairePortrait size="hero" />
@@ -201,7 +212,7 @@ function ClaireChatInner() {
               </p>
             </div>
 
-            <div className="mt-8 grid gap-2 sm:grid-cols-2">
+            <div className="mx-auto mt-8 grid w-full max-w-3xl gap-2 sm:grid-cols-2">
               {CHIPS.map((c) => (
                 <button
                   key={c.id}
@@ -214,30 +225,9 @@ function ClaireChatInner() {
                 </button>
               ))}
             </div>
-
-            <div className="mt-8">
-              <Composer
-                input={input}
-                onInputChange={setInput}
-                textareaRef={textareaRef}
-                onSubmit={onSubmit}
-                onKeyDown={onKeyDown}
-                disabled={!canSend}
-                isThinking={isThinking}
-                stickyBottom={false}
-              />
-              <p className="mt-3 text-center text-xs text-gray-500 dark:text-gray-400">
-                For emergencies, call (518) 678-1230.
-              </p>
-            </div>
           </div>
-        </div>
-      ) : (
-        <>
-          <div
-            ref={threadRef}
-            className="flex-1 overflow-y-auto px-4 pt-6 pb-32 sm:px-6"
-          >
+        ) : (
+          <div className="px-4 pt-6 pb-6 sm:px-6">
             <div className="mx-auto max-w-3xl space-y-6">
               {messages.map((m) => (
                 <MessageRow key={m.id} message={m} />
@@ -250,26 +240,28 @@ function ClaireChatInner() {
               )}
             </div>
           </div>
+        )}
+      </div>
 
-          <div className="sticky bottom-0 border-t border-gray-200 bg-gray-50/95 backdrop-blur dark:border-white/5 dark:bg-[#070D1F]/95">
-            <div className="mx-auto max-w-3xl px-4 py-4 sm:px-6">
-              <Composer
-                input={input}
-                onInputChange={setInput}
-                textareaRef={textareaRef}
-                onSubmit={onSubmit}
-                onKeyDown={onKeyDown}
-                disabled={!canSend}
-                isThinking={isThinking}
-                stickyBottom
-              />
-              <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
-                For emergencies, call (518) 678-1230.
-              </p>
-            </div>
-          </div>
-        </>
-      )}
+      {/* Composer — always pinned at the bottom of the viewport-tall
+          chat container, in both empty state and thread view. */}
+      <div className="shrink-0 border-t border-gray-200 bg-gray-50/95 backdrop-blur dark:border-white/5 dark:bg-[#070D1F]/95">
+        <div className="mx-auto max-w-3xl px-4 py-3 sm:px-6 sm:py-4">
+          <Composer
+            input={input}
+            onInputChange={setInput}
+            textareaRef={textareaRef}
+            onSubmit={onSubmit}
+            onKeyDown={onKeyDown}
+            disabled={!canSend}
+            isThinking={isThinking}
+            stickyBottom
+          />
+          <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
+            For emergencies, call (518) 678-1230.
+          </p>
+        </div>
+      </div>
     </div>
   )
 }
