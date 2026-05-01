@@ -163,7 +163,9 @@ function ConversationList({
                 <StatusDot status={c.status} takeover={!!c.takeover_by_user} />
               </div>
               <div className="text-[11px] text-gray-500 dark:text-gray-400 mt-0.5 truncate">
-                {c.attribution_channel || 'Unknown source'} · {relativeTime(c.updated_at)}
+                {c.customer_phone
+                  ? `${formatPhone(c.customer_phone)} · ${relativeTime(c.updated_at)}`
+                  : `${c.attribution_channel || 'Unknown source'} · ${relativeTime(c.updated_at)}`}
               </div>
               {c.tz_lead_id && (
                 <div className="text-[10px] uppercase tracking-wider font-bold text-emerald-700 dark:text-emerald-300 mt-1">
@@ -208,6 +210,11 @@ function ConversationHeader({
           {visitorLabel(active)}
         </div>
         <div className="text-xs text-gray-500 dark:text-gray-400">
+          {active.customer_phone && (
+            <span className="font-mono mr-2">
+              {formatPhone(active.customer_phone)}
+            </span>
+          )}
           status: {active.status}
           {active.takeover_by_user && (
             <span className="ml-2 text-amber-700 dark:text-amber-300">
@@ -456,11 +463,19 @@ function StatusDot({
 }
 
 function visitorLabel(c: AgentConversation): string {
-  // Web chat visitors are anonymous unless Claire captured a name during
-  // qualification. Show the captured name when we have it, otherwise a
-  // short conversation id stub so the office can tell threads apart.
+  // Web chat visitors are anonymous when they land. Claire's contact-first
+  // flow captures a first name on the second turn via update_visitor_contact;
+  // until then we show a short conversation id stub so the office can tell
+  // threads apart at a glance.
   if (c.customer_name) return c.customer_name
   return `Visitor ${c.id.slice(0, 8)}`
+}
+
+function formatPhone(phone: string | null): string {
+  if (!phone) return ''
+  const digits = phone.replace(/\D/g, '')
+  if (digits.length !== 10) return phone
+  return `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
 }
 
 function relativeTime(iso: string): string {

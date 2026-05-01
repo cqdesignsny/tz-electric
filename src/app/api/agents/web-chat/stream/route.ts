@@ -194,7 +194,18 @@ export async function POST(req: NextRequest) {
 
   const result = streamText({
     model: gateway('anthropic/claude-sonnet-4.6'),
-    system: systemPrompt,
+    // Mark the system prompt as ephemerally cached on Anthropic.
+    // The KB + persona + rules are identical across every visitor and
+    // every turn, so once cached (~5 min TTL), follow-up turns drop
+    // input cost on the cached portion by ~90%. At ~11.5K tokens of
+    // system prompt this is the single biggest cost lever we have.
+    system: {
+      role: 'system',
+      content: systemPrompt,
+      providerOptions: {
+        anthropic: { cacheControl: { type: 'ephemeral' } },
+      },
+    },
     messages: modelMessages,
     tools,
     stopWhen: stepCountIs(MAX_TOOL_STEPS),

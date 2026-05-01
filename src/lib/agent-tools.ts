@@ -19,6 +19,7 @@ import {
   escalateConversation,
 } from './agent-conversations'
 import { leadValueCents } from './attribution'
+import { db } from './db'
 import {
   createCustomerForLead,
   createEstimateForLead,
@@ -53,6 +54,70 @@ const SERVICE_KEYS = [
  */
 export function buildAgentTools(ctx: AgentToolContext) {
   return {
+    update_visitor_contact: tool({
+      description:
+        "Save the visitor's first name and best phone number to this conversation as soon as they share them. Call this on the FIRST turn after the visitor tells you who they are, BEFORE any qualification questions. The office sees the name and phone in the TZ Switchboard immediately, so even if the visitor leaves mid-conversation we can still follow up. Email is optional. Phone is required (10-digit US). Safe to call again if the visitor corrects their info.",
+      inputSchema: z.object({
+        first_name: z
+          .string()
+          .describe("Visitor's first name. Use full name if they shared both."),
+        phone: z
+          .string()
+          .describe('10-digit US phone, any format. Required. Strip non-digits server-side.'),
+        last_name: z
+          .string()
+          .optional()
+          .describe('Last name if they shared one.'),
+        email: z
+          .string()
+          .optional()
+          .describe('Email if they shared it. Phone is the priority.'),
+      }),
+      execute: async ({ first_name, last_name, phone, email }) => {
+        const fullName = [first_name?.trim(), last_name?.trim()]
+          .filter(Boolean)
+          .join(' ')
+          .trim()
+        const digitsOnly = phone.replace(/\D/g, '')
+        const normalizedPhone =
+          digitsOnly.length === 11 && digitsOnly.startsWith('1')
+            ? digitsOnly.slice(1)
+            : digitsOnly
+        if (normalizedPhone.length !== 10) {
+          return {
+            ok: false,
+            error: 'Phone number must be 10 digits. Ask the visitor to clarify.',
+          }
+        }
+        try {
+          const sql = db()
+          await sql`
+            UPDATE tz_agent_conversations
+            SET customer_name  = ${fullName || null},
+                customer_phone = ${normalizedPhone},
+                customer_email = COALESCE(${email?.trim() || null}, customer_email),
+                updated_at     = NOW()
+            WHERE id = ${ctx.conversationId}
+          `
+          return {
+            ok: true,
+            saved: {
+              name: fullName,
+              phone: normalizedPhone,
+              email: email?.trim() || null,
+            },
+            message: `Saved ${fullName || 'contact'} / ${normalizedPhone} on this conversation. Office now sees them in the Switchboard.`,
+          }
+        } catch (e) {
+          console.error('[agent-tools] update_visitor_contact failed:', e)
+          return {
+            ok: false,
+            error: 'Failed to save contact info. Continue the conversation; the office can still see the transcript.',
+          }
+        }
+      },
+    }),
+
     find_existing_customer: tool({
       description:
         'Look up an existing customer in Housecall Pro by phone, email, or full name. Always call this BEFORE creating a lead so we attach to the existing record instead of duplicating. Returns the matched HCP customer id (or null) and which signal matched.',
