@@ -135,7 +135,26 @@ function ClaireChatInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const { messages, sendMessage, status, error } = useChat({ transport })
+  const { messages, sendMessage, status, error, setMessages, clearError } =
+    useChat({ transport })
+
+  function startOver() {
+    // Mint a fresh conversation id so the office sees a clean new thread
+    // instead of an extension of whatever came before. The old thread
+    // stays in the DB for transcript history.
+    const fresh = generateConversationId()
+    if (typeof window !== 'undefined') {
+      try {
+        window.sessionStorage.setItem(CONVERSATION_KEY, fresh)
+      } catch {
+        // ignore
+      }
+    }
+    conversationIdRef.current = fresh
+    setMessages([])
+    setInput('')
+    clearError?.()
+  }
 
   const isThinking = status === 'submitted' || status === 'streaming'
   const showEmptyState = messages.length === 0 && !isThinking
@@ -180,11 +199,32 @@ function ClaireChatInner() {
 
   return (
     <div className="bg-gray-50 text-charcoal dark:bg-[#070D1F] dark:text-gray-100">
-      {/* Slim top strip with the theme toggle — thread view only.
+      {/* Slim top strip with the theme toggle + start-over — thread view only.
           The empty state has its own centered toggle above the portrait. */}
       {!showEmptyState && (
         <div className="sticky top-0 z-20 border-b border-gray-200 bg-white/85 backdrop-blur dark:border-white/5 dark:bg-[#0A1228]/85">
-          <div className="mx-auto flex max-w-3xl justify-end px-4 py-2 sm:px-6">
+          <div className="mx-auto flex max-w-3xl items-center justify-end gap-3 px-4 py-2 sm:px-6">
+            <button
+              type="button"
+              onClick={startOver}
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-navy hover:bg-gray-50 transition-colors dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10"
+              aria-label="Start a new conversation"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-3.5 h-3.5"
+                aria-hidden
+              >
+                <path d="M3 12a9 9 0 1 0 3-6.7" />
+                <path d="M3 4v5h5" />
+              </svg>
+              Start over
+            </button>
             <ChatThemeToggle />
           </div>
         </div>

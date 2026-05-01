@@ -1,7 +1,9 @@
+import { createHash } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import {
   streamText,
   convertToModelMessages,
+  gateway,
   isTextUIPart,
   stepCountIs,
   type UIMessage,
@@ -14,6 +16,13 @@ import {
 import { buildSystemPrompt } from '@/lib/agent-prompt'
 import { buildAgentTools } from '@/lib/agent-tools'
 import { db } from '@/lib/db'
+
+// Abuse / cost guardrails. Tuned conservatively; relax later if real
+// usage hits the ceiling.
+const MAX_USER_MESSAGE_CHARS = 2000 // single-message length cap
+const MAX_USER_MESSAGES_PER_CONVERSATION = 50 // forces a fresh thread after long sessions
+const MAX_OUTPUT_TOKENS = 1200 // per-reply cap so a runaway answer can't drain the bill
+const MAX_TOOL_STEPS = 8 // existing limit on the tool-use loop
 
 /**
  * Web chat streaming endpoint for Claire on the public site (`/claire`).
@@ -72,6 +81,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'no_messages' }, { status: 400 })
   }
 
+  // Reject oversized user messages early. A single 100KB blob has no
+  // legitimate use here and racks up input tokens.
+  const lastForCheck = messages[messages.length - 1]
+  if (lastForCheck?.role === 'user') {
+    const text = uiMessageText(lastForCheck)
+    if (text.length > MAX_USER_MESSAGE_CHARS) {
+      return NextResponse.json(
+        {
+          error: 'message_too_long',
+          message: `Please keep messages under ${MAX_USER_MESSAGE_CHARS} characters. Try splitting your question into a couple of shorter ones.`,
+        },
+        { status: 413 },
+      )
+    }
+  }
+
   // Auth is handled by @ai-sdk/gateway: AI_GATEWAY_API_KEY first,
   // then OIDC via @vercel/oidc on Vercel. We don't pre-check env vars
   // here because OIDC isn't always exposed as a process.env value;
@@ -99,6 +124,30 @@ export async function POST(req: NextRequest) {
   } catch (e) {
     console.error('[web-chat] conversation upsert failed:', e)
     return NextResponse.json({ error: 'db_error' }, { status: 500 })
+  }
+
+  // Per-conversation cap. Long sessions get cut off and forced to a
+  // fresh thread (the "Start over" button on the UI) to limit how much
+  // a single anonymous visitor can spend in one sitting.
+  try {
+    const sql = db()
+    const rows = (await sql`
+      SELECT COUNT(*)::int AS count FROM tz_agent_messages
+      WHERE conversation_id = ${conversationId} AND role = 'user'
+    `) as Array<{ count: number }>
+    const userCount = rows[0]?.count ?? 0
+    if (userCount >= MAX_USER_MESSAGES_PER_CONVERSATION) {
+      return NextResponse.json(
+        {
+          error: 'conversation_limit_reached',
+          message: `This conversation has reached its message limit. Hit "Start over" or call (518) 678-1230 and a real person can pick up where you left off.`,
+        },
+        { status: 429 },
+      )
+    }
+  } catch (e) {
+    console.error('[web-chat] message-count check failed:', e)
+    // Non-fatal: don't block on a counter query failure.
   }
 
   // Persist the latest user message for the transcript view.
@@ -131,12 +180,31 @@ export async function POST(req: NextRequest) {
   const tools = buildAgentTools({ conversationId, channel: 'web_chat' })
 
   const modelMessages = await convertToModelMessages(messages)
+
+  // Visitor identifier for AI Gateway per-user rate limiting + cost
+  // attribution. Hash the IP so we don't store the raw value anywhere.
+  // Configure RPM / TPD ceilings in the Vercel dashboard
+  // (vercel.com/<team>/<project>/settings → AI Gateway → Rate Limits).
+  const visitorIp =
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    req.headers.get('x-real-ip') ||
+    'unknown'
+  const visitorHash = createHash('sha256').update(visitorIp).digest('hex').slice(0, 24)
+  const env = process.env.VERCEL_ENV || 'dev'
+
   const result = streamText({
-    model: 'anthropic/claude-sonnet-4.6',
+    model: gateway('anthropic/claude-sonnet-4.6'),
     system: systemPrompt,
     messages: modelMessages,
     tools,
-    stopWhen: stepCountIs(8),
+    stopWhen: stepCountIs(MAX_TOOL_STEPS),
+    maxOutputTokens: MAX_OUTPUT_TOKENS,
+    providerOptions: {
+      gateway: {
+        user: visitorHash,
+        tags: ['feature:claire-web-chat', `env:${env}`],
+      },
+    },
     onError: ({ error }) => {
       // Surface the real upstream message in Vercel logs so we can debug
       // auth / model / tool failures without guessing.
