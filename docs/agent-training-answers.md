@@ -10,17 +10,40 @@ This document is the canonical knowledge base the AI agents (voice SMS web chat)
 
 ## 1. Pricing & Fees
 
+### Estimates Policy (READ FIRST)
+
+**TZ Electric offers free estimates.** This is the default offer for any customer asking about pricing for new work, upgrades, or replacements. Schedule a free estimate appointment unless the job specifically requires an on-site Field Assessment (see below).
+
+**What "free estimate" means in practice:**
+- For straightforward work where pricing can be ballparked (outlet/switch replacements, hot water heater swaps, standard EV charger near panel, mini-split add-ons in already-served rooms, panel info gathering, etc.), Claire can share the published price ranges in this section and offer to book a free estimate visit so the office team confirms scope and finalizes the quote.
+- For larger or multi-item projects, Claire schedules a free estimate and the estimating team produces a detailed proposal. No fee.
+- Claire **never** quotes the Field Assessment fee in response to a customer asking about a "free estimate", "quote", or "what does it cost". Field Assessments are a separate, narrower offer reserved for the cases listed below.
+
+**When to offer a Field Assessment instead of a free estimate:**
+
+A Field Assessment is a **paid** on-site visit that buys serious technician time to evaluate complex pre-work. Only offer it when the job genuinely needs that depth of survey:
+- Detached structures requiring trenching or long underground runs (EV charger to detached garage, sub-panel to outbuilding, generator pad far from house)
+- Whole-home rewires where existing wiring condition needs to be inspected before quoting
+- Service upgrades on historic homes, knob-and-tube, plaster walls, or unknown panel conditions
+- In-ground pools, hot tubs requiring bonding inspection, or remote water features
+- Properties where the customer doesn't know their own service size, panel location, or layout, and the project depends on those answers
+- Any time the customer themselves asks for an "on-site evaluation" or "engineer to come out"
+
+**If a customer pushes back on the Field Assessment fee** (when one is genuinely warranted), Claire can offer:
+- "If you're comfortable sharing photos and rough measurements, I can pass those to our estimating team and we can ballpark it for free first." Then escalate via `flag_for_office_review` so the office can follow up.
+- Reminder that the Field Assessment fee may be credited or waived if the project moves forward.
+
 ### Field Assessment vs Diagnostic Service
 
-Two on-site appointment types. Use the right one based on the customer's need.
+Two on-site appointment types **for the cases above**. Use the right one based on the customer's need.
 
-**Field Assessment** is for pricing new work or upgrades. Roughly 30 minutes on-site.
+**Field Assessment** is for pricing new work or upgrades **when on-site survey is required** (see "When to offer" list above). Roughly 30 minutes on-site.
 - Local Zone: **$169** (15–20 min from shop)
 - Standard Zone: **$239** (25–45 min from shop)
 - Extended Zone: **$329** (45 min to 1 hr 15 min)
-- Common scope: new fixtures/outlets, dedicated circuits, EV chargers, service upgrades, generators, mini-split electrical, planned upgrades.
-- Larger or multi-item projects can be forwarded to the estimating team for a detailed proposal.
+- Common scope: trenching/long-run projects, service upgrades on unknown panels, in-ground pools, remote outbuildings, historic-home rewires.
 - The assessment fee may be credited or waived depending on the project.
+- **Default to free estimate first.** Field Assessment is the fallback when survey is genuinely needed.
 
 **Diagnostic Service** is for existing problems, failures, troubleshooting.
 - Level 1 Diagnostic starts at **$244**.

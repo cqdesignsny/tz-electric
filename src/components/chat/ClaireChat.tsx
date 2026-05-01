@@ -176,13 +176,9 @@ function ClaireChatInner() {
   return (
     <div
       className="flex flex-col bg-gray-50 text-charcoal dark:bg-[#070D1F] dark:text-gray-100"
-      // Fixed height = viewport minus an estimate of the public-site
-      // chrome above (mobile has the phone-strip + nav, desktop just nav).
-      // Keeps the composer pinned and the thread internally scrollable —
-      // iMessage-style, no hunting for the input on first load.
-      style={{
-        height: 'calc(100dvh - var(--public-header, 120px))',
-      }}
+      // /claire is full-viewport (no public Header above). Body scrolls
+      // internally; composer is always pinned at the bottom of the screen.
+      style={{ height: '100dvh' }}
     >
       {/* Slim top strip with the theme toggle — thread view only.
           The empty state has its own centered toggle above the portrait. */}
@@ -379,12 +375,7 @@ function Composer({
   return (
     <form
       onSubmit={onSubmit}
-      className={[
-        'flex items-end gap-2 rounded-2xl border bg-white p-2 shadow-sm transition-shadow focus-within:shadow-md dark:bg-[#0F1A36]',
-        stickyBottom
-          ? 'border-gray-200 dark:border-white/10'
-          : 'border-gray-200 dark:border-white/10',
-      ].join(' ')}
+      className="flex items-end gap-2 rounded-3xl border border-gray-200 bg-white p-3 shadow-sm transition-shadow focus-within:shadow-md sm:p-4 dark:border-white/10 dark:bg-[#0F1A36]"
     >
       <textarea
         ref={textareaRef}
@@ -393,13 +384,13 @@ function Composer({
         onKeyDown={onKeyDown}
         placeholder={isThinking ? 'Claire is typing…' : 'Ask Claire anything about your project…'}
         rows={1}
-        className="flex-1 resize-none rounded-xl bg-transparent px-3 py-2.5 text-sm leading-relaxed text-navy placeholder:text-gray-400 focus:outline-none dark:text-white dark:placeholder:text-gray-500"
+        className="min-h-[28px] flex-1 resize-none rounded-xl bg-transparent px-2 py-2 text-base leading-relaxed text-navy placeholder:text-gray-400 focus:outline-none sm:min-h-[40px] sm:py-2.5 sm:text-base dark:text-white dark:placeholder:text-gray-500"
       />
       <button
         type="submit"
         disabled={!canSubmit}
         aria-label="Send message"
-        className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue text-white shadow-sm transition-all hover:bg-blue-dark disabled:cursor-not-allowed disabled:bg-gray-300 dark:disabled:bg-white/10 dark:disabled:text-gray-500"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue text-white shadow-sm transition-all hover:bg-blue-dark disabled:cursor-not-allowed disabled:bg-gray-300 sm:h-12 sm:w-12 dark:disabled:bg-white/10 dark:disabled:text-gray-500"
       >
         <svg
           viewBox="0 0 24 24"

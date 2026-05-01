@@ -25,6 +25,18 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://tzelectricinc.com'),
 }
 
+// Pinned to initial-scale=1 so the layout always renders at the actual
+// device width. We deliberately do NOT set maximum-scale=1 / user-
+// scalable=no — that breaks accessibility (visitors with low vision
+// rely on pinch-zoom). The "input zoom on tap" issue iOS Safari does
+// is fixed at the input level by giving every input/textarea a 16px
+// minimum font-size (in globals.css), which is what triggers the
+// platform's auto-zoom behavior.
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+}
+
 export default function RootLayout({
   children,
 }: {
@@ -35,7 +47,7 @@ export default function RootLayout({
       lang="en"
       className={`${montserrat.variable} ${manrope.variable}`}
     >
-      <body className="min-h-screen flex flex-col">{children}</body>
+      <body className="min-h-screen flex flex-col overflow-x-clip">{children}</body>
     </html>
   )
 }

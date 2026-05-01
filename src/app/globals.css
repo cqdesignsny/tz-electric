@@ -4,6 +4,18 @@
    Only used inside the Switchboard. The public site never sets it. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
+/* iOS Safari auto-zooms in on any input / textarea / select that has a
+   computed font-size below 16px. We never want that — it breaks layout
+   and feels broken to the visitor. Pin a 16px minimum on every form
+   element across the site so taps don't trigger zoom. Tailwind classes
+   like text-sm (14px) are still allowed for visual styling, but the
+   minimum size below catches them at the platform level. */
+input,
+textarea,
+select {
+  font-size: max(16px, 1em);
+}
+
 /* ============================================
    TZ ELECTRIC INC - DESIGN SYSTEM
    ============================================ */
