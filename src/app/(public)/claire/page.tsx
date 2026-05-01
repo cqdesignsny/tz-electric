@@ -4,8 +4,8 @@ import ClaireChat from '@/components/chat/ClaireChat'
 import { chatThemeInitScript } from '@/components/chat/ChatThemeProvider'
 
 export const metadata = createMetadata({
-  title: 'Claire | TZ Electric AI Assistant',
-  description: `Chat with Claire, TZ Electric's AI assistant. Get instant answers about cooling, heating, electrical, plumbing, generators, and EV chargers in the Hudson Valley. Call ${COMPANY.phone}.`,
+  title: 'Claire | TZ Electric Smart Assistant',
+  description: `Chat with Claire, TZ Electric's smart assistant. Get instant answers about cooling, heating, electrical, plumbing, generators, and EV chargers in the Hudson Valley. Call ${COMPANY.phone}.`,
   path: '/claire',
 })
 

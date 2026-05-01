@@ -458,7 +458,7 @@ export const SECTIONS: Section[] = [
         type: 'long_text',
         label: 'First auto-reply wording on inbound SMS',
         placeholder:
-          'e.g. "Thanks for texting TZ Electric. I am an AI assistant and can help right now. What service do you need?"',
+          'e.g. "Thanks for texting TZ Electric. I am a smart assistant and can help right now. What service do you need?"',
       },
       {
         id: 'review_request_workflow',

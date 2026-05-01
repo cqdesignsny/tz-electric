@@ -190,7 +190,7 @@ function ClaireChatInner() {
                 Hi, I&apos;m Claire.
               </h1>
               <p className="mt-3 max-w-xl text-base text-gray-600 dark:text-gray-300 sm:text-lg">
-                I&apos;m an AI assistant for TZ Electric. Ask me anything about your project. Cooling, heating, electrical, plumbing, generators, EV chargers.
+                I&apos;m a smart assistant for TZ Electric. Ask me anything about your project. Cooling, heating, electrical, plumbing, generators, EV chargers.
               </p>
             </div>
 
@@ -220,7 +220,7 @@ function ClaireChatInner() {
                 stickyBottom={false}
               />
               <p className="mt-3 text-center text-xs text-gray-500 dark:text-gray-400">
-                Identifies as AI. For emergencies call (518) 678-1230 — we answer 24/7.
+                For emergencies, call (518) 678-1230.
               </p>
             </div>
           </div>
@@ -257,7 +257,7 @@ function ClaireChatInner() {
                 stickyBottom
               />
               <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-400">
-                Identifies as AI. For emergencies call (518) 678-1230.
+                For emergencies, call (518) 678-1230.
               </p>
             </div>
           </div>
@@ -333,7 +333,7 @@ function ClairePortrait({ size }: { size: 'avatar' | 'hero' }) {
       <div className="relative h-32 w-32 overflow-hidden rounded-full ring-4 ring-white shadow-lg sm:h-36 sm:w-36 dark:ring-white/10">
         <Image
           src={CLAIRE_PIC}
-          alt="Claire, AI assistant for TZ Electric"
+          alt="Claire, smart assistant for TZ Electric"
           fill
           sizes="(min-width: 640px) 144px, 128px"
           priority
