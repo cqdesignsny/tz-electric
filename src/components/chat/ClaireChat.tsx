@@ -172,10 +172,43 @@ function ClaireChatInner() {
     ta.style.height = `${Math.min(ta.scrollHeight, 192)}px`
   }, [input])
 
-  // Auto-scroll intentionally NOT applied. Cesar wants the thread to
-  // stay anchored where the visitor is reading instead of yanking the
-  // viewport down on every streamed token. The thread is scrollable;
-  // visitors scroll themselves to follow new replies.
+  // Smart auto-scroll: keep the latest message in view by default, but
+  // get out of the way if the visitor scrolled up to read older history.
+  // We track user scroll direction (negative dy = scrolled up); a single
+  // intentional scroll-up disables autoscroll until they scroll back to
+  // within 100px of the bottom. Programmatic scrolls always move down, so
+  // the dy < -20 threshold reliably distinguishes them from user scrolls.
+  const hasUserScrolledUpRef = useRef(false)
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    let lastY = window.scrollY
+    function onScroll() {
+      const dy = window.scrollY - lastY
+      lastY = window.scrollY
+      if (dy < -20) {
+        hasUserScrolledUpRef.current = true
+        return
+      }
+      const distanceFromBottom =
+        document.documentElement.scrollHeight -
+        (window.innerHeight + window.scrollY)
+      if (distanceFromBottom < 100) {
+        hasUserScrolledUpRef.current = false
+      }
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (hasUserScrolledUpRef.current) return
+    window.scrollTo({
+      top: document.documentElement.scrollHeight,
+      behavior: 'auto',
+    })
+  }, [messages, isThinking])
 
   function send(text: string) {
     const trimmed = text.trim()
