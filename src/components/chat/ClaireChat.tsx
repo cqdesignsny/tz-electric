@@ -113,6 +113,52 @@ function ClaireChatInner() {
     setHydrated(true)
   }, [])
 
+  // iOS Safari overlays the keyboard on top of the layout viewport. CSS
+  // 100dvh / 100vh both stay at the full screen height, so a 100dvh chat
+  // container ends up half-covered by the keyboard with body bg showing
+  // through. Use the visualViewport API to track the *visible* viewport
+  // and subtract the public-site Header height. Updates on resize, scroll,
+  // and any header height change.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const headerEl = document.querySelector('header') as HTMLElement | null
+
+    function updateHeight() {
+      const vv = window.visualViewport
+      const visualH = vv ? vv.height : window.innerHeight
+      const headerH = headerEl?.getBoundingClientRect().height ?? 0
+      // Floor at 240px so the chat is still usable even on very small
+      // visible-viewport sizes (e.g. landscape with keyboard up).
+      const chatH = Math.max(visualH - headerH, 240)
+      document.documentElement.style.setProperty('--claire-h', `${chatH}px`)
+    }
+
+    updateHeight()
+
+    const vv = window.visualViewport
+    if (vv) {
+      vv.addEventListener('resize', updateHeight)
+      vv.addEventListener('scroll', updateHeight)
+    }
+    window.addEventListener('resize', updateHeight)
+
+    let ro: ResizeObserver | undefined
+    if (headerEl && typeof ResizeObserver !== 'undefined') {
+      ro = new ResizeObserver(updateHeight)
+      ro.observe(headerEl)
+    }
+
+    return () => {
+      if (vv) {
+        vv.removeEventListener('resize', updateHeight)
+        vv.removeEventListener('scroll', updateHeight)
+      }
+      window.removeEventListener('resize', updateHeight)
+      ro?.disconnect()
+    }
+  }, [])
+
   const transport = useMemo(() => {
     return new DefaultChatTransport({
       api: '/api/agents/web-chat/stream',
@@ -176,9 +222,12 @@ function ClaireChatInner() {
   return (
     <div
       className="flex flex-col bg-gray-50 text-charcoal dark:bg-[#070D1F] dark:text-gray-100"
-      // /claire is full-viewport (no public Header above). Body scrolls
-      // internally; composer is always pinned at the bottom of the screen.
-      style={{ height: '100dvh' }}
+      // Height is the visible viewport minus the public Header above.
+      // The --claire-h variable is set by the visualViewport hook above
+      // and shrinks live when the iOS keyboard appears, so the composer
+      // never ends up below the keyboard or with white space below it.
+      // Fallback for first paint before JS runs.
+      style={{ height: 'var(--claire-h, calc(100dvh - 110px))' }}
     >
       {/* Slim top strip with the theme toggle — thread view only.
           The empty state has its own centered toggle above the portrait. */}

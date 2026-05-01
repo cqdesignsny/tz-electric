@@ -16,6 +16,15 @@ select {
   font-size: max(16px, 1em);
 }
 
+/* On /claire (and anywhere else dark mode is active), match the body
+   background to the dark chat surface. iOS Safari scrolls the page to
+   bring focused inputs above the keyboard; if the body bg leaks through
+   under the chat container during that scroll, we want it to look like
+   the chat, not white. */
+[data-theme="dark"] body {
+  background-color: #070D1F;
+}
+
 /* ============================================
    TZ ELECTRIC INC - DESIGN SYSTEM
    ============================================ */

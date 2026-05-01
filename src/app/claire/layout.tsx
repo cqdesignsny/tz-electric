@@ -1,13 +1,15 @@
+import Header from '@/components/layout/Header'
 import PublicAnalytics from '@/components/analytics/PublicAnalytics'
 
 /**
- * /claire layout — fully immersive chat surface. No public Header,
- * Footer, "Ready to Get Started?" CTA strip, or FloatingCTA. Just the
- * chat. Analytics still load so we track visits to this surface.
+ * /claire layout — public site Header at the top so visitors can still
+ * navigate elsewhere on the site, then the immersive chat below it.
+ * Footer, "Ready to Get Started?" CTA strip, and FloatingCTA all stay
+ * out — they fight the chat for attention and push the composer off
+ * screen on mobile.
  *
- * Lives outside the (public) route group on purpose: the public layout
- * wraps every page in chrome that competes with the chat for attention
- * and pushes the composer below the fold on mobile.
+ * Lives outside the (public) route group so we can keep just the
+ * Header (navigation) without inheriting the rest of the public chrome.
  */
 export default function ClaireLayout({
   children,
@@ -17,6 +19,7 @@ export default function ClaireLayout({
   return (
     <>
       <PublicAnalytics />
+      <Header />
       <main className="flex-1">{children}</main>
     </>
   )
