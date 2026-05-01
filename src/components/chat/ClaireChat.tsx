@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import {
   useEffect,
   useLayoutEffect,
@@ -14,6 +15,8 @@ import { DefaultChatTransport, isTextUIPart, type UIMessage } from 'ai'
 
 import ChatThemeToggle from './ChatThemeToggle'
 import { ChatThemeProvider } from './ChatThemeProvider'
+
+const CLAIRE_PIC = '/images/agents/claire-profile.png'
 
 const CONVERSATION_KEY = 'tz-claire-conversation-id'
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -166,35 +169,27 @@ function ClaireChatInner() {
   }
 
   return (
-    <div className="flex flex-col bg-gray-50 text-charcoal dark:bg-[#070D1F] dark:text-gray-100 min-h-[calc(100vh-80px)]">
-      {/* Page header strip — sits below the public site Header. */}
-      <div className="border-b border-gray-200 bg-white/80 backdrop-blur dark:border-white/5 dark:bg-[#0A1228]/80">
-        <div className="mx-auto flex max-w-3xl items-center justify-between px-4 py-3 sm:px-6">
-          <div className="flex items-center gap-3">
-            <ClaireAvatar />
-            <div>
-              <p className="font-heading text-sm font-bold text-navy dark:text-white">
-                Claire
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                AI assistant for TZ Electric
-              </p>
-            </div>
-          </div>
+    <div className="relative flex flex-col bg-gray-50 text-charcoal dark:bg-[#070D1F] dark:text-gray-100 min-h-[calc(100vh-80px)]">
+      {/* Floating theme toggle for the thread view. Empty state has its own
+          centered toggle, so suppress this one there. */}
+      {!showEmptyState && (
+        <div className="pointer-events-auto absolute right-4 top-4 z-10 sm:right-6 sm:top-6">
           <ChatThemeToggle />
         </div>
-      </div>
+      )}
 
-      {/* Body: empty state OR message thread. */}
       {showEmptyState ? (
         <div className="flex-1 flex flex-col items-center justify-center px-4 py-10 sm:px-6">
           <div className="w-full max-w-3xl">
-            <div className="text-center">
-              <ClaireAvatar large />
-              <h1 className="mt-5 font-heading text-3xl font-bold text-navy dark:text-white sm:text-4xl">
+            <div className="flex flex-col items-center text-center">
+              <ChatThemeToggle />
+              <div className="mt-6">
+                <ClairePortrait size="hero" />
+              </div>
+              <h1 className="mt-6 font-heading text-3xl font-bold text-navy dark:text-white sm:text-4xl">
                 Hi, I&apos;m Claire.
               </h1>
-              <p className="mt-3 text-base text-gray-600 dark:text-gray-300 sm:text-lg">
+              <p className="mt-3 max-w-xl text-base text-gray-600 dark:text-gray-300 sm:text-lg">
                 I&apos;m an AI assistant for TZ Electric. Ask me anything about your project. Cooling, heating, electrical, plumbing, generators, EV chargers.
               </p>
             </div>
@@ -289,7 +284,7 @@ function MessageRow({ message }: { message: UIMessage }) {
 
   return (
     <div className="flex gap-3">
-      <ClaireAvatar />
+      <ClairePortrait size="avatar" />
       <div className="flex-1 pt-1">
         <p className="mb-1 text-xs font-bold uppercase tracking-wider text-blue dark:text-blue-light">
           Claire
@@ -305,7 +300,7 @@ function MessageRow({ message }: { message: UIMessage }) {
 function TypingIndicator() {
   return (
     <div className="flex gap-3">
-      <ClaireAvatar />
+      <ClairePortrait size="avatar" />
       <div className="pt-1">
         <p className="mb-1 text-xs font-bold uppercase tracking-wider text-blue dark:text-blue-light">
           Claire
@@ -329,15 +324,30 @@ function Dot({ delay }: { delay: string }) {
   )
 }
 
-function ClaireAvatar({ large = false }: { large?: boolean }) {
-  const size = large ? 'w-14 h-14 text-lg' : 'w-9 h-9 text-sm'
+function ClairePortrait({ size }: { size: 'avatar' | 'hero' }) {
+  // 'avatar' is the small version next to message rows; 'hero' is the
+  // large one on the empty state. Both use the same source — Next/Image
+  // serves a properly sized variant.
+  if (size === 'hero') {
+    return (
+      <Image
+        src={CLAIRE_PIC}
+        alt="Claire, AI assistant for TZ Electric"
+        width={144}
+        height={144}
+        priority
+        className="h-32 w-32 rounded-full object-cover ring-4 ring-white shadow-lg sm:h-36 sm:w-36 dark:ring-white/10"
+      />
+    )
+  }
   return (
-    <div
-      className={`${size} flex items-center justify-center rounded-full bg-gradient-to-br from-navy to-blue text-white font-heading font-bold shadow-md dark:from-blue dark:to-blue-light`}
-      aria-hidden
-    >
-      C
-    </div>
+    <Image
+      src={CLAIRE_PIC}
+      alt="Claire"
+      width={72}
+      height={72}
+      className="h-9 w-9 flex-shrink-0 rounded-full object-cover ring-2 ring-white shadow-sm dark:ring-white/10"
+    />
   )
 }
 
