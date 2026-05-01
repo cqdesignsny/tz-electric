@@ -99,13 +99,17 @@ export default function ClaireChat() {
 }
 
 function ClaireChatInner() {
-  const [conversationId, setConversationId] = useState('')
-  const [attribution, setAttribution] = useState<Record<string, string>>({})
+  // useChat captures the transport on first init and ignores later
+  // useMemo updates. Stash the conversationId + attribution in refs so
+  // prepareSendMessagesRequest reads the latest values on every send,
+  // not whatever was in scope at first render.
+  const conversationIdRef = useRef<string>('')
+  const attributionRef = useRef<Record<string, string>>({})
   const [hydrated, setHydrated] = useState(false)
 
   useEffect(() => {
-    setConversationId(readOrCreateConversationId())
-    setAttribution(captureAttribution())
+    conversationIdRef.current = readOrCreateConversationId()
+    attributionRef.current = captureAttribution()
     setHydrated(true)
   }, [])
 
@@ -116,18 +120,21 @@ function ClaireChatInner() {
         body: {
           ...(body ?? {}),
           messages,
-          conversationId,
-          attribution,
+          conversationId: conversationIdRef.current,
+          attribution: attributionRef.current,
         },
       }),
     })
-  }, [conversationId, attribution])
+    // Transport is stable for the life of the component; refs above
+    // carry the up-to-date conversationId / attribution into each send.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const { messages, sendMessage, status, error } = useChat({ transport })
 
   const isThinking = status === 'submitted' || status === 'streaming'
   const showEmptyState = messages.length === 0 && !isThinking
-  const canSend = hydrated && !!conversationId && !isThinking
+  const canSend = hydrated && !isThinking
 
   const [input, setInput] = useState('')
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
@@ -275,8 +282,8 @@ function MessageRow({ message }: { message: UIMessage }) {
   if (isUser) {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] rounded-2xl rounded-br-md bg-navy px-4 py-3 text-sm leading-relaxed text-white shadow-sm dark:bg-blue">
-          <p className="whitespace-pre-wrap break-words">{text}</p>
+        <div className="max-w-[85%] rounded-2xl rounded-br-md bg-navy px-4 py-3 text-sm leading-relaxed shadow-sm dark:bg-blue-dark">
+          <p className="whitespace-pre-wrap break-words text-white">{text}</p>
         </div>
       </div>
     )
