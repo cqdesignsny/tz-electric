@@ -153,7 +153,7 @@ export function buildAgentTools(ctx: AgentToolContext) {
 
     create_lead_with_estimate: tool({
       description:
-        'Create a lead end-to-end: persist to TZ DB, find or create the HCP customer, create an unscheduled estimate with all qualification details in office-internal notes, and drop a card in HCP Job Inbox. Same backend the website form uses. Call this only after qualification is complete.',
+        'BOOK THE LEAD INTO HOUSECALL PRO. This is the same backend the website /quote form uses, called via the same pipeline. Calling this tool: (1) persists the lead to the TZ DB, (2) finds-or-creates the HCP customer (by phone, email, or name), (3) creates an unscheduled estimate with all qualification answers in office-internal private notes, (4) drops a card in HCP Job Inbox so the office sees the new lead immediately, (5) mirrors to the TZ Switchboard Lead Pipeline, and (6) attaches the resulting tz_lead_id to this conversation. There is no other way to land a lead in HCP from this conversation; this tool IS the booking step. Call when: the visitor has agreed to a free estimate AND you have first name + last name + phone + ownership at minimum. Use the qualification keys from section 6 of the knowledge base ("Canonical Lead Intake Question Set") so the office reads consistent fields across the website form and every agent.',
       inputSchema: z.object({
         first_name: z.string(),
         last_name: z.string(),
