@@ -294,12 +294,14 @@ function MessageRow({ message }: { message: UIMessage }) {
   return (
     <div className="flex gap-3">
       <ClairePortrait size="avatar" />
-      <div className="flex-1 pt-1">
+      <div className="flex-1 min-w-0 pt-1">
         <p className="mb-1 text-xs font-bold uppercase tracking-wider text-blue dark:text-blue-light">
           Claire
         </p>
-        <div className="whitespace-pre-wrap break-words text-sm leading-relaxed text-charcoal dark:text-gray-100">
-          {text}
+        <div className="inline-block max-w-full rounded-2xl rounded-bl-md bg-gray-200 px-4 py-3 text-sm leading-relaxed shadow-sm dark:bg-white/10">
+          <p className="whitespace-pre-wrap break-words text-charcoal dark:text-gray-100">
+            {text}
+          </p>
         </div>
       </div>
     </div>
@@ -314,7 +316,7 @@ function TypingIndicator() {
         <p className="mb-1 text-xs font-bold uppercase tracking-wider text-blue dark:text-blue-light">
           Claire
         </p>
-        <div className="flex items-center gap-1.5 py-2">
+        <div className="inline-flex items-center gap-1.5 rounded-2xl rounded-bl-md bg-gray-200 px-4 py-3 shadow-sm dark:bg-white/10">
           <Dot delay="0ms" />
           <Dot delay="150ms" />
           <Dot delay="300ms" />
