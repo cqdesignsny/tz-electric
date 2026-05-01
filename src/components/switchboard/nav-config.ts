@@ -152,7 +152,7 @@ export const NAV_SECTIONS: NavSection[] = [
       {
         label: 'Web Chat',
         slug: 'web-chat',
-        status: 'soon',
+        status: 'live',
         tagline: 'Chatbot conversations from tzelectricinc.com.',
         overview:
           'Live chat sessions from the public site. Same takeover-by-human flow as SMS. Replaces the old Podium webchat with a CQ-built version that integrates with the rest of the TZ Switchboard.',
