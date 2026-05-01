@@ -162,7 +162,7 @@ export function buildAgentTools(ctx: AgentToolContext) {
           escalated: true,
           reason,
           message:
-            'Emergency dispatch has been alerted. Tyler and the on-call team are being paged now. Stay on the line / keep your phone close — someone will reach back within minutes.',
+            'Emergency dispatch has been alerted. Tyler and the on-call team are being paged now. Stay on the line, keep your phone close, someone will reach back within minutes.',
         }
       },
     }),
