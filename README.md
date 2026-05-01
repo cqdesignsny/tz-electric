@@ -45,8 +45,11 @@ src/
 │   ├── globals.css                # Design system via Tailwind @theme + dark variant
 │   ├── robots.ts                  # /robots.txt
 │   ├── sitemap.ts                 # /sitemap.xml (50+ URLs)
+│   ├── claire/                    # /claire — Web Chat Claire (top-level segment, own minimal layout)
+│   │   ├── layout.tsx             # Public Header + PublicAnalytics; no Footer / CTA / FloatingCTA
+│   │   └── page.tsx               # Mounts ClaireChat with breadcrumb JSON-LD + theme init script
 │   ├── (public)/                  # Public site route group
-│   │   ├── layout.tsx             # Public chrome + analytics + LocalBusiness JSON-LD
+│   │   ├── layout.tsx             # Public chrome + PublicAnalytics + LocalBusiness JSON-LD
 │   │   ├── page.tsx               # Homepage
 │   │   ├── (services)/[slug]/     # 7 dynamic service pages
 │   │   ├── mitsubishi/            # Mitsubishi Electric landing
@@ -76,15 +79,28 @@ src/
 │   │                              # warehouse-inventory, sales-outbound
 │   └── api/
 │       ├── agent-training/submit/ # Branded HTML email via Resend
+│       ├── agents/
+│       │   ├── web-chat/
+│       │   │   ├── stream/        # POST: streaming chat endpoint (AI Gateway, prompt cached, abuse-guarded)
+│       │   │   └── conversations/ # POST: takeover / release / close / office_reply
+│       │   └── sms/
+│       │       ├── webhook/       # Twilio inbound (scaffolded, awaiting model wire-up)
+│       │       └── conversations/ # Office actions on SMS threads
+│       ├── leads/submit/          # Form + agent shared lead-routing pipeline (HCP customer + estimate + Job Inbox + tz_leads)
 │       └── switchboard/auth/      # /login + /logout cookie session
 ├── components/
 │   ├── ui/                        # Button, Badge, Card, SectionHeader, StarRating, TrustIndexWidget
-│   ├── layout/                    # Header (sticky, dropdowns), Footer (4-col + Admin link)
-│   ├── switchboard/               # DashboardShell, Sidebar, TopBar, ThemeProvider,
-│   │                              # ThemeToggle, ModuleInfoPage, nav-config
+│   ├── layout/                    # Header (sticky, dropdowns), Footer (4-col + Admin link, slim CTA)
+│   ├── analytics/                 # PublicAnalytics (GTM + GA4 + Google Ads + Meta Pixel + Hotjar) — used by (public)/ and claire/
+│   ├── chat/                      # ClaireChat, ChatThemeProvider, ChatThemeToggle (used on /claire)
+│   ├── switchboard/               # DashboardShell, Sidebar, TopBar, ThemeProvider, ThemeToggle,
+│   │                              # ModuleInfoPage, nav-config, SmsConversationsClient,
+│   │                              # WebChatConversationsClient, LeadPipelineClient, RecentLeadsCard,
+│   │                              # KnowledgeBaseNav
 │   ├── sections/                  # HeroSection, TrustBar, ServicesGrid, WhyChooseUs,
 │   │                              # ReviewsSection, ServiceAreaSection, CTASection,
 │   │                              # ServicePageTemplate, CertificationSlider
+│   ├── forms/                     # LeadForm, lead-form-config, ConversionTracker
 │   └── effects/                   # ElectricCursor (canvas particle system), ScrollToTop
 └── lib/
     ├── constants.ts               # Company data, nav, services, analytics IDs
@@ -97,7 +113,22 @@ src/
     ├── careers-data.ts            # 6 job listings with full content
     ├── team-data.ts               # Team members
     ├── housecall-pro.ts           # HCP API client (customer search, create, tag)
-    ├── switchboard-auth.ts        # HMAC session token for /switchboard/*
+    ├── switchboard-auth.ts        # HMAC session token for /switchboard/* (legacy, transition fallback)
+    ├── auth-config.ts             # NextAuth.js v5 setup (Google OAuth, role allowlists, domain restriction)
+    ├── current-user.ts            # requireModuleAccess() and signed-in user helpers
+    ├── modules.ts                 # ModuleSlug union, default role-based access policy
+    ├── agent-prompt.ts            # buildSystemPrompt — KB + persona + voice + security + mission + per-channel framing
+    ├── agent-tools.ts             # buildAgentTools — update_visitor_contact, find_existing_customer,
+    │                              # create_lead_with_estimate, lookup_business_hours, flag_for_office_review,
+    │                              # escalate_emergency. Shared by web chat, voice, SMS.
+    ├── agent-conversations.ts     # tz_agent_conversations + tz_agent_messages helpers (find/start, append, takeover, etc.)
+    ├── agent-knowledge-base.ts    # Loads + merges base KB (markdown) with tz_kb_overrides (Tyler-edited)
+    ├── leads-store.ts             # tz_leads insert + HCP linkage helpers
+    ├── attribution.ts             # deriveChannel(), leadValueCents(), attribution snapshot helpers
+    ├── lead-tracking.ts           # Client-side first/last-touch tracking (gclid, utm_*, referrer)
+    ├── db.ts                      # Neon HTTP client (singleton)
+    ├── housecall-pro.ts           # HCP API client + empirical findings docs
+    ├── twilio-signature.ts        # Twilio webhook signature verification
     ├── email-templates.ts         # Branded HTML email layout + per-email functions
     └── utils.ts                   # cn(), formatPhone()
 ```
@@ -107,11 +138,15 @@ src/
 The TZ Switchboard at `/switchboard` is the operational backend for TZ Electric. Auth-gated via single-password admin login. HMAC-signed cookie session, 30-day TTL. Public footer has a discreet "Admin" link in the bottom bar.
 
 **Live modules:**
-- **Agent Training** (`/switchboard/agent-training`), multi-step discovery questionnaire (~70 questions across 9 sections) that feeds the AI agent knowledge base. Auto-saves to localStorage. Submit posts to `/api/agent-training/submit`, which sends a branded HTML email to the recipient configured in `AGENT_TRAINING_TO_EMAIL` (default `cesar@creativequalitymarketing.com`). **Tyler submitted on 2026-04-26.** His answers (plus follow-up gap answers) live at [`docs/agent-training-answers.md`](docs/agent-training-answers.md), which is the canonical knowledge base the SMS, voice, and web chat agents will load as their system prompt context.
+- **Agent Training** (`/switchboard/agent-training`), multi-step discovery questionnaire (~70 questions across 9 sections) that feeds the AI agent knowledge base. Auto-saves to localStorage. Submit posts to `/api/agent-training/submit`, which sends a branded HTML email. **Tyler submitted on 2026-04-26.** His answers (plus follow-up gap answers) live at [`docs/agent-training-answers.md`](docs/agent-training-answers.md), the canonical knowledge base the SMS, voice, and web chat agents load as their system prompt context.
+- **Knowledge Base** (`/switchboard/knowledge-base`), structured browseable view of the agent training answers doc with sticky section nav, scroll-spy, and full markdown styling. Owners + admins see Edit / Revert per section. Tyler-authored overrides land in `tz_kb_overrides` (Neon) and **always win on render and in agent prompts**, even if CQ later updates the base markdown. `tz_kb_override_history` keeps every revision; `tz_audit_log` stamps every edit.
+- **Lead Pipeline** (`/switchboard/lead-pipeline`), reads from `tz_leads` (Neon). Filters (search, service, channel, status). Two-way HCP Won/Lost sync. Channel chip + paid/organic/referral/direct stat cards. Deep-link to HCP estimate.
+- **Web Chat** (`/switchboard/web-chat`) **— LIVE 2026-05-01.** Office-side viewer for `/claire` conversations. Thread list with visitor name + phone + attribution channel + "Lead captured" badge. Active thread shows full transcript including collapsible tool-call rows, first-touch attribution strip with lead deep-link, takeover/release/close, office reply composer. Channel-agnostic actions API at `/api/agents/web-chat/conversations`.
+- **SMS Conversations** (`/switchboard/sms-conversations`), live SMS thread viewer with takeover. Same shape as Web Chat. Awaits the SMS Claire model wire-up + Twilio creds to populate; until then any inbound test SMS persists as transcript.
+- **Users** (`/switchboard/users`), owner-only. Invite, role grant / revoke, disable, login_count + last sign-in tracking, per-user module access overrides.
 
-**Coming Soon and Planned modules:** every sidebar item is clickable and opens a dedicated info page describing what we'll build there. All 11 share a single `ModuleInfoPage` template that reads from `nav-config.ts`:
-- Lead Pipeline, Reports, Employee Training (Trainual)
-- Knowledge Base, Call Logs, SMS Conversations, Web Chat
+**Coming Soon and Planned modules:** every sidebar item is clickable and opens a dedicated info page describing what we'll build there. Shared `ModuleInfoPage` template reads from `nav-config.ts`:
+- Reports, Employee Training (Trainual), Call Logs
 - Email Assistant, Office Operations, Warehouse & Inventory, Sales & Outbound
 
 **Theme:** Light / Dark / System segmented toggle in the topbar, prominent on every screen size. Defaults to System (follows OS preference). The `dark` variant is scoped to `[data-theme="dark"]` so it only applies inside the TZ Switchboard. Public site stays light only.
@@ -140,9 +175,9 @@ Future email types (lead form notifications, booking confirms, agent replies) re
 
 ## Pages
 
-The public site has 50+ static and dynamic routes including the homepage, 7 service pages, sub-service pages, the Mitsubishi landing, signature plans, maintenance plans, about, contact, reviews, financing, gallery, promotions, careers (with 6 individual job pages), 7 city pages, 5 county pages, 5 legal pages, and the hidden /thank-you page.
+The public site has 50+ static and dynamic routes including the homepage, 7 service pages, sub-service pages, the Mitsubishi landing, signature plans, maintenance plans, about, contact, reviews, financing, gallery, promotions, careers (with 6 individual job pages), 7 city pages, 5 county pages, 5 legal pages, the lead form at `/quote`, the hidden /thank-you page, and **`/claire`** (full-page web chat surface, top-level segment with its own minimal layout).
 
-The TZ Switchboard adds 13 more (login, dashboard home, agent training, plus 11 module info pages).
+The TZ Switchboard adds 13+ more (login, dashboard home, agent training, knowledge base, lead pipeline, web chat conversations, SMS conversations, users, plus the remaining module info pages).
 
 ## Design System
 
@@ -207,11 +242,14 @@ All scripts loaded directly in `(public)/layout.tsx` so they only fire on the pu
 | Service | Status | Details |
 |---|---|---|
 | Stripe | Live | Payment processing for maintenance plan signups |
-| Housecall Pro | Live | Customer creation, lead capture (`/leads`), and tagging via API |
+| Housecall Pro | Live | Customer find-or-create + estimate creation + Job Inbox lead. Same routing for the website form and every agent. |
 | Resend | Live | Outbound email, account under `tzelectricoffice@gmail.com`, domain `tzelectricinc.com` verified (SPF + DKIM) |
 | Trust Index | Live | Google reviews widget on homepage + reviews page |
-| Neon Postgres (`tz-db`) | Live | Vercel Marketplace integration. `tz_leads` write-through on every form submission. Migrations in `migrations/`, run with `npm run migrate`. |
+| Neon Postgres (`tz-db`) | Live | Vercel Marketplace integration. `tz_leads` + `tz_agent_conversations` + `tz_agent_messages` + `tz_kb_overrides` + `tz_users`. Migrations in `migrations/`, run with `npm run migrate`. |
 | Native lead form | Live | `/quote`, replaces the old Typeform popup. Posts to HCP `/leads` and `tz_leads`. GCLID + UTM capture, branded email via Resend. |
+| Vercel AI Gateway | Live | Powers Web Chat Claire via OIDC auth (no API key on Vercel). Anthropic Sonnet 4.6 with ephemeral prompt caching. Same Gateway will power voice and SMS Claire when those ship. Per-visitor rate-limit ceilings configurable in dashboard. |
+| Anthropic (via Gateway) | Live | Sonnet 4.6 model behind Web Chat Claire. ~90% input cost reduction on cache hits. |
+| NextAuth.js v5 (Google OAuth) | Live | TZ Switchboard sign-in. Domain-restricted to `tzelectricinc.com` + `creativequalitymarketing.com`. Per-user roles + module access overrides. |
 | Typeform (job app) | Active | `ghfs29y37tj.typeform.com/to/hsBm2HUf`, to be replaced with native form (Phase later) |
 
 ## Career Pages
@@ -224,7 +262,7 @@ All scripts loaded directly in `(public)/layout.tsx` so they only fire on the pu
 
 ## What's shipped
 
-The voice persona for all customer-facing agents is **Claire** (female voice, warm/neighborly, identifies as AI in the opener). Source of truth for behavior: [`docs/agent-training-answers.md`](docs/agent-training-answers.md), with Tyler-authored overrides on top via the in-app editor.
+The persona for all customer-facing agents is **Claire** (warm / neighborly / professional, identifies as a "smart assistant" in the opener — never "AI assistant" in customer-facing copy; internal HCP tag stays as `TZ AI AGENT`). Source of truth for behavior: [`docs/agent-training-answers.md`](docs/agent-training-answers.md), with Tyler-authored overrides on top via the in-app editor at `/switchboard/knowledge-base`.
 
 - ✓ **Native lead form** at `/quote`. Three-step (service → qualification → contact). Replaces every Typeform CTA. Renter detection + landlord-info branch. Branded Resend email. Multi-channel attribution (gclid, gbraid, wbraid, fbclid, msclkid, ttclid, li_fat_id, lsa_id + UTMs + referrer + first-touch / last-touch cookies). Conversion firing on `/thank-you` (GTM dataLayer + GA4 `generate_lead` + Meta Pixel `Lead`, value tiered by service).
 - ✓ **HCP routing rewritten** as a triple-write per submission: find-or-create customer (matched by phone OR email OR full name), create unscheduled estimate with `work_status: needs scheduling` and lead details in option-internal notes, drop a Job Inbox card via `/leads` with top-level `customer_id`. Customer profile notes stay reserved for persistent customer info, never job specifics. All three records mirror back to `tz_leads` on Neon.
@@ -232,17 +270,24 @@ The voice persona for all customer-facing agents is **Claire** (female voice, wa
 - ✓ **Knowledge Base** at `/switchboard/knowledge-base`. Owners + admins click Edit on any section to write a per-section override into `tz_kb_overrides` (Neon). Tyler-authored overrides always win on render and in agent prompts even if CQ later updates the base markdown. Every edit stamps `tz_kb_override_history` + `tz_audit_log`.
 - ✓ **Switchboard auth.** Google OAuth via NextAuth.js v5, domain-restricted to `tzelectricinc.com` + `creativequalitymarketing.com`. Per-user roles (`owner` / `admin` / `office` / `viewer` / `disabled`). Owner-only `/switchboard/users` page with invite, role grant/revoke, disable, login_count + last sign-in tracking, **per-user module access overrides** ("Customize access" button gives a checkbox panel per user). Sidebar filters modules by access; each protected page calls `requireModuleAccess(slug)` and bounces denied visitors. Sidebar shows the signed-in user's avatar + name + role. Dashboard home greets by first name with time-aware salutation + sign-in count.
 - ✓ **Account handoff to TZ team.** Vercel project + domain transferred to `tzelectricoffice@gmail.com` (Pro plan). Neon migrated from CQ Marketplace to TZ-DB Marketplace via `pg_dump 17` → `psql` restore. Old CQ Neon deleted. Stripe + HCP secrets converted to Vercel `sensitive` type. Every paid resource for tz-electric is on Tyler's billing.
-- ✓ **SMS Claire scaffolding.** Webhook signature verification, conversation persistence (`tz_agent_conversations` + `tz_agent_messages`), takeover UI at `/switchboard/sms-conversations`, system prompt assembler with channel-aware framing (sms / voice / web_chat), AI SDK v6 tool surface (`find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`). Just needs the model call + Twilio creds to go live.
+- ✓ **Web Chat Claire (LIVE).** Full-page immersive chat at `/claire`. AI SDK v6 + Vercel AI Gateway with OIDC auth (model `anthropic/claude-sonnet-4.6`). Anthropic ephemeral prompt caching enabled (~90% input cost reduction on cache hits). Helpful-first qualification flow: answers questions using KB ranges, captures name + phone via `update_visitor_contact` within 2-3 turns, weaves in per-service qualification questions from KB section 6, offers free estimate, books via `create_lead_with_estimate` (same backend as the website form). Server-side guardrails: 2000-char per-message cap, 50 user-messages per-conversation cap, 1200 max output tokens, 8 max tool steps, AI Gateway per-user attribution via `sha256(visitorIP)`. Prompt-side guardrails: stay-in-role, refuse prompt injection, never reveal sensitive data, detect spam/solicitors/bots. UX: full-viewport iMessage-style layout, fixed composer above iOS keyboard, smart auto-scroll that respects scroll-up intent, light/dark labeled toggle, Start Over button, Claire portrait next to messages, contrasting bubbles. **Live at https://tzelectricinc.com/claire.**
+- ✓ **TZ Switchboard Web Chat module (LIVE).** Office-side viewer at `/switchboard/web-chat`. Thread list with visitor name + phone, attribution channel, "Lead captured" badge, takeover state. Active thread shows transcript with collapsible tool-call rows, first-touch attribution strip, lead deep-link to Lead Pipeline. Takeover / release / close actions; office reply composer (saves to transcript, customer-side delivery is a small follow-up).
+- ✓ **SMS Claire scaffolding.** Webhook signature verification, conversation persistence (`tz_agent_conversations` + `tz_agent_messages`), takeover UI at `/switchboard/sms-conversations`, system prompt assembler with channel-aware framing (sms / voice / web_chat), AI SDK v6 tool surface (`update_visitor_contact`, `find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`). Just needs the model call + Twilio creds to go live; mirror the web-chat route's shape for prompt caching, abuse guardrails, and gateway user attribution.
 
 ## What's next (in build order)
 
-Cesar's preferred sequence is web chat first, voice second, SMS last (because A2P 10DLC carrier review is the only 1-2 week external blocker). After all three: Phase R1 reports, then Phase 7 self-improving learning loop.
+Cesar's preferred sequence: **web chat shipped 2026-05-01**, voice next, SMS last (because A2P 10DLC carrier review is the only 1-2 week external blocker). After all three: Phase R1 reports, then Phase 7 self-improving learning loop.
 
-1. **Web chat Claire.** New widget on every public page with a 15-second proactive popup. Reuses the existing prompt assembler + tools surface. Tyler's Vercel Pro plan includes AI Gateway via OIDC, so no separate API key. Estimated 1-3 hours.
-2. **Voice Claire (Vapi).** Tyler signs up at vapi.ai, connects his Twilio number when it lands. Same prompt + tools. Estimated 2-3 hours after Vapi account is ready.
-3. **SMS Claire.** Replace the TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call (pseudocode is in the route's comments), set `TWILIO_*` env vars, point Twilio inbound webhook at the existing route. ~30 min once A2P 10DLC approves and Tyler shares creds.
+1. ~~**Web chat Claire.**~~ **DONE 2026-05-01.** Live at `/claire`.
+2. **Voice Claire (Vapi).** Tyler signs up at vapi.ai, connects his Twilio number when it lands. Same prompt + tools as web chat. Estimated 2-3 hours after Vapi account is ready. Cost: ~$0.50-1.00 per 8-min call (Vapi telephony + model tokens combined).
+3. **SMS Claire.** Replace the TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call, mirroring the web-chat route's wiring (gateway() wrapper, prompt caching, system prompt as `SystemModelMessage` with Anthropic ephemeral cache, `MAX_OUTPUT_TOKENS` cap, gateway user/tags). Set `TWILIO_*` env vars, point Twilio inbound webhook at the existing route. ~30 min once A2P 10DLC approves and Tyler shares creds.
 4. **Phase R1 reports** at `/switchboard/reports`. Charts off `tz_leads`: lead volume over time stacked by channel, channel breakdown pie, service mix, funnel by channel, lead value at risk. ~2 hours, all data already in place.
 5. **Phase 7 self-improving learning loop.** Office flags transcripts in the agent conversation views; flagged items become proposed KB overrides; owners approve and they merge into `tz_kb_overrides` via the existing override mechanism. Reports module gains agent KPIs: handoff rate, false-escalation count, sentiment proxy, top failure modes.
+
+### Two dashboard toggles to enable for production rate-limiting (no code change, just clicks)
+
+1. **Vercel team → AI Gateway → Rate Limits.** Suggested 20 RPM / 50K tokens-per-day / 3 concurrent per visitor. The web-chat route already passes `user` (sha256 of visitor IP) and `tags` so per-visitor ceilings work the moment a value is set.
+2. **Vercel team → AI Gateway → Budget Alerts.** Suggested $100 alert / $500 hard cap so a real attack triggers a warning + degradation instead of a surprise bill.
 
 ### Backlog
 - [ ] Blog content migration from old Webflow site

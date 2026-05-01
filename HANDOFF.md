@@ -2,7 +2,7 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-04-28, end of session 16 (Vercel + Neon handoff to TZ Electric team complete). All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
+**Last verified:** 2026-05-01, end of session 17 (**Web Chat Claire shipped end-to-end** at `/claire`, plus the TZ Switchboard Web Chat module wired up for office visibility). All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
 
 ## Picking up on a different machine
 
@@ -76,13 +76,16 @@ A handful of blockers remain before the SMS or voice agent can ship; see "What's
 ### What's live in production
 
 - **Public site:** https://tzelectricinc.com (Cloudflare DNS, Vercel hosting)
-- **TZ Switchboard:** https://tzelectricinc.com/switchboard (gated)
+- **Web Chat Claire:** https://tzelectricinc.com/claire (full-page immersive chat, smart assistant persona, books leads into HCP via the same backend as the website form)
+- **Lead form:** https://tzelectricinc.com/quote (3-step form, multi-channel attribution, HCP routing)
+- **TZ Switchboard:** https://tzelectricinc.com/switchboard (Google OAuth, role-gated)
+- **Web Chat module:** https://tzelectricinc.com/switchboard/web-chat (live thread viewer, attribution, takeover, lead deep-link)
 - **Login:** https://tzelectricinc.com/switchboard/login
-- **Password:** `Itsgonnabegreat26!` (stored in Vercel env as `SWITCHBOARD_PASSWORD`)
-- **Questionnaire:** https://tzelectricinc.com/switchboard/agent-training (auth-gated)
-- **Module info pages:** 11 of them, every Coming Soon and Planned sidebar item is clickable and shows what we'll build there
-- **Old `/agent-training`:** redirects to `/switchboard/agent-training`
-- **Public footer link:** discreet "Admin" link in the bottom bar of every page
+- **Auth:** Google OAuth via NextAuth (domain-restricted to `tzelectricinc.com` + `creativequalitymarketing.com`). Legacy shared password (`Itsgonnabegreat26!`, stored in Vercel env as `SWITCHBOARD_PASSWORD`) kept as transition fallback.
+- **Questionnaire:** https://tzelectricinc.com/switchboard/agent-training (auth-gated). Tyler submitted 2026-04-26.
+- **Module info pages:** every Coming Soon and Planned sidebar item is clickable and shows what we'll build there.
+- **Old `/agent-training`:** redirects to `/switchboard/agent-training`.
+- **Public footer link:** discreet "Admin" link in the bottom bar of every page.
 
 ### Architecture summary
 
@@ -96,6 +99,94 @@ A handful of blockers remain before the SMS or voice agent can ship; see "What's
 - Theme: Light / Dark / System toggle in the topbar, defaults to System. No-flash inline init script. Variant scoped to `[data-theme="dark"]` so the public site stays light only.
 - Sidebar nav driven by `src/components/switchboard/nav-config.ts` (single source for module list, slugs, taglines, overview copy, "what it will do" bullets, "what we need" bullets)
 - Email: branded HTML templates in `src/lib/email-templates.ts`. Reusable layout shell + per-email functions. Resend over a verified domain.
+
+### Web Chat Claire (LIVE as of 2026-05-01)
+
+Full-page immersive chat at https://tzelectricinc.com/claire. Replaces the old Podium widget. Same persona (Claire, smart assistant) and same lead-routing pipeline as the website form, exposed to anyone landing on `/claire`.
+
+**End-to-end flow:**
+
+1. Visitor lands on `/claire`. Empty state shows Claire's portrait, the centered theme toggle, the greeting "Hi, I'm Claire. I'm a smart assistant for TZ Electric. Ask me anything about your project. Cooling, heating, electrical, plumbing, generators, EV chargers. How can I help you today?", a row of suggestion chips, and the composer.
+2. Visitor sends a message. Client generates a UUID v4, stashes in sessionStorage, and POSTs to `/api/agents/web-chat/stream` with `{ messages, conversationId, attribution }`. The conversation row is upserted into `tz_agent_conversations` (channel=`web_chat`) on first request, capturing first-touch attribution (gclid, fbclid, utm_*, referrer, landing URL).
+3. Server builds the system prompt via `buildSystemPrompt({ channel: 'web_chat' })` (KB + persona + voice rules + security rules + mission + channel framing) and the tool surface via `buildAgentTools({ conversationId, channel: 'web_chat' })`.
+4. Streams via `streamText` through Vercel AI Gateway (model `anthropic/claude-sonnet-4.6`). System prompt cached via Anthropic ephemeral cache (~90% input cost reduction on cache hits).
+5. Claire follows the helpful-first flow: answer the question using KB ranges, ask for first name + best phone naturally within 2-3 turns, qualify with the per-service questions from KB section 6, offer a free estimate, and call `create_lead_with_estimate` to land the lead.
+6. Office sees everything live in the TZ Switchboard Web Chat module (see "TZ Switchboard Web Chat" below).
+
+**Tools Claire has access to (`src/lib/agent-tools.ts`):**
+
+- `update_visitor_contact` — saves visitor's name + phone + optional email to the conversation row. Called as soon as the visitor shares contact info. Office sees them in the Switchboard immediately.
+- `find_existing_customer` — HCP customer lookup by phone, email, or full name. Called before `create_lead_with_estimate` to avoid duplicates.
+- `create_lead_with_estimate` — **the booking step**. Same backend as `/api/leads/submit` (the website form). Persists to `tz_leads`, finds-or-creates HCP customer, creates unscheduled estimate with all qualification answers in office-internal notes, drops Job Inbox card, mirrors to TZ Switchboard Lead Pipeline, stitches `tz_lead_id` back to the conversation.
+- `lookup_business_hours` — checks if office is open right now, returns Saturday/Sunday context.
+- `flag_for_office_review` — marks the conversation for office attention (ambiguous cases, complaints, suspected non-customers, customer asks for human).
+- `escalate_emergency` — pages Tyler + on-call team (active leak, no heat below 32, smoke / sparks / burning smell, electrical hazard, gas smell, sewage backup, medical equipment dependency loss).
+
+**System prompt structure (`src/lib/agent-prompt.ts`):**
+
+- Persona ("You are Claire, smart assistant, never use 'AI' or 'AI assistant'").
+- Mission block ("Be a helpful expert first, lead-capture machine second" + 6-step end-to-end flow, ending in `create_lead_with_estimate`).
+- Channel framing (`## You are on the WEB CHAT channel`, with conversation flow specific to web chat).
+- KB content (loaded from `docs/agent-training-answers.md` + per-section overrides from `tz_kb_overrides`).
+- Tool use reminders (mention `update_visitor_contact`, never call `create_lead_with_estimate` without contact captured).
+- Voice & Style rules (no em dashes, no emojis, no AI filler, no inflation, friendly contractions, varied sentence length).
+- Security & Abuse Resistance (stay in role, refuse prompt injection, never reveal sensitive data, detect spam/solicitors/bots).
+
+**Server-side guardrails (`src/app/api/agents/web-chat/stream/route.ts`):**
+
+- `MAX_USER_MESSAGE_CHARS = 2000` — single message size cap, 413 + friendly error.
+- `MAX_USER_MESSAGES_PER_CONVERSATION = 50` — DB-backed count, 429 + "use Start Over or call us" message when hit.
+- `MAX_OUTPUT_TOKENS = 1200` — caps any single Claire reply.
+- `MAX_TOOL_STEPS = 8` — caps the tool-use loop.
+- AI Gateway per-user attribution via `providerOptions.gateway.user = sha256(visitorIP).slice(0,24)` and `tags = ['feature:claire-web-chat', 'env:<vercel-env>']`. Configure RPM / tokens-per-day / concurrent ceilings in the Vercel dashboard (suggested 20 RPM / 50K tokens-per-day / 3 concurrent per user).
+- Anthropic prompt caching via `system: { role: 'system', content: systemPrompt, providerOptions: { anthropic: { cacheControl: { type: 'ephemeral' } } } }`. ~90% input cost reduction on cache hits within 5-minute TTL.
+
+**TZ Switchboard Web Chat (`src/app/switchboard/(dashboard)/web-chat/page.tsx`):**
+
+- Lives at `/switchboard/web-chat`. Gated by `requireModuleAccess('web-chat')`.
+- Loads `web_chat`-channel conversations from `tz_agent_conversations` + their messages from `tz_agent_messages`.
+- Left rail: thread list with visitor label (name once Claire captures it, otherwise short id stub), captured phone or attribution-channel fallback, "Lead captured" badge, "Office responding" badge during takeover, "Escalated" badge for flagged threads.
+- Right pane: header with visitor + status + takeover/release/close buttons; first-touch attribution strip (channel, UTM, gclid, referrer, landing URL, lead deep-link to `/switchboard/lead-pipeline`); message timeline with collapsible tool-call rows showing JSON arguments + results; token usage per assistant message.
+- Office reply composer at the bottom (only enabled during takeover). Saves to transcript; customer-side delivery on the live `/claire` widget is a small follow-up (needs SSE / polling on the client).
+- Actions API at `/api/agents/web-chat/conversations` — supports `takeover` / `release` / `close` / `office_reply`.
+
+**UI on `/claire`:**
+
+- Public site Header at the top so visitors can navigate to other pages. No Footer / "Ready to Get Started?" CTA strip / FloatingCTA — those compete with the chat for attention.
+- Composer is `position: fixed; bottom: 0` so iOS keeps it above the on-screen keyboard. Page scrolls behind it; pb-40 / sm:pb-44 keeps the last message readable.
+- Smart auto-scroll: keeps the latest message visible by default, but if the visitor scrolls up to read older history, it doesn't yank them back. Detects user scroll direction (negative dy = scrolled up) vs programmatic scroll (always positive dy).
+- Light/Dark labeled segmented toggle (`[ ☀ Light | ☾ Dark ]`). Storage key `tz-claire-theme` separate from the TZ Switchboard theme so it doesn't leak.
+- Start Over button next to the toggle in thread view. Mints a fresh UUID, clears messages, returns to empty state. Old thread stays in the DB.
+- Claire's portrait (`public/images/agents/claire-profile.png`, 1254x1254) shows in the empty-state hero and next to every Claire message in the thread (small avatar). Photo zoom: `scale-[1.4] origin-top` so her face fills the round crop instead of leaving headspace.
+- User bubble: navy in light mode, blue-dark in dark mode, white text. Claire bubble: gray-200 in light mode, white/10 in dark mode, dark text. iMessage-style with the corner notch flipped to the sender's side.
+- Mobile: `font-size: max(16px, 1em)` on every input/textarea/select via globals.css so iOS Safari doesn't auto-zoom on input focus. Body has `overflow-x-clip` so no element can ever push past the viewport width.
+
+**Brand / voice rules baked into the system prompt:**
+
+- Free estimates are the default for any pricing question. Field Assessment is a narrow paid case (trenching to detached structures, whole-home rewires on unknown panels, in-ground pools, customers who don't know their own service size). Tyler caught Claire quoting the $169 fee on 2026-04-30; the new Estimates Policy section in KB section 1 + a hard rule in the system prompt prevent her from drifting back.
+- Identifies as "smart assistant", never "AI assistant". Customer-facing only; internal HCP tag stays as `TZ AI AGENT`.
+- No em dashes (use commas, periods, parens). No en dashes for pauses (only allowed in published number ranges). No emojis. No AI filler ("Great question", "I'd be happy to", "Here's the thing"). No significance inflation ("pivotal", "groundbreaking", "robust", "transformative"). No tier-1 AI vocab ("delve", "leverage", "harness", "navigate"-metaphorical, "realm", "embark"). Friendly contractions, short sentences, direct answers.
+
+**Cost reality (Anthropic Sonnet 4.6 via Gateway, with prompt caching enabled):**
+
+- Quiet month, ~10 chats/day: $30-50.
+- Normal month, ~25 chats/day: $75-150.
+- Busy month, ~50 chats/day: $200-400.
+- Plus $5 free Gateway credits per team per month.
+- Caching cuts repeat-input cost ~90% within 5-min TTL, so realistic bills land near the lower end of the ranges.
+
+**Two dashboard toggles still pending (Cesar can flip whenever, no code change):**
+
+1. Vercel team → AI Gateway → **Rate Limits**. The route already passes `user` + `tags` so per-visitor ceilings work the moment a value is set. Suggested 20 RPM / 50K tokens-per-day / 3 concurrent per user.
+2. Vercel team → AI Gateway → **Budget Alerts**. Set a monthly cap (suggested $100 alert / $500 hard limit) so a real attack triggers a warning + degradation instead of a surprise bill.
+
+**Known follow-ups:**
+
+- Customer-side delivery of office takeover replies on the live `/claire` widget. Currently office reply persists to the transcript only; needs SSE / WebSocket / polling on the client to push the office's message into the visitor's open chat. Same gap exists for SMS Claire (waits on Twilio Messages API push).
+- Auto-refresh of the conversations list in the Switchboard. Today the office reloads or clicks a thread to see new activity.
+- The form-data identifier `'Yes — active leak'` flows through 5 callsites in the lead pipeline. Renaming requires touching all 5 atomically. Customer impact is the form radio button label only; the system-prompt rule keeps Claire from echoing the em dash regardless. Mark as future cleanup.
+- Vercel BotID `@vercel/botid` package integration if dashboard toggle isn't enough abuse protection.
+- Friendlier limit-reached UX on the client (currently the 429 surfaces as the generic "Something went wrong" UI; the friendly `message` field in the JSON body is ignored by useChat).
 
 ### SMS Claire cutover plan (when Tyler finishes vendor signups)
 
@@ -218,14 +309,17 @@ The `tz-electric` project has been transferred from `cq-marketings-projects` to 
 - [x] ~~Knowledge Base v2 (edit-in-place).~~ Live at `/switchboard/knowledge-base`. Owners + admins see Edit / Revert per section. Tyler-authored overrides land in `tz_kb_overrides` (Neon) and always win on render and in agent prompts — even if CQ later updates the base markdown. `tz_kb_override_history` keeps every revision; `tz_audit_log` stamps every edit.
 - [x] ~~Switchboard auth: Google OAuth + per-user roles + per-module access overrides.~~ Domain-restricted to `tzelectricinc.com` + `creativequalitymarketing.com`. Owners (Tyler, Terry, Cesar) can promote / demote / disable users from `/switchboard/users` and toggle module access per-user via Customize access. Login_count + last sign-in tracked per user.
 - [x] ~~Vercel + Neon handoff to TZ Electric team.~~ Project + domain transferred to Tyler's TZ team (`team_rgs4fNAHW2dNT1fCPsjf5aVg`, owned by `tzelectricoffice@gmail.com`, Pro plan). Neon migrated from CQ Marketplace to TZ-DB Marketplace via `pg_dump 17` → `psql` restore — schema + data identical pre/post. Old CQ Neon deleted by Cesar. Stripe + HCP secret env vars converted to Vercel `sensitive` type for production+preview.
+- [x] ~~Web Chat Claire shipped at /claire.~~ Full-page immersive chat. AI SDK v6 + AI Gateway with OIDC auth and Anthropic prompt caching. Helpful-first qualification flow. Captures contact via `update_visitor_contact`, books leads via `create_lead_with_estimate` (same backend as the website form). Voice & Style + Security & Abuse Resistance + Estimates Policy hard-coded into the system prompt. TZ Switchboard Web Chat module live with takeover, attribution, and lead deep-link. See "Web Chat Claire (LIVE...)" section above for the full operational doc.
 
 ### Next on deck: AI agents (Claire), in this order
 
-1. **Web chat Claire (FIRST — no external blockers).** Public-site widget on every page with proactive popup at 15s. Reuses `agent-prompt.ts` (channel `web_chat` framing already defined: medium-length plain-text replies, line breaks ok), `agent-tools.ts` tool surface (`find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`), and `agent-conversations.ts` persistence. Tyler's Vercel Pro plan includes AI Gateway access via OIDC, so no separate Anthropic API key needed. Estimated ~1-3 hours. Build path: new chat widget React component (likely `@ai-sdk/react`'s `useChat`), new public-site mount in `(public)/layout.tsx`, new `/api/agents/web-chat/stream` route hooking up `streamText` with the existing tool surface.
-2. **Voice Claire via Vapi (SECOND).** Same `agent-prompt.ts` (channel `voice` already framed: 1-2 sentence turns, digit-spelling for phone/email, the Tyler-approved opener line, 15-min max before forced handoff). Same tool surface. Vapi handles audio + transcription + TTS; we build the tool endpoints. Tyler signs up at vapi.ai, connects his Twilio number once it lands, points Vapi assistant at our `/api/agents/voice/*` tool routes. Estimated ~2-3 hours once Tyler has a Vapi account.
-3. **SMS Claire (THIRD — long pole, 1-2 week vendor wait).** Scaffolding fully shipped end of session 14: webhook signature verification, conversation persistence, takeover UI at `/switchboard/sms-conversations`. Blocked on Twilio A2P 10DLC carrier review (1-2 weeks regardless of how fast we move). Cutover when vendor unblocks: replace one TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call (pseudocode is right there in the comment), set `TWILIO_*` env vars on Vercel, point Twilio webhook at the existing route. ~30 min once Tyler shares creds.
+1. ~~**Web chat Claire**~~ — **DONE** (2026-05-01). Live at `/claire`. See full section above.
+2. **Voice Claire via Vapi (NEXT).** Same `agent-prompt.ts` (channel `voice` already framed: 1-2 sentence turns, digit-spelling for phone/email, the Tyler-approved opener line, 15-min max before forced handoff, contact capture handled via caller ID). Same tool surface (`update_visitor_contact`, `find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`). Vapi handles audio + transcription + TTS; we build the tool endpoints. Tyler signs up at vapi.ai, connects his Twilio number once it lands, points Vapi assistant at our `/api/agents/voice/*` tool routes. Estimated ~2-3 hours once Tyler has a Vapi account. Cost expectation: ~$0.50-1.00 per 8-min call (Vapi telephony + model tokens combined).
+3. **SMS Claire (long pole, 1-2 week vendor wait).** Scaffolding fully shipped end of session 14: webhook signature verification, conversation persistence, takeover UI at `/switchboard/sms-conversations`. Blocked on Twilio A2P 10DLC carrier review (1-2 weeks regardless of how fast we move). Cutover when vendor unblocks: replace one TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call (pseudocode is in the comment, but mirror the web-chat route's pattern: gateway() wrapper, prompt caching, system prompt as `SystemModelMessage` with Anthropic ephemeral cache, `MAX_OUTPUT_TOKENS` cap, gateway user/tags). Set `TWILIO_*` env vars on Vercel, point Twilio webhook at the existing route. ~30 min once Tyler shares creds. Cost expectation: ~$120-150/mo SMS + $13/mo fixed Twilio fees + per-conversation tokens.
 
-After all three agents: Phase R1 reports (~2 hr, charts off `tz_leads`), then Phase 7 self-improving learning loop (transcript flagging → approved edits land as KB overrides via the existing override mechanism).
+After voice + SMS: Phase R1 reports (~2 hr, charts off `tz_leads`), then Phase 7 self-improving learning loop (transcript flagging → approved edits land as KB overrides via the existing override mechanism).
+
+**Reusable across all three channels:** voice and SMS share the same `agent-prompt.ts` (KB + persona + voice + security + mission + per-channel framing), the same tool surface in `agent-tools.ts`, and the same persistence in `agent-conversations.ts`. The web-chat route (`src/app/api/agents/web-chat/stream/route.ts`) is the reference implementation for AI Gateway wiring, prompt caching, abuse guardrails, and tool-call persistence — copy its shape for voice and SMS routes.
 
 ## Account handoff plan (everything paid moves to Tyler)
 
