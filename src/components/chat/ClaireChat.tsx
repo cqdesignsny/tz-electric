@@ -113,51 +113,10 @@ function ClaireChatInner() {
     setHydrated(true)
   }, [])
 
-  // iOS Safari overlays the keyboard on top of the layout viewport. CSS
-  // 100dvh / 100vh both stay at the full screen height, so a 100dvh chat
-  // container ends up half-covered by the keyboard with body bg showing
-  // through. Use the visualViewport API to track the *visible* viewport
-  // and subtract the public-site Header height. Updates on resize, scroll,
-  // and any header height change.
-  useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const headerEl = document.querySelector('header') as HTMLElement | null
-
-    function updateHeight() {
-      const vv = window.visualViewport
-      const visualH = vv ? vv.height : window.innerHeight
-      const headerH = headerEl?.getBoundingClientRect().height ?? 0
-      // Floor at 240px so the chat is still usable even on very small
-      // visible-viewport sizes (e.g. landscape with keyboard up).
-      const chatH = Math.max(visualH - headerH, 240)
-      document.documentElement.style.setProperty('--claire-h', `${chatH}px`)
-    }
-
-    updateHeight()
-
-    const vv = window.visualViewport
-    if (vv) {
-      vv.addEventListener('resize', updateHeight)
-      vv.addEventListener('scroll', updateHeight)
-    }
-    window.addEventListener('resize', updateHeight)
-
-    let ro: ResizeObserver | undefined
-    if (headerEl && typeof ResizeObserver !== 'undefined') {
-      ro = new ResizeObserver(updateHeight)
-      ro.observe(headerEl)
-    }
-
-    return () => {
-      if (vv) {
-        vv.removeEventListener('resize', updateHeight)
-        vv.removeEventListener('scroll', updateHeight)
-      }
-      window.removeEventListener('resize', updateHeight)
-      ro?.disconnect()
-    }
-  }, [])
+  // No visualViewport gymnastics. The composer is position:fixed at the
+  // viewport bottom (see render below); iOS keeps fixed elements with
+  // focused inputs above the keyboard automatically. The page scrolls
+  // naturally behind the fixed composer.
 
   const transport = useMemo(() => {
     return new DefaultChatTransport({
@@ -220,30 +179,26 @@ function ClaireChatInner() {
   }
 
   return (
-    <div
-      className="flex flex-col bg-gray-50 text-charcoal dark:bg-[#070D1F] dark:text-gray-100"
-      // Height is the visible viewport minus the public Header above.
-      // The --claire-h variable is set by the visualViewport hook above
-      // and shrinks live when the iOS keyboard appears, so the composer
-      // never ends up below the keyboard or with white space below it.
-      // Fallback for first paint before JS runs.
-      style={{ height: 'var(--claire-h, calc(100dvh - 110px))' }}
-    >
+    <div className="bg-gray-50 text-charcoal dark:bg-[#070D1F] dark:text-gray-100">
       {/* Slim top strip with the theme toggle — thread view only.
           The empty state has its own centered toggle above the portrait. */}
       {!showEmptyState && (
-        <div className="border-b border-gray-200 bg-white/80 backdrop-blur dark:border-white/5 dark:bg-[#0A1228]/80">
+        <div className="sticky top-0 z-20 border-b border-gray-200 bg-white/85 backdrop-blur dark:border-white/5 dark:bg-[#0A1228]/85">
           <div className="mx-auto flex max-w-3xl justify-end px-4 py-2 sm:px-6">
             <ChatThemeToggle />
           </div>
         </div>
       )}
 
-      {/* Body: empty state OR thread. Both scroll internally so the
-          composer below stays put. */}
-      <div ref={threadRef} className="flex-1 overflow-y-auto">
+      {/* Body content scrolls naturally with the page. The fixed
+          composer below sits on top, so we add bottom padding equal to
+          its rough height to keep the last message readable. */}
+      <div
+        ref={threadRef}
+        className="min-h-[calc(100dvh-110px)] pb-40 sm:pb-44"
+      >
         {showEmptyState ? (
-          <div className="px-4 pt-8 pb-6 sm:px-6 sm:pt-12">
+          <div className="px-4 pt-8 sm:px-6 sm:pt-12">
             <div className="mx-auto flex w-full max-w-3xl flex-col items-center text-center">
               <ChatThemeToggle />
               <div className="mt-6">
@@ -272,7 +227,7 @@ function ClaireChatInner() {
             </div>
           </div>
         ) : (
-          <div className="px-4 pt-6 pb-6 sm:px-6">
+          <div className="px-4 pt-6 sm:px-6">
             <div className="mx-auto max-w-3xl space-y-6">
               {messages.map((m) => (
                 <MessageRow key={m.id} message={m} />
@@ -288,9 +243,19 @@ function ClaireChatInner() {
         )}
       </div>
 
-      {/* Composer — always pinned at the bottom of the viewport-tall
-          chat container, in both empty state and thread view. */}
-      <div className="shrink-0 border-t border-gray-200 bg-gray-50/95 backdrop-blur dark:border-white/5 dark:bg-[#070D1F]/95">
+      {/* Composer — fixed to the viewport bottom on every screen. iOS
+          keeps fixed elements with focused inputs above the on-screen
+          keyboard, so this stays in view while the page scrolls behind
+          it. Subtle gradient mask above the bar so messages fade into
+          it instead of cutting off abruptly. */}
+      <div
+        className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-gray-50/95 backdrop-blur dark:border-white/5 dark:bg-[#070D1F]/95"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-8 left-0 right-0 h-8 bg-gradient-to-t from-gray-50 to-transparent dark:from-[#070D1F]"
+        />
         <div className="mx-auto max-w-3xl px-4 py-3 sm:px-6 sm:py-4">
           <Composer
             input={input}
