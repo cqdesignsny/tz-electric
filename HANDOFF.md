@@ -188,6 +188,56 @@ Full-page immersive chat at https://tzelectricinc.com/claire. Replaces the old P
 - Vercel BotID `@vercel/botid` package integration if dashboard toggle isn't enough abuse protection.
 - Friendlier limit-reached UX on the client (currently the 429 surfaces as the generic "Something went wrong" UI; the friendly `message` field in the JSON body is ignored by useChat).
 
+### Voice Claire (Vapi) — phone-number routing strategy
+
+Decision (2026-05-01): TZ's published main number **(518) 678-1230 stays exactly where it is** with TZ's current carrier. We do NOT port it. Voice Claire lives on a separate Twilio number; the main number forwards to it under specific conditions.
+
+**Architecture:**
+
+- Tyler signs up at vapi.ai (his card, his account, per the handoff plan). Vapi runs the assistant logic but uses Twilio under the hood for telephony.
+- Tyler signs up at twilio.com (his card, his account). Buys ONE Hudson Valley local Twilio number (~$1.15/month). This single number does double duty for voice + SMS (see "One Twilio number for both" below).
+- Tyler logs into his current carrier's portal (whoever provides 518-678-1230 today) and configures forwarding:
+  - **Business hours (Mon-Fri 7am-5pm):** main number rings the office first. Unanswered in 3-4 rings → roll to the new Twilio number. Office gets first crack; Claire is overflow.
+  - **After hours / weekends / holidays:** main number forwards directly to the new Twilio number. Claire picks up immediately, qualifies, books a free estimate, or escalates to the on-call rotation per the dispatch SOP in `docs/agent-training-answers.md`.
+- We configure the Vapi assistant in the Vapi dashboard to point at our `/api/agents/voice/*` tool endpoints (thin wrappers around the same `buildAgentTools()` surface as web chat).
+
+**Why this approach:**
+
+- No port required. No carrier change, no 2-3 week port window, no risk to the number TZ has been using forever.
+- Claire is purely additive. If Vapi or Anthropic ever go down, the worst case is the main number rings to voicemail like it does today. Nothing breaks for the office.
+- HCP is unaffected. HCP doesn't own the phone number; it tracks calls when associated with a customer record. Whether Claire or a human picks up, lead capture flows through `create_lead_with_estimate` to the same HCP customer + estimate + Job Inbox + Switchboard mirror pipeline.
+- Caller ID handles contact-capture for free. Vapi exposes the caller's phone number from the carrier on every call, so the voice channel framing already says Claire only confirms the name (no contact-first dance).
+
+### One Twilio number for BOTH voice and SMS (Bring Your Own Number to Vapi)
+
+Cesar asked 2026-05-01 whether voice and SMS need separate Twilio numbers. **They don't.** A US local Twilio number is voice + SMS capable by default; you point separate webhooks at the two functions:
+
+- **Voice URL** on the number → Vapi (their endpoint, set up via Vapi's BYON wizard).
+- **Messaging URL** on the same number → our `https://tzelectricinc.com/api/agents/sms/webhook`.
+
+Two paths to set this up:
+
+1. **Vapi-managed number (avoid).** Convenient but the number lives in Vapi's managed Twilio sub-account, which means we can't easily wire the Messaging URL to our SMS webhook. Forces a second standalone Twilio number for SMS. Two numbers, two monthly rentals, two phone numbers in customer-facing copy.
+2. **Bring Your Own Number (BYON) — what we want.** Tyler keeps his own Twilio account, buys one Twilio number, configures both webhooks himself. Connects to Vapi via Vapi's BYON flow. **One number, both functions, one rental, simpler customer story.**
+
+**Tyler's account picture:**
+
+- **Vapi account** (his card) — runs voice assistant logic, no number management.
+- **Twilio account** (his card) — owns ONE Hudson Valley local number (~$1.15/month). Voice URL → Vapi. Messaging URL → our SMS webhook.
+
+**Customer-facing numbers:**
+
+- "Call (518) 678-1230" — stays with TZ's current carrier as always. Forwards to the new Twilio number on no-answer / after-hours; Vapi/Claire picks up.
+- "Text (518) XXX-XXXX" — the new Twilio number. Published as the SMS contact because TZ's current main number is likely a landline that can't receive texts. SMS Claire handles inbound here.
+- If Tyler's current main carrier IS SMS-capable (modern VoIP like RingCentral / Vonage), we could revisit and unify under one published number. Most landlines aren't, so two-numbers-in-marketing-copy is the realistic plan.
+
+**Timing:**
+
+- **Voice goes live first.** No carrier review for voice. Hours after Tyler's Vapi + Twilio signups land + we wire the Vapi assistant config + Tyler sets up forwarding on the main number.
+- **SMS waits on A2P 10DLC.** 1-2 week vendor wait for Twilio's brand vetting before SMS reliably delivers to consumer carriers. Tyler kicks off the registration when he buys the Twilio number; we wait for it to clear.
+
+**Long-term unification option (not needed for v1):** port (518) 678-1230 to Twilio later so the main published number IS the Twilio number doing both voice (via Vapi) + SMS (via Claire) all in one. Cleaner customer story (one number for everything), but requires the port window. The two-numbers-with-forwarding plan above ships immediately without that risk.
+
 ### SMS Claire cutover plan (when Tyler finishes vendor signups)
 
 Scaffolding is live. Going from holding-pattern to "Claire is talking to customers" is now a small, well-defined step.
@@ -314,7 +364,7 @@ The `tz-electric` project has been transferred from `cq-marketings-projects` to 
 ### Next on deck: AI agents (Claire), in this order
 
 1. ~~**Web chat Claire**~~ — **DONE** (2026-05-01). Live at `/claire`. See full section above.
-2. **Voice Claire via Vapi (NEXT).** Same `agent-prompt.ts` (channel `voice` already framed: 1-2 sentence turns, digit-spelling for phone/email, the Tyler-approved opener line, 15-min max before forced handoff, contact capture handled via caller ID). Same tool surface (`update_visitor_contact`, `find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`). Vapi handles audio + transcription + TTS; we build the tool endpoints. Tyler signs up at vapi.ai, connects his Twilio number once it lands, points Vapi assistant at our `/api/agents/voice/*` tool routes. Estimated ~2-3 hours once Tyler has a Vapi account. Cost expectation: ~$0.50-1.00 per 8-min call (Vapi telephony + model tokens combined).
+2. **Voice Claire via Vapi (NEXT).** Same `agent-prompt.ts` (channel `voice` already framed: 1-2 sentence turns, digit-spelling for phone/email, the Tyler-approved opener line, 15-min max before forced handoff, contact capture handled via caller ID). Same tool surface (`update_visitor_contact`, `find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`). Vapi handles audio + transcription + TTS; we build the tool endpoints. **See "Voice Claire (Vapi) — phone-number routing strategy" + "One Twilio number for BOTH voice and SMS" sections above** for the full carrier / number-ownership story (TL;DR: Tyler keeps his main number with current carrier and forwards to a single new Twilio number that handles both voice via Vapi BYON and SMS via our webhook). Estimated ~2-3 hours once Tyler has a Vapi + Twilio account. Cost expectation: ~$0.50-1.00 per 8-min call (Vapi telephony + model tokens combined).
 3. **SMS Claire (long pole, 1-2 week vendor wait).** Scaffolding fully shipped end of session 14: webhook signature verification, conversation persistence, takeover UI at `/switchboard/sms-conversations`. Blocked on Twilio A2P 10DLC carrier review (1-2 weeks regardless of how fast we move). Cutover when vendor unblocks: replace one TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call (pseudocode is in the comment, but mirror the web-chat route's pattern: gateway() wrapper, prompt caching, system prompt as `SystemModelMessage` with Anthropic ephemeral cache, `MAX_OUTPUT_TOKENS` cap, gateway user/tags). Set `TWILIO_*` env vars on Vercel, point Twilio webhook at the existing route. ~30 min once Tyler shares creds. Cost expectation: ~$120-150/mo SMS + $13/mo fixed Twilio fees + per-conversation tokens.
 
 After voice + SMS: Phase R1 reports (~2 hr, charts off `tz_leads`), then Phase 7 self-improving learning loop (transcript flagging → approved edits land as KB overrides via the existing override mechanism).
