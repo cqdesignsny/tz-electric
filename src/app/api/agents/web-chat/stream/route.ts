@@ -72,21 +72,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'no_messages' }, { status: 400 })
   }
 
-  // Gateway only. Auth comes from OIDC on Vercel (auto-injected) or
-  // AI_GATEWAY_API_KEY locally. The model slug below is a Gateway model
-  // string, so a direct provider key wouldn't route correctly anyway.
-  const gatewayReady =
-    !!process.env.VERCEL_OIDC_TOKEN || !!process.env.AI_GATEWAY_API_KEY
-  if (!gatewayReady) {
-    return NextResponse.json(
-      {
-        error: 'ai_provider_not_configured',
-        message:
-          'Chat is being set up and will be live shortly. Please call (518) 678-1230 or use the Get a Quote form in the meantime.',
-      },
-      { status: 503 },
-    )
-  }
+  // Auth is handled by @ai-sdk/gateway: AI_GATEWAY_API_KEY first,
+  // then OIDC via @vercel/oidc on Vercel. We don't pre-check env vars
+  // here because OIDC isn't always exposed as a process.env value;
+  // letting the SDK try and surface its own error gives us better
+  // diagnostics than a brittle env-name guess.
 
   // Upsert the conversation row. Client owns the UUID so we can be
   // idempotent across reloads / retries inside the same session.
@@ -147,6 +137,11 @@ export async function POST(req: NextRequest) {
     messages: modelMessages,
     tools,
     stopWhen: stepCountIs(8),
+    onError: ({ error }) => {
+      // Surface the real upstream message in Vercel logs so we can debug
+      // auth / model / tool failures without guessing.
+      console.error('[web-chat] streamText error:', error)
+    },
     onFinish: async ({ steps, text, totalUsage }) => {
       try {
         // Walk every step so the transcript reflects the full chain of
@@ -201,17 +196,19 @@ function uiMessageText(m: UIMessage): string {
 }
 
 /**
- * GET handler for ad-hoc deploy verification — returns the route status so
- * we can confirm it's wired without sending a live request.
+ * GET handler for ad-hoc deploy verification. Returns the route shape and
+ * the AI Gateway auth modes the runtime can detect (OIDC is auto-injected
+ * on Vercel and may not appear as a process env var, so a "false" here
+ * doesn't necessarily mean the route is broken — try a real POST).
  */
 export async function GET() {
   return NextResponse.json({
     endpoint: '/api/agents/web-chat/stream',
     method: 'POST',
     purpose: 'Web chat (Claire) streaming endpoint',
-    ai_provider:
-      process.env.VERCEL_OIDC_TOKEN || process.env.AI_GATEWAY_API_KEY
-        ? 'gateway_ready'
-        : 'pending',
+    detected_auth: {
+      ai_gateway_api_key: !!process.env.AI_GATEWAY_API_KEY,
+      vercel_oidc_token_env: !!process.env.VERCEL_OIDC_TOKEN,
+    },
   })
 }
