@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { COMPANY, NAV_ITEMS, QUOTE_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
+import { claireHref } from '@/lib/claire-links'
 
 const footerServices = [
   { label: 'Mitsubishi Mini Splits', href: '/mitsubishi' },
@@ -38,10 +39,19 @@ export default function Footer() {
               Ready to Get Started?
             </h3>
             <p className="text-gray-300 text-sm md:text-base mt-0.5 md:mt-1">
-              Get a free quote from our expert team today.
+              Chat with Claire, get a free quote, or call us. Whichever&apos;s faster.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center gap-2 md:gap-3">
+            <Link
+              href={claireHref('footer_banner')}
+              className="inline-flex items-center gap-2 px-4 py-2 text-sm md:px-6 md:py-3 md:text-base bg-gradient-to-r from-blue to-blue-light text-white font-heading font-semibold rounded-full hover:shadow-lg hover:scale-[1.02] transition-all duration-300 shadow-md"
+            >
+              <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+              </svg>
+              Chat with Claire
+            </Link>
             <a
               href={`tel:${COMPANY.phoneRaw}`}
               className="inline-flex items-center gap-2 px-4 py-2 text-sm md:px-6 md:py-3 md:text-base bg-white text-navy font-heading font-semibold rounded-full hover:bg-gray-100 transition-all duration-300 shadow-sm hover:shadow-lg"
@@ -83,6 +93,17 @@ export default function Footer() {
                 <a href={`mailto:${COMPANY.email}`} className="text-white hover:text-sky transition-colors">
                   {COMPANY.email}
                 </a>
+              </p>
+              <p>
+                <Link
+                  href={claireHref('footer_address')}
+                  className="inline-flex items-center gap-1.5 text-blue-light hover:text-white transition-colors font-semibold"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+                  </svg>
+                  Chat with Claire
+                </Link>
               </p>
             </address>
 
@@ -175,6 +196,17 @@ export default function Footer() {
               Company
             </h4>
             <ul className="space-y-1">
+              <li>
+                <Link
+                  href={claireHref('footer_company_list')}
+                  className="inline-flex items-center gap-1.5 text-blue-light hover:text-white text-sm font-semibold transition-colors py-1.5"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.455 2.456L21.75 6l-1.036.259a3.375 3.375 0 00-2.455 2.456z" />
+                  </svg>
+                  Chat with Claire
+                </Link>
+              </li>
               {footerCompany.map((item) => (
                 <li key={item.href}>
                   <Link

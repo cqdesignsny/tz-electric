@@ -5,6 +5,7 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import ScrollToTop from '@/components/effects/ScrollToTop'
 import FloatingCTA from '@/components/ui/FloatingCTA'
+import ClaireFloatingBubble from '@/components/claire/ClaireFloatingBubble'
 import PublicAnalytics from '@/components/analytics/PublicAnalytics'
 
 export const metadata: Metadata = {
@@ -70,6 +71,7 @@ export default function PublicLayout({
       <main className="flex-1">{children}</main>
       <Footer />
       <FloatingCTA />
+      <ClaireFloatingBubble />
     </>
   )
 }

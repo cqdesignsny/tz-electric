@@ -7,6 +7,8 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { COMPANY, NAV_ITEMS, QUOTE_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
+import ClaireCTA from '@/components/claire/ClaireCTA'
+import { claireHref, trackClaireCtaClick } from '@/lib/claire-links'
 
 const HIDDEN_PATHS = ['/switchboard', '/internal']
 
@@ -599,6 +601,8 @@ export default function Header() {
             <span className="hidden md:inline text-gray-500">|</span>
             <span className="text-accent font-bold">24/7 Emergency</span>
             <span className="text-gray-500">|</span>
+            <ClaireCTA source="header_topbar" variant="topbar" />
+            <span className="text-gray-500">|</span>
             <div className="flex items-center gap-2">
               <a href={COMPANY.social.facebook} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors" aria-label="Facebook">
                 <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" /></svg>
@@ -670,6 +674,7 @@ export default function Header() {
               <PhoneIcon />
               {COMPANY.phone}
             </a>
+            <ClaireCTA source="header_desktop" variant="pill" label="Ask Claire" />
             <Button href={QUOTE_URL} size="sm">
               Get a Free Quote
             </Button>
@@ -781,6 +786,33 @@ export default function Header() {
               className="lg:hidden fixed inset-x-0 top-[calc(var(--header-height,60px)+var(--topbar-height,40px))] bottom-0 bg-white z-50 overflow-y-auto border-t border-gray-100"
             >
               <nav className="container-site py-4 space-y-1">
+                {/* Featured: Claire */}
+                <Link
+                  href={claireHref('header_mobile_featured')}
+                  onClick={() => { trackClaireCtaClick('header_mobile_featured'); closeMobile() }}
+                  className="flex items-center gap-3 p-3 mb-3 rounded-2xl bg-gradient-to-r from-blue to-blue-dark text-white shadow-md hover:shadow-lg transition-all"
+                >
+                  <span className="relative w-12 h-12 rounded-full overflow-hidden ring-2 ring-white/60 bg-sky flex-shrink-0">
+                    <Image
+                      src="/images/agents/claire-profile.png"
+                      alt=""
+                      width={48}
+                      height={48}
+                      className="object-cover scale-[1.4] origin-top w-full h-full"
+                      sizes="48px"
+                      aria-hidden="true"
+                    />
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-success ring-2 ring-blue-dark" aria-hidden="true" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <span className="block font-heading font-bold text-base leading-tight">Chat with Claire</span>
+                    <span className="block text-xs text-white/85 mt-0.5">Smart assistant. Quick answers. 24/7.</span>
+                  </div>
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                  </svg>
+                </Link>
+
                 {/* Services */}
                 <MobileAccordion label="Services" href="/services" onClose={closeMobile}>
                   <div className="space-y-0.5">

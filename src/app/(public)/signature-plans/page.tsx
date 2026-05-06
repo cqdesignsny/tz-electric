@@ -9,6 +9,7 @@ import {
 } from '@/lib/signature-plans-data'
 import Button from '@/components/ui/Button'
 import SignaturePlansClient from '@/components/SignaturePlansClient'
+import ClaireSection from '@/components/claire/ClaireSection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
@@ -360,6 +361,14 @@ export default function SignaturePlansPage() {
           </div>
         </div>
       </section>
+
+      <ClaireSection
+        source="signature_plans_section"
+        eyebrow="Picking a plan?"
+        heading="Claire can help you choose."
+        description={"Not sure if Core, Preferred, or Elite is the right fit? Tell Claire what equipment you have and how you use it. She'll walk you through the differences and the math."}
+        tone="dark"
+      />
     </>
   )
 }

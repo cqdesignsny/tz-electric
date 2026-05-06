@@ -49,6 +49,10 @@ export const COMPANY = {
 // Service pages can deep-link via /quote?service=hvac to prefill the service step.
 export const QUOTE_URL = '/quote'
 
+// Claire web chat path. Linked from buttons sitewide so we can track entry
+// points via the ?source query param. Helpers in src/lib/claire-links.ts.
+export const CLAIRE_URL = '/claire'
+
 // Analytics IDs (preserved from current site)
 export const ANALYTICS = {
   ga4: 'G-X55X1YSD10',

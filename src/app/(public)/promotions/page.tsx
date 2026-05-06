@@ -2,6 +2,7 @@ import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import Button from '@/components/ui/Button'
 import CTASection from '@/components/sections/CTASection'
+import ClaireSection from '@/components/claire/ClaireSection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
@@ -184,7 +185,7 @@ export default function PromotionsPage() {
               Don&apos;t See What You Need?
             </h2>
             <p className="mt-2 text-gray-600 max-w-lg mx-auto">
-              We frequently update our promotions. Contact us to ask about current deals
+              We frequently update our promotions. Ask Claire what&apos;s currently running,
               or get a competitive quote for any service.
             </p>
             <div className="mt-6 flex flex-wrap gap-4 justify-center">
@@ -199,7 +200,15 @@ export default function PromotionsPage() {
         </div>
       </section>
 
-      <CTASection />
+      <ClaireSection
+        source="promotions_section"
+        eyebrow="Looking for a deal?"
+        heading="Ask Claire about current promos."
+        description={"Claire stays up to date on every active promotion. Tell her what service you're looking at and she'll surface the right offer, eligibility, and any expiration."}
+        tone="light"
+      />
+
+      <CTASection claireSource="promotions_cta" />
     </>
   )
 }

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
 import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
+import ClaireCTA from '@/components/claire/ClaireCTA'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 import { TrustIndexBadge } from '@/components/ui/TrustIndexWidget'
 
@@ -85,6 +86,7 @@ export default function HeroSection() {
               <Button href={QUOTE_URL} size="lg">
                 Get a Free Quote
               </Button>
+              <ClaireCTA source="homepage_hero" variant="hero-secondary" label="Ask Claire" />
               <Button
                 href={`tel:${COMPANY.phoneRaw}`}
                 variant="outline"

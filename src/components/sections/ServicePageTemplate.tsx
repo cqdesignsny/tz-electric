@@ -7,6 +7,8 @@ import SectionHeader from '@/components/ui/SectionHeader'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import CTASection from '@/components/sections/CTASection'
+import ClaireSection from '@/components/claire/ClaireSection'
+import ClaireCTA from '@/components/claire/ClaireCTA'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 import { TrustIndexBadge } from '@/components/ui/TrustIndexWidget'
 
@@ -74,6 +76,7 @@ export default function ServicePageTemplate({ service, parentService }: ServiceP
               <Button href={QUOTE_URL} size="lg">
                 Get a Free Quote
               </Button>
+              <ClaireCTA source={`service_hero_${service.slug}`} variant="hero-secondary" label="Ask Claire" />
               <Button
                 href={`tel:${COMPANY.phoneRaw}`}
                 variant="outline"
@@ -217,6 +220,14 @@ export default function ServicePageTemplate({ service, parentService }: ServiceP
           </div>
         </div>
       </section>
+
+      <ClaireSection
+        source={`service_section_${service.slug}`}
+        eyebrow={`Have a ${service.title.toLowerCase()} question?`}
+        heading={`Ask Claire about ${service.title.toLowerCase()}.`}
+        description={`Pricing, timing, brands, what to expect. Claire knows ${service.title.toLowerCase()} cold and can book a free estimate without you waiting on hold.`}
+        tone="light"
+      />
 
       <CTASection />
     </>

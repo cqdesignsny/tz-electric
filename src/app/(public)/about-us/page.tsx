@@ -5,6 +5,7 @@ import Image from 'next/image'
 import SectionHeader from '@/components/ui/SectionHeader'
 import Button from '@/components/ui/Button'
 import CTASection from '@/components/sections/CTASection'
+import ClaireSection from '@/components/claire/ClaireSection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
@@ -501,7 +502,15 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <CTASection />
+      <ClaireSection
+        source="about_us_section"
+        eyebrow="Want to know more?"
+        heading="Ask Claire about TZ Electric."
+        description={`12+ years in the ${COMPANY.serviceArea}, ${COMPANY.reviews.count}+ five-star Google reviews, and a team that genuinely answers the phone. Claire can tell you about our certifications, what we cover, and how we work.`}
+        tone="light"
+      />
+
+      <CTASection claireSource="about_us_cta" />
     </>
   )
 }

@@ -7,6 +7,7 @@ import {
 } from '@/lib/maintenance-data'
 import Button from '@/components/ui/Button'
 import GeneratorPlansClient from '@/components/GeneratorPlansClient'
+import ClaireSection from '@/components/claire/ClaireSection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
@@ -253,6 +254,14 @@ export default function MaintenancePage() {
           </div>
         </div>
       </section>
+
+      <ClaireSection
+        source="maintenance_section"
+        eyebrow="Generator maintenance question?"
+        heading="Ask Claire about Bronze, Silver, or Gold."
+        description={"Tell Claire your generator size, fuel type, and how long since the last service. She'll point you at the right tier and explain what each visit covers."}
+        tone="dark"
+      />
     </>
   )
 }

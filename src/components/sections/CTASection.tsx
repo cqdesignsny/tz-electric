@@ -1,7 +1,13 @@
 import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import Button from '@/components/ui/Button'
+import ClaireCTA from '@/components/claire/ClaireCTA'
 
-export default function CTASection() {
+interface CTASectionProps {
+  /** Override the source label used for tracking. Default `cta_section`. */
+  claireSource?: string
+}
+
+export default function CTASection({ claireSource = 'cta_section' }: CTASectionProps = {}) {
   return (
     <section className="section-padding bg-gradient-to-br from-blue to-blue-dark text-white">
       <div className="container-site text-center max-w-3xl mx-auto">
@@ -22,6 +28,7 @@ export default function CTASection() {
           >
             Get a Free Quote
           </Button>
+          <ClaireCTA source={claireSource} variant="hero-secondary" label="Ask Claire" />
           <Button
             href={`tel:${COMPANY.phoneRaw}`}
             variant="outline"

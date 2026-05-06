@@ -2,6 +2,7 @@ import { COMPANY, QUOTE_URL } from '@/lib/constants'
 import { createMetadata, getBreadcrumbSchema } from '@/lib/metadata'
 import Button from '@/components/ui/Button'
 import CTASection from '@/components/sections/CTASection'
+import ClaireSection from '@/components/claire/ClaireSection'
 import ElectricCursor from '@/components/effects/ElectricCursor'
 
 export const metadata = createMetadata({
@@ -273,7 +274,15 @@ export default function FinancingPage() {
         </div>
       </section>
 
-      <CTASection />
+      <ClaireSection
+        source="financing_section"
+        eyebrow="Financing question?"
+        heading="Claire knows the numbers."
+        description={"Wisetack vs. Synchrony, monthly estimates, NYSERDA and IRA rebate eligibility, what you can roll into a project. Ask Claire and she'll point you in the right direction before you apply."}
+        tone="light"
+      />
+
+      <CTASection claireSource="financing_cta" />
     </>
   )
 }

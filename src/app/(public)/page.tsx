@@ -8,6 +8,7 @@ import TrustBar from '@/components/sections/TrustBar'
 import WhyChooseUs from '@/components/sections/WhyChooseUs'
 import ReviewsSection from '@/components/sections/ReviewsSection'
 import ServiceAreaSection from '@/components/sections/ServiceAreaSection'
+import ClaireSection from '@/components/claire/ClaireSection'
 
 export const metadata: Metadata = createMetadata({
   title: `${COMPANY.name} | Expert ${COMPANY.tagline} | ${COMPANY.serviceArea}`,
@@ -32,6 +33,13 @@ export default function HomePage() {
       <TrustBar />
       <ServicesGrid />
       <WhyChooseUs />
+      <ClaireSection
+        source="homepage_section"
+        eyebrow="Meet Claire. Online Now."
+        heading={"Need answers fast? Claire's on it."}
+        description="Claire is our smart assistant for every service we offer in the Hudson Valley. Cooling, heating, electrical, plumbing, generators, EV chargers. Ask about pricing, timing, what to expect, or book a free estimate without picking up the phone."
+        tone="dark"
+      />
       <ReviewsSection />
       <ServiceAreaSection />
 
