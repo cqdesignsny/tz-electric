@@ -97,7 +97,7 @@ export const NAV_ITEMS = [
     ],
   },
   {
-    label: 'Service Areas',
+    label: 'Areas',
     href: '/service-areas',
     children: [
       { label: 'Catskill, NY', href: '/service-areas/catskill-ny' },

@@ -574,7 +574,7 @@ export default function Header() {
     setMobileOpen(false)
   }, [])
 
-  const dropdownItems = ['Services', 'Plans', 'About', 'Service Areas']
+  const dropdownItems = ['Services', 'Plans', 'About', 'Areas']
 
   if (HIDDEN_PATHS.some((p) => pathname?.startsWith(p))) return null
 
@@ -720,7 +720,7 @@ export default function Header() {
                 onMouseLeave={handleMouseLeave}
               >
                 {activeDropdown === 'Services' && <ServicesMegaPanel onClose={closeMega} />}
-                {activeDropdown === 'Service Areas' && <ServiceAreasMegaPanel onClose={closeMega} />}
+                {activeDropdown === 'Areas' && <ServiceAreasMegaPanel onClose={closeMega} />}
                 {activeDropdown === 'About' && <AboutMegaPanel onClose={closeMega} />}
                 {activeDropdown === 'Plans' && (
                   <div className="container-site py-8">
