@@ -281,7 +281,7 @@ function ClaireChatInner() {
                 Hi, I&apos;m Claire.
               </h1>
               <p className="mt-3 max-w-xl text-base text-gray-600 dark:text-gray-300 sm:text-lg">
-                I&apos;m a smart assistant for TZ Electric. Ask me anything about your project. Cooling, heating, electrical, plumbing, generators, EV chargers. How can I help you today?
+                I&apos;m a smart assistant for TZ Electric. Ask me anything about your project. I can help with cooling, heating, electrical, plumbing, generators, and EV chargers. How can I help you today?
               </p>
             </div>
 
