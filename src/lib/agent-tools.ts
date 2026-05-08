@@ -24,10 +24,16 @@ import { businessUnitUuidForService } from './constants'
 import {
   createCustomerForLead,
   createEstimateForLead,
+  createInboxLeadForEstimate,
   findExistingCustomer,
   type HCPCustomer,
 } from './housecall-pro'
-import { attachHcpEstimate, insertLead } from './leads-store'
+import { attachHcpEstimate, attachHcpLeadId, insertLead } from './leads-store'
+import {
+  sendClaireLeadCapturedEmail,
+  sendEmergencyEscalationEmail,
+  sendOfficeFlagEmail,
+} from './agent-notifications'
 
 export type AgentChannelLabel = 'sms' | 'voice' | 'web_chat'
 
@@ -199,6 +205,38 @@ export function buildAgentTools(ctx: AgentToolContext) {
       execute: async ({ reason, priority }) => {
         await escalateConversation(ctx.conversationId, `flagged: ${reason}`)
         console.log(`[agent-tools] flag_for_office_review (${priority}): ${reason}`)
+
+        // Send an immediate office email so the team sees the flag
+        // within minutes instead of whenever they next check the
+        // Switchboard. Pulls customer context from the conversation
+        // row Claire wrote earlier via update_visitor_contact.
+        try {
+          const sql = db()
+          type ConvRow = {
+            customer_name: string | null
+            customer_phone: string | null
+            customer_email: string | null
+            attribution_channel: string | null
+          }
+          const [conv] = (await sql`
+            SELECT customer_name, customer_phone, customer_email, attribution_channel
+            FROM tz_agent_conversations
+            WHERE id = ${ctx.conversationId}
+          `) as unknown as ConvRow[]
+          await sendOfficeFlagEmail({
+            conversationId: ctx.conversationId,
+            channel: ctx.channel,
+            reason,
+            priority,
+            customerName: conv?.customer_name ?? null,
+            customerPhone: conv?.customer_phone ?? null,
+            customerEmail: conv?.customer_email ?? null,
+            attributionChannel: conv?.attribution_channel ?? null,
+          })
+        } catch (e) {
+          console.error('[agent-tools] flag_for_office_review email failed (non-fatal):', e)
+        }
+
         return {
           flagged: true,
           reason,
@@ -222,12 +260,39 @@ export function buildAgentTools(ctx: AgentToolContext) {
         console.log(
           `[agent-tools] EMERGENCY ESCALATION: ${reason} | ${customer_name || ''} | ${customer_phone} | ${address || ''}`,
         )
-        // TODO: when Tyler ships Twilio, page him + on-call rotation here.
+
+        // Fire an immediate office email. SMS paging will layer on top
+        // once Twilio A2P 10DLC clears (configure DIGEST_PAGER_NUMBER
+        // and add a Twilio messages.create call here).
+        try {
+          const sql = db()
+          type ConvRow = {
+            customer_name: string | null
+            attribution_channel: string | null
+          }
+          const [conv] = (await sql`
+            SELECT customer_name, attribution_channel
+            FROM tz_agent_conversations
+            WHERE id = ${ctx.conversationId}
+          `) as unknown as ConvRow[]
+          await sendEmergencyEscalationEmail({
+            conversationId: ctx.conversationId,
+            channel: ctx.channel,
+            reason,
+            customerName: customer_name || conv?.customer_name || null,
+            customerPhone: customer_phone,
+            address: address || null,
+            attributionChannel: conv?.attribution_channel ?? null,
+          })
+        } catch (e) {
+          console.error('[agent-tools] escalate_emergency email failed (non-fatal):', e)
+        }
+
         return {
           escalated: true,
           reason,
           message:
-            'Emergency dispatch has been alerted. Tyler and the on-call team are being paged now. Stay on the line, keep your phone close, someone will reach back within minutes.',
+            'The office has been alerted and will reach out as fast as possible. Keep your phone close, someone will call you back within minutes.',
         }
       },
     }),
@@ -311,6 +376,7 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
   let hcpCustomerExisting = false
   let hcpMatchedBy: 'phone' | 'email' | 'name' | null = null
   let hcpEstimateId: string | undefined
+  let hcpInboxLeadId: string | undefined
   let hcpError: string | undefined
 
   try {
@@ -384,6 +450,23 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
       })
       if (typeof estimate?.id === 'string') hcpEstimateId = estimate.id
       if (noteAttachError) hcpError = `Estimate created but note attach failed: ${noteAttachError}`
+
+      // Restore the /leads POST so the office gets the inbox-card
+      // notification path they actually monitor. Reverting last night's
+      // single-record change after Tyler reported the David Maros
+      // conversation never surfaced (2026-05-08). Belt-and-suspenders:
+      // the estimate carries the rich notes via lead_source preset, the
+      // /leads POST guarantees the inbox notification.
+      try {
+        const inbox = await createInboxLeadForEstimate({
+          customerId: hcpCustomer.id,
+          tags,
+          address,
+        })
+        if (typeof inbox?.id === 'string') hcpInboxLeadId = inbox.id
+      } catch (e) {
+        console.error('[agent-tools] inbox lead failed (non-fatal):', e)
+      }
     } catch (e) {
       hcpError = e instanceof Error ? e.message : String(e)
     }
@@ -398,8 +481,47 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
         hcpMatchVia: hcpMatchedBy,
         hcpError,
       })
+      if (hcpInboxLeadId) {
+        await attachHcpLeadId(storedLeadId, hcpInboxLeadId)
+      }
     } catch (e) {
       console.error('[agent-tools] attachHcpEstimate failed (non-fatal):', e)
+    }
+  }
+
+  // Fire an immediate office email so the team sees Claire-booked leads
+  // in their inbox the way they always have for web-form leads. Pulls
+  // attribution channel from the conversation row Claire wrote earlier.
+  if (hcpCustomer) {
+    try {
+      const sql = db()
+      type ConvRow = { attribution_channel: string | null }
+      const [conv] = (await sql`
+        SELECT attribution_channel
+        FROM tz_agent_conversations
+        WHERE id = ${ctx.conversationId}
+      `) as unknown as ConvRow[]
+      const fullAddress =
+        input.street && input.city && input.state
+          ? `${input.street}, ${input.city}, ${input.state}${input.zip ? ' ' + input.zip : ''}`
+          : null
+      await sendClaireLeadCapturedEmail({
+        conversationId: ctx.conversationId,
+        channel: ctx.channel,
+        customerName: `${input.first_name} ${input.last_name}`.trim() || null,
+        customerPhone: input.phone || null,
+        customerEmail: input.email || null,
+        serviceLabel: input.service_label,
+        urgency: cleanQualification.urgency || null,
+        scope: cleanQualification.scope || null,
+        address: fullAddress,
+        hcpEstimateId: hcpEstimateId || null,
+        hcpCustomerId: hcpCustomer.id,
+        hcpError: hcpError || null,
+        attributionChannel: conv?.attribution_channel ?? null,
+      })
+    } catch (e) {
+      console.error('[agent-tools] lead-captured email failed (non-fatal):', e)
     }
   }
 

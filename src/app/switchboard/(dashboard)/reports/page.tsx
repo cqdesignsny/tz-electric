@@ -271,7 +271,7 @@ export default async function ReportsPage({
         )}
       </section>
 
-      {/* No-contact-captured list — Tyler's specific ask 2026-05-02 */}
+      {/* Conversations to review — Tyler's 2026-05-02 ask + David Maros gap 2026-05-08 */}
       {noContact.length > 0 && (
         <section className="rounded-2xl border-2 border-amber-200 bg-amber-50/40 dark:bg-amber-500/5 dark:border-amber-500/20 p-5 lg:p-6">
           <div className="flex items-baseline justify-between mb-4">
@@ -280,10 +280,10 @@ export default async function ReportsPage({
                 Conversations to review
               </h2>
               <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 max-w-2xl">
-                Visitors who started chatting but never shared their name or
-                phone, and never booked. Tyler asked us to flag these so the
-                office can audit whether the visitor bailed for a real reason
-                or whether Claire fumbled the handoff.
+                Conversations Claire couldn&apos;t close on her own: ones she
+                explicitly flagged or escalated, and ones where the visitor
+                started chatting but never shared their name or phone.
+                Top of the list is highest priority.
               </p>
             </div>
             <Link
@@ -299,40 +299,64 @@ export default async function ReportsPage({
               <thead className="text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400">
                 <tr className="text-left">
                   <th className="px-2 py-2 font-heading font-semibold">When</th>
+                  <th className="px-2 py-2 font-heading font-semibold">Reason</th>
+                  <th className="px-2 py-2 font-heading font-semibold">Customer</th>
                   <th className="px-2 py-2 font-heading font-semibold">Channel</th>
-                  <th className="px-2 py-2 font-heading font-semibold">Source</th>
                   <th className="px-2 py-2 font-heading font-semibold">Msgs</th>
-                  <th className="px-2 py-2 font-heading font-semibold">First user message</th>
-                  <th className="px-2 py-2 font-heading font-semibold">Last Claire reply</th>
+                  <th className="px-2 py-2 font-heading font-semibold">Why / first message</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-amber-200/60 dark:divide-white/10">
-                {noContact.map((c) => (
-                  <tr key={c.id} className="text-gray-800 dark:text-gray-200">
-                    <td className="px-2 py-3 whitespace-nowrap text-gray-600 dark:text-gray-400">
-                      {shortDate(c.createdAt)}
-                    </td>
-                    <td className="px-2 py-3 whitespace-nowrap">
-                      {c.channel === 'web_chat' ? 'Web chat' : c.channel === 'sms' ? 'SMS' : 'Voice'}
-                    </td>
-                    <td className="px-2 py-3 whitespace-nowrap text-gray-600 dark:text-gray-400">
-                      {c.attributionChannel || 'Direct'}
-                    </td>
-                    <td className="px-2 py-3 whitespace-nowrap tabular-nums">
-                      {c.messageCount}
-                    </td>
-                    <td className="px-2 py-3 max-w-xs">
-                      <span className="line-clamp-2 text-gray-700 dark:text-gray-300">
-                        {truncate(c.firstUserMessage, 120) || <em className="text-gray-400">(no messages)</em>}
-                      </span>
-                    </td>
-                    <td className="px-2 py-3 max-w-xs">
-                      <span className="line-clamp-2 text-gray-600 dark:text-gray-400 italic">
-                        {truncate(c.lastAssistantMessage, 120) || <em className="text-gray-400">(no reply)</em>}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                {noContact.map((c) => {
+                  const reasonLabel =
+                    c.reviewReason === 'emergency'
+                      ? { label: 'Emergency', cls: 'bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-300' }
+                      : c.reviewReason === 'flagged'
+                        ? { label: 'Flagged', cls: 'bg-amber-200 text-amber-900 dark:bg-amber-500/20 dark:text-amber-300' }
+                        : c.reviewReason === 'escalated'
+                          ? { label: 'Escalated', cls: 'bg-orange-200 text-orange-900 dark:bg-orange-500/20 dark:text-orange-300' }
+                          : { label: 'No contact', cls: 'bg-gray-200 text-gray-700 dark:bg-white/10 dark:text-gray-300' }
+
+                  const customerLabel = c.customerName
+                    ? `${c.customerName}${c.customerPhone ? ' · ' + c.customerPhone : ''}`
+                    : '(anonymous)'
+
+                  const detailOrFirstMsg = c.reviewDetail || c.firstUserMessage
+
+                  return (
+                    <tr key={c.id} className="text-gray-800 dark:text-gray-200 align-top">
+                      <td className="px-2 py-3 whitespace-nowrap text-gray-600 dark:text-gray-400">
+                        {shortDate(c.createdAt)}
+                      </td>
+                      <td className="px-2 py-3 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-heading font-semibold ${reasonLabel.cls}`}>
+                          {reasonLabel.label}
+                        </span>
+                      </td>
+                      <td className="px-2 py-3 max-w-xs">
+                        <span className="text-gray-800 dark:text-gray-200 break-words">
+                          {customerLabel}
+                        </span>
+                        {c.attributionChannel && (
+                          <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            {c.attributionChannel}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-2 py-3 whitespace-nowrap text-gray-700 dark:text-gray-300">
+                        {c.channel === 'web_chat' ? 'Web chat' : c.channel === 'sms' ? 'SMS' : 'Voice'}
+                      </td>
+                      <td className="px-2 py-3 whitespace-nowrap tabular-nums">
+                        {c.messageCount}
+                      </td>
+                      <td className="px-2 py-3 max-w-md">
+                        <span className="line-clamp-3 text-gray-700 dark:text-gray-300">
+                          {truncate(detailOrFirstMsg, 200) || <em className="text-gray-400">(no message)</em>}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>

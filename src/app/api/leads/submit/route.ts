@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   createCustomerForLead,
   createEstimateForLead,
+  createInboxLeadForEstimate,
   findExistingCustomer,
   type HCPCustomer,
 } from '@/lib/housecall-pro'
 import { renderLeadFormSubmissionEmail } from '@/lib/email-templates'
-import { attachHcpEstimate, insertLead } from '@/lib/leads-store'
+import { attachHcpEstimate, attachHcpLeadId, insertLead } from '@/lib/leads-store'
 import { deriveChannel, leadValueCents } from '@/lib/attribution'
 import { businessUnitUuidForService } from '@/lib/constants'
 import {
@@ -309,6 +310,7 @@ export async function POST(req: NextRequest) {
   let hcpCustomerExisting = false
   let hcpMatchedBy: 'phone' | 'email' | 'name' | null = null
   let hcpEstimateId: string | undefined
+  let hcpInboxLeadId: string | undefined
   let hcpError: string | undefined
 
   try {
@@ -382,11 +384,22 @@ export async function POST(req: NextRequest) {
         // it; office can re-add the note manually.
         hcpError = `Estimate created but office note failed to attach: ${noteAttachError}`
       }
-      // Single-record approach: only the estimate. The lead_source =
-      // "Lead Form" preset is one of HCP's locked integration sources,
-      // so the estimate appears in the Inbox UI as "Estimate for X"
-      // with full notes from option.notes — same as how Google's
-      // "Reserve with Google" leads land. No /leads POST needed.
+      // Restore the /leads POST so the office gets the inbox-card
+      // notification path they actually monitor. Reverting last night's
+      // single-record change after Tyler reported missing leads (the
+      // David Maros conversation never surfaced — 2026-05-08).
+      // Belt-and-suspenders: estimate carries the rich notes via
+      // lead_source preset, /leads POST guarantees inbox visibility.
+      try {
+        const inbox = await createInboxLeadForEstimate({
+          customerId: hcpCustomer.id,
+          tags,
+          address,
+        })
+        if (typeof inbox?.id === 'string') hcpInboxLeadId = inbox.id
+      } catch (e) {
+        console.error('[lead-form] HCP Job Inbox lead failed (non-fatal):', e)
+      }
     } catch (e) {
       hcpError = e instanceof Error ? e.message : String(e)
       console.error('[lead-form] HCP createEstimate failed:', hcpError)
@@ -404,6 +417,9 @@ export async function POST(req: NextRequest) {
         hcpMatchVia: hcpMatchedBy,
         hcpError,
       })
+      if (hcpInboxLeadId) {
+        await attachHcpLeadId(storedLeadId, hcpInboxLeadId)
+      }
     } catch (e) {
       console.error('[lead-form] attachHcpEstimate failed (non-fatal):', e)
     }
@@ -485,6 +501,7 @@ export async function POST(req: NextRequest) {
     leadId: storedLeadId,
     hcpCustomerId: hcpCustomer?.id || null,
     hcpEstimateId: hcpEstimateId || null,
+    hcpInboxLeadId: hcpInboxLeadId || null,
     hcpCustomerExisting,
     hcpError: hcpError || null,
     channel,

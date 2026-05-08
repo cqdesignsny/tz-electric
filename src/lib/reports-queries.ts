@@ -261,30 +261,44 @@ export async function getConversationStats(range: DateRange): Promise<Conversati
 }
 
 // ============================================================================
-// CONVERSATIONS THAT NEVER CAPTURED CONTACT (Tyler's specific ask 2026-05-02)
-// "I want to flag conversations where somebody doesn't share their info so
-//  we can audit if it was the info that was relayed or if the AI didn't
-//  handle it well."
+// CONVERSATIONS TO REVIEW (Tyler's specific ask 2026-05-02 + David Maros gap
+// 2026-05-08). Three categories qualify:
+//   1. No contact captured AND no lead booked — visitor bailed silently
+//   2. Status = 'escalated' — Claire explicitly flagged for office review
+//      (this is the bucket the David Maros contractor case landed in)
+//   3. closed_reason starts with 'flagged:' or 'emergency:' — a tool call
+//      raised this for human attention
+// All three should appear so the office has one place to triage anything
+// Claire couldn't or shouldn't handle alone.
 // ============================================================================
 
-export type NoContactConversation = {
+export type ReviewReason = 'no_contact' | 'escalated' | 'flagged' | 'emergency'
+
+export type ConversationToReview = {
   id: string
   channel: string
   createdAt: string
   status: string
+  reviewReason: ReviewReason
+  reviewDetail: string | null
+  customerName: string | null
+  customerPhone: string | null
   messageCount: number
   firstUserMessage: string | null
   lastAssistantMessage: string | null
   attributionChannel: string | null
 }
 
-export async function getNoContactConversations(range: DateRange, limit = 50): Promise<NoContactConversation[]> {
+export async function getConversationsToReview(range: DateRange, limit = 50): Promise<ConversationToReview[]> {
   const sql = db()
   type Row = {
     id: string
     channel: string
     created_at: string
     status: string
+    closed_reason: string | null
+    customer_name: string | null
+    customer_phone: string | null
     attribution_channel: string | null
     message_count: number
     first_user: string | null
@@ -296,6 +310,9 @@ export async function getNoContactConversations(range: DateRange, limit = 50): P
       c.channel,
       c.created_at,
       c.status,
+      c.closed_reason,
+      c.customer_name,
+      c.customer_phone,
       c.attribution_channel,
       (SELECT COUNT(*)::int FROM tz_agent_messages m WHERE m.conversation_id = c.id) AS message_count,
       (
@@ -311,21 +328,49 @@ export async function getNoContactConversations(range: DateRange, limit = 50): P
     FROM tz_agent_conversations c
     WHERE c.created_at >= ${range.start}
       AND c.created_at <= ${range.end}
-      AND c.customer_phone IS NULL
-      AND c.customer_name IS NULL
-      AND c.tz_lead_id IS NULL
-    ORDER BY c.created_at DESC
+      AND (
+        c.status = 'escalated'
+        OR (
+          c.customer_phone IS NULL
+          AND c.customer_name IS NULL
+          AND c.tz_lead_id IS NULL
+        )
+      )
+    ORDER BY
+      CASE WHEN c.closed_reason LIKE 'emergency:%' THEN 0
+           WHEN c.status = 'escalated' THEN 1
+           ELSE 2 END,
+      c.created_at DESC
     LIMIT ${limit}
   `) as unknown as Row[]
 
-  return rows.map((r) => ({
-    id: r.id,
-    channel: r.channel,
-    createdAt: r.created_at,
-    status: r.status,
-    messageCount: r.message_count,
-    firstUserMessage: r.first_user,
-    lastAssistantMessage: r.last_assistant,
-    attributionChannel: r.attribution_channel,
-  }))
+  return rows.map((r) => {
+    let reviewReason: ReviewReason = 'no_contact'
+    if (r.closed_reason?.startsWith('emergency:')) reviewReason = 'emergency'
+    else if (r.closed_reason?.startsWith('flagged:')) reviewReason = 'flagged'
+    else if (r.status === 'escalated') reviewReason = 'escalated'
+
+    const reviewDetail =
+      r.closed_reason?.replace(/^(emergency|flagged):\s*/i, '') ?? null
+
+    return {
+      id: r.id,
+      channel: r.channel,
+      createdAt: r.created_at,
+      status: r.status,
+      reviewReason,
+      reviewDetail,
+      customerName: r.customer_name,
+      customerPhone: r.customer_phone,
+      messageCount: r.message_count,
+      firstUserMessage: r.first_user,
+      lastAssistantMessage: r.last_assistant,
+      attributionChannel: r.attribution_channel,
+    }
+  })
 }
+
+// Backwards-compat alias for existing callers (Reports page + digest).
+// New code should use getConversationsToReview.
+export type NoContactConversation = ConversationToReview
+export const getNoContactConversations = getConversationsToReview
