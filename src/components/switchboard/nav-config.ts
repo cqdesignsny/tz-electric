@@ -66,17 +66,20 @@ export const NAV_SECTIONS: NavSection[] = [
       {
         label: 'Reports',
         slug: 'reports',
-        status: 'soon',
-        tagline: 'Calls, leads, jobs, and conversions at a glance.',
+        status: 'live',
+        tagline: 'Lead volume, channel mix, service mix, and Claire health.',
         overview:
-          "Plain-English reports on what the agents are doing and how they're performing. Daily, weekly, and monthly views without spreadsheets.",
+          "Daily, weekly, and monthly view of every lead and every Claire conversation. Reads from Neon (tz_leads + tz_agent_conversations) so it's fast and reflects whatever's in HCP without needing a refresh.",
         willDo: [
-          'Calls handled, missed, escalated to a human',
-          'Leads captured and converted, by source',
-          'Average response time, per channel',
-          'Revenue attribution per agent and channel',
+          'Lead volume per day, stacked by attribution channel',
+          'Channel breakdown: paid, organic, referral, direct (with pipeline value)',
+          'Service mix: HVAC, Mini-Split, Electrical, Generator, Plumbing, etc.',
+          'Claire conversation health: total, captured contact, booked a lead, no-contact-captured',
+          'Conversations to review: visitors who chatted but never shared info, so the office can audit',
+          'Daily digest email at 8 AM ET to office team',
+          'CSV export of every lead in the period',
         ],
-        needs: ['Lead Pipeline live', 'Agent run history stored'],
+        needs: [],
       },
       {
         label: 'Employee Training',
