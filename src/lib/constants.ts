@@ -49,6 +49,65 @@ export const COMPANY = {
 // Service pages can deep-link via /quote?service=hvac to prefill the service step.
 export const QUOTE_URL = '/quote'
 
+// HCP Business Unit UUIDs. Tyler's HCP account has three Business Units
+// configured: Plumbing, HVAC, Electrical. We auto-populate the Business
+// Unit field on every estimate so the office can filter by vertical.
+//
+// HCP's public API does NOT expose business unit UUIDs (verified
+// empirically 2026-05-08: GET /business_units, /companies/{id}/business_units,
+// /settings/business_units all 404). To populate the values below:
+//
+//   1. Tyler logs into HCP, opens any estimate in edit mode.
+//   2. Open browser dev tools, Network tab, filter by Fetch/XHR.
+//   3. Click the Business Unit dropdown. The request that loads the
+//      options will return JSON with {uuid, name} for each BU.
+//   4. Drop the three uuids into the env vars below.
+//
+// Stored as env vars (not hardcoded) so they can vary between preview
+// branches and prod, and so the UUIDs aren't checked into the public repo.
+// If unset at runtime, we just don't pass business_unit_uuid to HCP — the
+// office will tag estimates manually like they do today.
+export const HCP_BUSINESS_UNITS = {
+  plumbing: process.env.HCP_BU_PLUMBING_UUID || '',
+  hvac: process.env.HCP_BU_HVAC_UUID || '',
+  electrical: process.env.HCP_BU_ELECTRICAL_UUID || '',
+} as const
+
+/**
+ * Map a service slug (from services-data.ts) to one of TZ's three Business
+ * Units. Generators and EV chargers are electrical work in TZ's HCP setup
+ * (per Tyler). Hot water heaters are plumbing.
+ *
+ * Returns the BU UUID if env is configured, otherwise undefined so the
+ * caller can skip the field entirely.
+ */
+export function businessUnitUuidForService(serviceKey: string): string | undefined {
+  const k = serviceKey.toLowerCase()
+  if (k === 'plumbing' || k === 'hot-water-heaters') {
+    return HCP_BUSINESS_UNITS.plumbing || undefined
+  }
+  if (
+    k === 'mini-split' ||
+    k === 'mitsubishi' ||
+    k === 'hvac' ||
+    k === 'maintenance' ||
+    k === 'cooling' ||
+    k === 'heating'
+  ) {
+    return HCP_BUSINESS_UNITS.hvac || undefined
+  }
+  if (
+    k === 'electrical' ||
+    k === 'generator' ||
+    k === 'ev-charger' ||
+    k === 'panel'
+  ) {
+    return HCP_BUSINESS_UNITS.electrical || undefined
+  }
+  // Emergency, anything else: leave unset, office triages manually.
+  return undefined
+}
+
 // Claire web chat path. Linked from buttons sitewide so we can track entry
 // points via the ?source query param. Helpers in src/lib/claire-links.ts.
 export const CLAIRE_URL = '/claire'

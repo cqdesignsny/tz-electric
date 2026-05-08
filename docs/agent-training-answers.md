@@ -158,6 +158,59 @@ On-site Field Assessment recommended.
 
 ---
 
+### HVAC Maintenance (Mini-Split & Ducted Cleaning)
+
+Modular per-component pricing. We do NOT bundle. The customer pays for the components they actually have, plus an outdoor compressor line per system.
+
+**How to quote a maintenance call:** add ONE outdoor compressor line per outdoor unit, then ONE indoor unit line per indoor head/handler matching the type they have. Use one-time pricing if no contract is on file, or 3-year contract pricing if they sign or have an active 3-year maintenance agreement.
+
+**Per-component pricing (one-time / 3-year per visit):**
+
+| Component | One-Time | 3-Year Plan | Deep Clean Add-On |
+|---|---|---|---|
+| Outdoor Compressor | $120 | $111 | n/a |
+| High-Wall Head | $104 | $96 | +$69 per unit |
+| Ceiling Cassette | $156 | $144 | +$98 per unit |
+| Low-Wall (Floor-Mount) Head | $123 | $114 | +$79 per unit |
+| Ducted Air Handler | $163 | $151 | +$117 per unit |
+
+**Common system totals (one-time pricing):**
+
+| System | Total | 3-Year (per visit) |
+|---|---|---|
+| Mini-split 1:1 (1 high-wall) | $224 | $207 |
+| Mini-split 1:2 (2 high-walls) | $328 | $303 |
+| Mini-split 1:3 (3 high-walls) | $432 | $399 |
+| Mini-split 1:1 cassette | $276 | $255 |
+| Mixed: 1 high-wall + 1 cassette | $380 | $351 |
+| Ducted 1:1 | $283 | $262 |
+| Ducted 1:2 | $446 | $413 |
+
+**3-year contract:** roughly 7.5% off per visit, plus priority booking during busy season and locked-in pricing for the term. Always offer it. Mention casually, even if they decline, they now know it exists.
+
+**Deep clean add-ons (on-site only):** the tech adds these only if they find heavy buildup, mold, mildew odor, or biological growth that won't rinse off. Tech calls the office before adding. Office confirms with customer before approving the upcharge. If customer declines, tech does the standard quick clean and notes that deep cleaning was recommended but declined.
+
+**Identifying indoor unit types over the phone or chat:**
+- High-wall: mounted high on the wall, looks like a long horizontal box
+- Ceiling cassette: recessed into the ceiling with a square grille (4-way airflow)
+- Low-wall (floor-mount): sits on the floor at baseboard level
+- Ducted air handler: hidden, air comes from regular ceiling/wall supply vents
+
+**When in doubt, ask for a photo.** Customer can text or email a quick picture. Prevents quoting errors. A cassette job quoted as a high-wall costs us money because cassettes take ~50% longer.
+
+**Brand-agnostic for residential mini-splits and ducted systems** — the cleaning process is the same. We do NOT service window units, portable AC, or commercial rooftop equipment.
+
+**When to escalate to a manager (do NOT quote):**
+- Commercial buildings or systems above 5 tons
+- Customer asks for a multi-year contract longer than 3 years
+- System we did not install + can't confirm what they have from photos
+- Customer pushes back hard on price (escalate, do not discount on the spot)
+- Anything that doesn't cleanly fit one of the line items
+
+**Where to send them:** the maintenance landing page is at https://tzelectricinc.com/hvac-maintenance and the booking link is the same /quote form, prefilled with service=hvac.
+
+---
+
 ## 2. Warranty, Brands & Payment
 
 ### Labor Warranty

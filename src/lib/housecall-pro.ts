@@ -410,6 +410,23 @@ export type EstimateInput = {
     state: string
     zip: string
   }
+  /**
+   * HCP business_unit UUID. Auto-populates the Business Unit field on the
+   * estimate so the office can filter by vertical (Plumbing / HVAC /
+   * Electrical) without manually tagging each estimate.
+   *
+   * Empirically verified 2026-05-08: HCP validates this field at create
+   * time and returns 422 "unknown <id> provided" if the UUID isn't real.
+   * The other variants we tried (business_unit_id, business_unit,
+   * business_unit_name, estimate_fields.business_unit) are silently
+   * dropped. Job_type_uuid is accepted on the request but doesn't stick
+   * on the estimate (job_type is a JOB-level field, not estimate-level).
+   *
+   * UUIDs are NOT exposed via the public API (/business_units returns
+   * 404). They have to be grabbed from the HCP UI's network requests.
+   * See HCP_BUSINESS_UNITS in src/lib/constants.ts.
+   */
+  businessUnitUuid?: string
 }
 
 export type HCPEstimateResponse = {
@@ -488,6 +505,7 @@ export async function createEstimateForLead(
     ],
   }
   if (input.address) body.address = input.address
+  if (input.businessUnitUuid) body.business_unit_uuid = input.businessUnitUuid
 
   const estimate = (await hcpFetch('/estimates', {
     method: 'POST',

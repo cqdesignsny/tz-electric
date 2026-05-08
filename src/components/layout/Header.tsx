@@ -542,14 +542,19 @@ export default function Header() {
     return () => document.removeEventListener('keydown', handleEscape)
   }, [])
 
-  // Prevent body scroll when mobile menu is open
+  // Prevent body scroll when mobile menu is open + signal floating widgets to hide
   useEffect(() => {
     if (mobileOpen) {
       document.body.style.overflow = 'hidden'
+      document.body.dataset.mobileMenuOpen = 'true'
     } else {
       document.body.style.overflow = ''
+      delete document.body.dataset.mobileMenuOpen
     }
-    return () => { document.body.style.overflow = '' }
+    return () => {
+      document.body.style.overflow = ''
+      delete document.body.dataset.mobileMenuOpen
+    }
   }, [mobileOpen])
 
   const handleMouseEnter = useCallback((label: string) => {

@@ -22,12 +22,12 @@ const CONVERSATION_KEY = 'tz-claire-conversation-id'
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 const CHIPS: Array<{ id: string; label: string; prompt: string }> = [
-  { id: 'leak', label: 'I have a leak', prompt: "I have a leak at my house and I'm not sure what to do." },
+  { id: 'mini-split', label: 'Mini-split install', prompt: "I'm thinking about a Mitsubishi mini-split for my home. Can you walk me through it?" },
   { id: 'ac', label: "AC isn't cooling", prompt: "My AC isn't cooling like it should. Can you help?" },
   { id: 'gen', label: 'New generator quote', prompt: "I'd like a quote on a new standby generator for my home." },
   { id: 'ev', label: 'EV charger install', prompt: 'I want to install an EV charger at my house.' },
   { id: 'panel', label: 'Panel upgrade', prompt: "I'm thinking about upgrading my electrical panel. Where do I start?" },
-  { id: 'other', label: 'Something else', prompt: 'I have a question about a service I need.' },
+  { id: 'maintenance', label: 'Mini-split maintenance', prompt: 'I want to schedule a maintenance cleaning on my mini-split system.' },
 ]
 
 function generateConversationId(): string {

@@ -7,10 +7,11 @@ import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { claireHref, trackClaireCtaClick } from '@/lib/claire-links'
 
-const HIDDEN_PATHS = ['/switchboard', '/internal', '/claire']
+const HIDDEN_PATHS = ['/switchboard', '/internal', '/claire', '/quote']
 const DISMISS_KEY = 'tz-claire-bubble-dismissed'
 const TEASER_DELAY_MS = 2500
 const TEASER_VISIBLE_MS = 7000
+const SHOW_AFTER_SCROLL_PX = 700
 
 /**
  * Persistent bottom-right Claire entry point. Shows on every public page
@@ -29,30 +30,38 @@ const TEASER_VISIBLE_MS = 7000
  */
 export default function ClaireFloatingBubble() {
   const pathname = usePathname()
-  const [mounted, setMounted] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
   const [showTeaser, setShowTeaser] = useState(false)
   const [dismissed, setDismissed] = useState(false)
 
-  // Mount with a short delay to avoid flashing during page transitions.
+  // Show only after the visitor scrolls past the hero. Matches FloatingCTA
+  // behavior so Claire and the call/quote buttons appear together rather
+  // than competing for attention on first paint.
   useEffect(() => {
-    const t = setTimeout(() => setMounted(true), 600)
-    return () => clearTimeout(t)
+    function handleScroll() {
+      setScrolled(window.scrollY > SHOW_AFTER_SCROLL_PX)
+    }
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Restore dismissed state from sessionStorage and run the teaser sequence.
+  // Restore dismissed state from sessionStorage and run the teaser sequence
+  // once Claire is visible (so the teaser doesn't fire while she's hidden).
   useEffect(() => {
     if (typeof window === 'undefined') return
     if (window.sessionStorage.getItem(DISMISS_KEY) === '1') {
       setDismissed(true)
       return
     }
+    if (!scrolled) return
     const teaserOn = setTimeout(() => setShowTeaser(true), TEASER_DELAY_MS)
     const teaserOff = setTimeout(() => setShowTeaser(false), TEASER_DELAY_MS + TEASER_VISIBLE_MS)
     return () => {
       clearTimeout(teaserOn)
       clearTimeout(teaserOff)
     }
-  }, [])
+  }, [scrolled])
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.preventDefault()
@@ -70,10 +79,10 @@ export default function ClaireFloatingBubble() {
   }
 
   if (HIDDEN_PATHS.some((p) => pathname?.startsWith(p))) return null
-  if (!mounted || dismissed) return null
+  if (!scrolled || dismissed) return null
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
+    <div className="tz-floating-action fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 pointer-events-none">
       {/* Teaser bubble */}
       <AnimatePresence>
         {showTeaser && (

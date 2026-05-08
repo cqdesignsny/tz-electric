@@ -20,6 +20,7 @@ import {
 } from './agent-conversations'
 import { leadValueCents } from './attribution'
 import { db } from './db'
+import { businessUnitUuidForService } from './constants'
 import {
   createCustomerForLead,
   createEstimateForLead,
@@ -343,7 +344,13 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
 
   if (hcpCustomer && !hcpError) {
     try {
+      // Lead the tag list with a single condensed summary so the HCP Job
+      // Inbox card answers "what is this?" at a glance. Same convention
+      // as the web-form path.
+      const cityState = [input.city, input.state].filter((v): v is string => !!v).join(', ').trim()
+      const summary = cityState ? `${input.service_label} · ${cityState}` : input.service_label
       const tags: string[] = [
+        summary,
         `Channel: Agent ${ctx.channel.toUpperCase()}`,
         'TZ AI AGENT',
         `Service: ${input.service_label}`,
@@ -369,6 +376,7 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
         description,
         tags,
         address,
+        businessUnitUuid: businessUnitUuidForService(input.service_key),
       })
       if (typeof estimate?.id === 'string') hcpEstimateId = estimate.id
       if (noteAttachError) hcpError = `Estimate created but note attach failed: ${noteAttachError}`

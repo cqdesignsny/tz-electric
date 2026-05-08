@@ -9,6 +9,7 @@ import {
 import { renderLeadFormSubmissionEmail } from '@/lib/email-templates'
 import { attachHcpEstimate, attachHcpLeadId, insertLead } from '@/lib/leads-store'
 import { deriveChannel, leadValueCents } from '@/lib/attribution'
+import { businessUnitUuidForService } from '@/lib/constants'
 import {
   findService,
   getQuestionLabel,
@@ -181,7 +182,18 @@ function buildEstimateTags(
   customerExisting: boolean,
   channel: string,
 ): string[] {
-  const tags: string[] = ['Web Form']
+  const tags: string[] = []
+
+  // Lead the list with a single condensed summary tag so the HCP Job Inbox
+  // card surfaces the at-a-glance answer to "what is this lead?" without
+  // the office having to click through. The full service info still lives
+  // in the linked estimate's option notes; this is the inbox-level header.
+  const cityState = [body.city, body.state].filter(isNonEmpty).join(', ').trim()
+  const summaryParts = [body.serviceLabel]
+  if (cityState) summaryParts.push(cityState)
+  tags.push(summaryParts.join(' · '))
+
+  tags.push('Web Form')
   tags.push(`Channel: ${channel}`)
   tags.push(`Service: ${body.serviceLabel}`)
 
@@ -357,6 +369,7 @@ export async function POST(req: NextRequest) {
         description,
         tags,
         address,
+        businessUnitUuid: businessUnitUuidForService(body.serviceKey),
       })
       if (typeof estimate?.id === 'string') hcpEstimateId = estimate.id
       if (noteAttachError) {

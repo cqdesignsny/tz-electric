@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import { COMPANY, QUOTE_URL } from '@/lib/constants'
 
-const HIDDEN_PATHS = ['/switchboard', '/internal', '/claire']
+const HIDDEN_PATHS = ['/switchboard', '/internal', '/claire', '/quote']
+const SHOW_AFTER_SCROLL_PX = 700
 
 export default function FloatingCTA() {
   const [visible, setVisible] = useState(false)
@@ -12,8 +13,9 @@ export default function FloatingCTA() {
 
   useEffect(() => {
     function handleScroll() {
-      setVisible(window.scrollY > 400)
+      setVisible(window.scrollY > SHOW_AFTER_SCROLL_PX)
     }
+    handleScroll()
     window.addEventListener('scroll', handleScroll, { passive: true })
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
@@ -22,7 +24,7 @@ export default function FloatingCTA() {
   if (!visible) return null
 
   return (
-    <div className="fixed bottom-6 left-6 z-50 flex flex-col gap-3 items-start">
+    <div className="tz-floating-action fixed bottom-6 left-6 z-50 flex flex-col gap-3 items-start">
       {/* Phone Button */}
       <a
         href={`tel:${COMPANY.phoneRaw}`}

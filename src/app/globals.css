@@ -146,6 +146,13 @@ select {
    UTILITY CLASSES
    ============================================ */
 
+/* Hide floating action widgets (Claire bubble, FloatingCTA) while the
+   mobile nav menu is open. Header already exposes those CTAs in the menu
+   itself, so the floating ones would just compete with the visible buttons. */
+body[data-mobile-menu-open="true"] .tz-floating-action {
+  display: none !important;
+}
+
 .container-site {
   max-width: var(--container-max);
   margin-left: auto;
