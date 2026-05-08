@@ -100,11 +100,11 @@ for (const n of opt?.notes || []) {
 console.log(`\n=== 3. Verdict ===\n`)
 const checks = {
   'estimate created': !!estimate.id,
-  'lead_source = "Website"': estimate.lead_source === 'Website',
-  'option has notes': (opt?.notes?.length || 0) > 0,
-  'first tag is summary (Service · City format)': /·/.test(opt?.tags?.[0] || ''),
+  'lead_source = "Lead Form"': estimate.lead_source === 'Lead Form',
+  'option.notes populated': (opt?.notes?.length || 0) > 0,
+  'option.notes content has qualification dump': /Qualification/.test(opt?.notes?.[0]?.content || ''),
   'tags include "Web Form"': (opt?.tags || []).includes('Web Form'),
-  'old hcpInboxLeadId field gone': !hasInboxLeadField,
+  'no hcpInboxLeadId in response (single-record flow)': !hasInboxLeadField,
 }
 for (const [k, v] of Object.entries(checks)) {
   console.log(`  ${v ? '✓' : '✗'} ${k}`)

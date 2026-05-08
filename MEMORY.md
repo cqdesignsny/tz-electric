@@ -27,14 +27,16 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - Hotjar: 5144458 (direct snippet)
 
 ## Current Integrations
-- Native lead form at `/quote` (replaces Typeform). Posts to HCP `/leads` AND persists to Neon `tz_leads`.
-- **Web Chat Claire at `/claire`** (LIVE 2026-05-01). AI SDK v6 + Vercel AI Gateway (Anthropic Sonnet 4.6) with OIDC auth + ephemeral prompt caching. Same lead-routing pipeline as the website form.
+- Native lead form at `/quote` (replaces Typeform). Persists to Neon `tz_leads` and creates an HCP estimate with `lead_source: "Lead Form"` (single-record flow as of 2026-05-08).
+- **Stay Cool billboard landing at `/stay-cool`** (LIVE 2026-05-07). Single-page summer mini-split promo, QR-code target with UTM tracking for `summer-2026-minisplit` campaign, `noIndex`.
+- **HVAC Maintenance landing at `/hvac-maintenance`** (LIVE 2026-05-08). Modular per-component pricing matrix from Tyler's 2026-05-07 maintenance doc. Bookings route through `/quote?service=hvac&promo=maintenance`.
+- **Web Chat Claire at `/claire`** (LIVE 2026-05-01). AI SDK v6 + Vercel AI Gateway (Anthropic Sonnet 4.6) with OIDC auth + ephemeral prompt caching. Posts to HCP as estimates with `lead_source: "CSR AI"`.
 - TZ Switchboard Web Chat module at `/switchboard/web-chat`. Office viewer for `/claire` conversations.
 - NextAuth.js v5 (Google OAuth) for TZ Switchboard sign-in. Domain-restricted to `tzelectricinc.com` + `creativequalitymarketing.com`. Per-user roles + per-module access overrides.
 - Trust Index for Google reviews widget
 - Wisetack & Synchrony financing
 - Stripe for maintenance plan subscriptions
-- HousecallPro for customer find-or-create + estimate creation + Job Inbox lead (Bearer auth on `api.housecallpro.com`). Same routing for the website form and every agent.
+- **HousecallPro routing (single-estimate flow as of 2026-05-08).** Find-or-create customer (by phone/email/name), create unscheduled estimate with `lead_source` preset (Lead Form for web form, CSR AI for Claire), populate `option.notes` with the full qualification + attribution block. The estimate appears in HCP's Inbox UI as "Estimate for X" with the source badge and notes rendered as "Additional notes" — same UX as Google's "Reserve with Google" leads. Bearer auth on `api.housecallpro.com`.
 - Resend for outbound email (account under `tzelectricoffice@gmail.com`, domain verified)
 - Neon Postgres (`tz-db`, Vercel Marketplace) for our own structured persistence (`tz_leads`, `tz_agent_conversations`, `tz_agent_messages`, `tz_kb_overrides`, `tz_users`, etc.)
 
