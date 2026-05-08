@@ -24,11 +24,10 @@ import { businessUnitUuidForService } from './constants'
 import {
   createCustomerForLead,
   createEstimateForLead,
-  createInboxLeadForEstimate,
   findExistingCustomer,
   type HCPCustomer,
 } from './housecall-pro'
-import { attachHcpEstimate, attachHcpLeadId, insertLead } from './leads-store'
+import { attachHcpEstimate, insertLead } from './leads-store'
 
 export type AgentChannelLabel = 'sms' | 'voice' | 'web_chat'
 
@@ -312,7 +311,6 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
   let hcpCustomerExisting = false
   let hcpMatchedBy: 'phone' | 'email' | 'name' | null = null
   let hcpEstimateId: string | undefined
-  let hcpInboxLeadId: string | undefined
   let hcpError: string | undefined
 
   try {
@@ -377,31 +375,15 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
         tags,
         address,
         businessUnitUuid: businessUnitUuidForService(input.service_key),
-        // Lead source on the estimate makes Claire's leads appear in HCP's
-        // Inbox card with the same UX as Google's "Reserve with Google"
-        // integration — option.notes show as "Additional notes" on the
-        // card. "Website" is HCP's whitelisted preset value. If Tyler
-        // adds a custom "Claire AI" lead source in HCP settings, we can
-        // switch to that.
-        leadSource: 'Website',
+        // "CSR AI" is HCP's locked preset for AI agent-sourced leads.
+        // The estimate appears in the Inbox as "Estimate for X" with
+        // the CSR AI badge and option.notes rendered as "Additional
+        // notes". Distinguishes Claire-sourced leads from web-form
+        // leads (which use "Lead Form") so Tyler can filter by source.
+        leadSource: 'CSR AI',
       })
       if (typeof estimate?.id === 'string') hcpEstimateId = estimate.id
       if (noteAttachError) hcpError = `Estimate created but note attach failed: ${noteAttachError}`
-
-      // Also drop a Job Inbox entry so the office reliably sees Claire's
-      // leads in the Inbox UI alongside web-form leads. The estimate
-      // already carries rich notes via lead_source + option.notes;
-      // the /leads POST is the belt-and-suspenders inbox visibility.
-      try {
-        const inbox = await createInboxLeadForEstimate({
-          customerId: hcpCustomer.id,
-          tags,
-          address,
-        })
-        if (typeof inbox?.id === 'string') hcpInboxLeadId = inbox.id
-      } catch (e) {
-        console.error('[agent-tools] inbox lead failed (non-fatal):', e)
-      }
     } catch (e) {
       hcpError = e instanceof Error ? e.message : String(e)
     }
@@ -416,9 +398,6 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
         hcpMatchVia: hcpMatchedBy,
         hcpError,
       })
-      if (hcpInboxLeadId) {
-        await attachHcpLeadId(storedLeadId, hcpInboxLeadId)
-      }
     } catch (e) {
       console.error('[agent-tools] attachHcpEstimate failed (non-fatal):', e)
     }
@@ -437,7 +416,6 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
     lead_id: storedLeadId,
     hcp_customer_id: hcpCustomer?.id || null,
     hcp_estimate_id: hcpEstimateId || null,
-    hcp_inbox_lead_id: hcpInboxLeadId || null,
     hcp_customer_existing: hcpCustomerExisting,
     hcp_match_via: hcpMatchedBy,
     hcp_error: hcpError || null,
