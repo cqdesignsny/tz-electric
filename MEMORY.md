@@ -27,16 +27,19 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - Hotjar: 5144458 (direct snippet)
 
 ## Current Integrations
-- Native lead form at `/quote` (replaces Typeform). Persists to Neon `tz_leads` and creates an HCP estimate with `lead_source: "Lead Form"` (single-record flow as of 2026-05-08).
+- Native lead form at `/quote` (replaces Typeform). Persists to Neon `tz_leads`, creates an HCP estimate with `lead_source: "Lead Form"`, AND posts a `/leads` inbox card. Belt-and-suspenders so the office's notification habit (Job Inbox > "Lead for X") keeps working AND the linked estimate carries the full service notes.
 - **Stay Cool billboard landing at `/stay-cool`** (LIVE 2026-05-07). Single-page summer mini-split promo, QR-code target with UTM tracking for `summer-2026-minisplit` campaign, `noIndex`.
 - **HVAC Maintenance landing at `/hvac-maintenance`** (LIVE 2026-05-08). Modular per-component pricing matrix from Tyler's 2026-05-07 maintenance doc. Bookings route through `/quote?service=hvac&promo=maintenance`.
-- **Web Chat Claire at `/claire`** (LIVE 2026-05-01). AI SDK v6 + Vercel AI Gateway (Anthropic Sonnet 4.6) with OIDC auth + ephemeral prompt caching. Posts to HCP as estimates with `lead_source: "CSR AI"`.
+- **Reports module at `/switchboard/reports`** (LIVE 2026-05-08). Lead volume by day stacked by channel, channel breakdown with pipeline value, service mix, Claire conversation health, "Conversations to review" with reason badges (Emergency/Flagged/Escalated/No contact). CSV export. **Daily digest email at 8 AM ET** to office team via Vercel Cron + Resend, skips on quiet days.
+- **Web Chat Claire at `/claire`** (LIVE 2026-05-01). AI SDK v6 + Vercel AI Gateway (Anthropic Sonnet 4.6) with OIDC auth + ephemeral prompt caching. Posts to HCP as estimates with `lead_source: "CSR AI"` + a `/leads` inbox card (dual-record).
+- **Office notifications wired (2026-05-08 hotfix).** Every Claire flag/escalate/lead booking emails Tyler + Terry within seconds via Resend. Helpers in `src/lib/agent-notifications.ts` (`sendOfficeFlagEmail`, `sendEmergencyEscalationEmail`, `sendClaireLeadCapturedEmail`). Pre-fix: tools updated DB rows but never paged anyone (David Maros gap). SMS paging will layer on top once Twilio A2P 10DLC clears.
 - TZ Switchboard Web Chat module at `/switchboard/web-chat`. Office viewer for `/claire` conversations.
 - NextAuth.js v5 (Google OAuth) for TZ Switchboard sign-in. Domain-restricted to `tzelectricinc.com` + `creativequalitymarketing.com`. Per-user roles + per-module access overrides.
 - Trust Index for Google reviews widget
 - Wisetack & Synchrony financing
 - Stripe for maintenance plan subscriptions
-- **HousecallPro routing (single-estimate flow as of 2026-05-08).** Find-or-create customer (by phone/email/name), create unscheduled estimate with `lead_source` preset (Lead Form for web form, CSR AI for Claire), populate `option.notes` with the full qualification + attribution block. The estimate appears in HCP's Inbox UI as "Estimate for X" with the source badge and notes rendered as "Additional notes" — same UX as Google's "Reserve with Google" leads. Bearer auth on `api.housecallpro.com`.
+- **HousecallPro dual-record routing (2026-05-08).** Find-or-create customer (by phone/email/name), create unscheduled estimate with `lead_source` preset (Lead Form for web form, CSR AI for Claire), populate `option.notes` with the full qualification + attribution block. ALSO POST `/leads` so the inbox card surfaces in Tyler's notification view. Estimate appears as "Estimate for X" with full notes; lead appears as "Lead for X" for inbox notification. Bearer auth on `api.housecallpro.com`. Optional `business_unit_uuid` per service vertical (env-gated until UUIDs collected).
+- **Vapi (in-progress, 2026-05-08).** Workspace + Assistant "Claire" created. API key, Twilio Account SID/Auth Token + API Key (SK + secret) collected. Awaiting phone-number purchase + voice route handlers.
 - Resend for outbound email (account under `tzelectricoffice@gmail.com`, domain verified)
 - Neon Postgres (`tz-db`, Vercel Marketplace) for our own structured persistence (`tz_leads`, `tz_agent_conversations`, `tz_agent_messages`, `tz_kb_overrides`, `tz_users`, etc.)
 

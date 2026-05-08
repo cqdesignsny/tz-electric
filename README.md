@@ -166,18 +166,27 @@ If `SWITCHBOARD_SESSION_SECRET` is missing, login throws a 503 with a clear mess
 
 ## Email System
 
-All outbound email goes through Resend on a verified `tzelectricinc.com` domain. Templates live in `src/lib/email-templates.ts`:
+All outbound email goes through Resend on a verified `tzelectricinc.com` domain. Templates live in `src/lib/email-templates.ts` (shared shell + customer-facing templates), `src/lib/digest-email.ts` (daily digest), and `src/lib/agent-notifications.ts` (Claire's per-tool office notifications):
 
-- `renderEmailLayout()`, the shared branded shell. Top gradient strip, TZ logo on white header, eyebrow, heading, intro, optional stats row, body block, optional CTA pill button, branded footer. Inline-styled, table-based for cross-client compatibility (Apple Mail, Gmail, Outlook, Yahoo). Mobile-responsive with a small media query block.
-- `renderQuestionnaireSubmissionEmail()`, the questionnaire submission email. Stats row (filled by, completed, percentage), full markdown answers in a navy code block, CTA to open the TZ Switchboard.
+- `renderEmailLayout()` — the shared branded shell. Top gradient strip, TZ logo on white header, eyebrow, heading, intro, optional stats row, body block, optional CTA pill button, branded footer. Inline-styled, table-based for cross-client compatibility (Apple Mail, Gmail, Outlook, Yahoo). Mobile-responsive.
+- `renderQuestionnaireSubmissionEmail()` — questionnaire submission email.
+- `renderLeadFormSubmissionEmail()` — fired on every web form submission.
+- `renderDailyDigestEmail()` (in `digest-email.ts`) — daily 8 AM ET summary of yesterday's lead + Claire conversation activity. Triggered by Vercel Cron at `/api/cron/daily-digest`.
+- `sendOfficeFlagEmail()` (in `agent-notifications.ts`) — fires when Claire calls `flag_for_office_review`. Priority badge + customer info + reason + Switchboard CTA.
+- `sendEmergencyEscalationEmail()` (in `agent-notifications.ts`) — fires when Claire calls `escalate_emergency`. Red banner + tap-to-call link to the customer's phone.
+- `sendClaireLeadCapturedEmail()` (in `agent-notifications.ts`) — fires when Claire calls `create_lead_with_estimate`. Lead summary + qualification + HCP estimate link.
 
-Future email types (lead form notifications, booking confirms, agent replies) reuse `renderEmailLayout()` to stay on-brand.
+Recipients default to the office team (Tyler/Terry/service@/Cesar); override per-feature via `LEAD_FORM_TO_EMAILS` (operational alerts) or `DIGEST_TO_EMAILS` (daily digest).
 
 ## Pages
 
-The public site has 50+ static and dynamic routes including the homepage, 7 service pages, sub-service pages, the Mitsubishi landing, signature plans, maintenance plans, about, contact, reviews, financing, gallery, promotions, careers (with 6 individual job pages), 7 city pages, 5 county pages, 5 legal pages, the lead form at `/quote`, the hidden /thank-you page, and **`/claire`** (full-page web chat surface, top-level segment with its own minimal layout).
+The public site has 50+ static and dynamic routes including the homepage, 7 service pages, sub-service pages, the Mitsubishi landing, signature plans, maintenance plans, about, contact, reviews, financing, gallery, promotions, careers (with 6 individual job pages), 7 city pages, 5 county pages, 5 legal pages, the lead form at `/quote`, the hidden `/thank-you` page, and **`/claire`** (full-page web chat surface, top-level segment with its own minimal layout).
 
-The TZ Switchboard adds 13+ more (login, dashboard home, agent training, knowledge base, lead pipeline, web chat conversations, SMS conversations, users, plus the remaining module info pages).
+Two campaign-specific landings:
+- **`/stay-cool`** — billboard QR target for the summer mini-split campaign. `noIndex`, UTM-trackable.
+- **`/hvac-maintenance`** — modular per-component maintenance pricing from Tyler's 2026-05-07 doc. Tables for per-component pricing, common-system pricing, deep-clean policy, FAQs.
+
+The TZ Switchboard adds 14+ more (login, dashboard home, agent training, knowledge base, lead pipeline, web chat conversations, SMS conversations, users, **reports** with daily digest cron, plus the remaining module info pages).
 
 ## Design System
 
