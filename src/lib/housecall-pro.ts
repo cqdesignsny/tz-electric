@@ -427,6 +427,25 @@ export type EstimateInput = {
    * See HCP_BUSINESS_UNITS in src/lib/constants.ts.
    */
   businessUnitUuid?: string
+
+  /**
+   * HCP lead_source. When set, the estimate appears in HCP's Inbox card
+   * with the lead source label and the option.notes shown as "Additional
+   * notes" — same UX as Google's "Reserve with Google" integration. This
+   * is THE way to make our leads look like Google's Inbox cards.
+   *
+   * HCP enforces a whitelist of preset lead source values. Verified
+   * empirically 2026-05-08:
+   *   - "Website" → accepted
+   *   - "API Leads" → accepted
+   *   - "TZ AI Agent" → 422 "Lead source not found"
+   *   - "Web Form" → 422 "Lead source not found"
+   *
+   * Preset values are configured in HCP under Settings > Lead Sources.
+   * Tyler can add custom ones (e.g. "Claire AI") via the HCP UI; once
+   * added they become valid here. Default to "Website" until then.
+   */
+  leadSource?: string
 }
 
 export type HCPEstimateResponse = {
@@ -506,6 +525,7 @@ export async function createEstimateForLead(
   }
   if (input.address) body.address = input.address
   if (input.businessUnitUuid) body.business_unit_uuid = input.businessUnitUuid
+  if (input.leadSource) body.lead_source = input.leadSource
 
   const estimate = (await hcpFetch('/estimates', {
     method: 'POST',

@@ -2,12 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   createCustomerForLead,
   createEstimateForLead,
-  createInboxLeadForEstimate,
   findExistingCustomer,
   type HCPCustomer,
 } from '@/lib/housecall-pro'
 import { renderLeadFormSubmissionEmail } from '@/lib/email-templates'
-import { attachHcpEstimate, attachHcpLeadId, insertLead } from '@/lib/leads-store'
+import { attachHcpEstimate, insertLead } from '@/lib/leads-store'
 import { deriveChannel, leadValueCents } from '@/lib/attribution'
 import { businessUnitUuidForService } from '@/lib/constants'
 import {
@@ -310,7 +309,6 @@ export async function POST(req: NextRequest) {
   let hcpCustomerExisting = false
   let hcpMatchedBy: 'phone' | 'email' | 'name' | null = null
   let hcpEstimateId: string | undefined
-  let hcpInboxLeadId: string | undefined
   let hcpError: string | undefined
 
   try {
@@ -370,6 +368,13 @@ export async function POST(req: NextRequest) {
         tags,
         address,
         businessUnitUuid: businessUnitUuidForService(body.serviceKey),
+        // Setting lead_source on the estimate makes it appear in HCP's
+        // Inbox card the same way Google's "Reserve with Google" leads
+        // do — with the lead source label and the option.notes surfaced
+        // as "Additional notes". This replaces the old /leads POST
+        // pattern, which couldn't carry notes via the public API.
+        // "Website" is one of HCP's preset whitelisted values.
+        leadSource: 'Website',
       })
       if (typeof estimate?.id === 'string') hcpEstimateId = estimate.id
       if (noteAttachError) {
@@ -378,21 +383,13 @@ export async function POST(req: NextRequest) {
         // it; office can re-add the note manually.
         hcpError = `Estimate created but office note failed to attach: ${noteAttachError}`
       }
-
-      // Drop a Job Inbox entry so the office sees new leads at a glance
-      // in HCP's "API Leads" channel. Attaches to the existing customer
-      // via customer_id (no duplicate). Failure here is non-fatal — the
-      // estimate already exists.
-      try {
-        const inbox = await createInboxLeadForEstimate({
-          customerId: hcpCustomer.id,
-          tags,
-          address,
-        })
-        if (typeof inbox?.id === 'string') hcpInboxLeadId = inbox.id
-      } catch (e) {
-        console.error('[lead-form] HCP Job Inbox lead failed (non-fatal):', e)
-      }
+      // We previously also POSTed to /leads to drop a Job Inbox entry, but
+      // that approach couldn't populate the lead's "Additional notes"
+      // panel (HCP's public API doesn't expose lead-level notes — verified
+      // empirically across all 35 leads in the account). The estimate-with-
+      // lead_source pattern above gives the office a fully-populated inbox
+      // card with notes, matching the UX of Google's Reserve with Google
+      // integration. Single source of truth, no duplicate inbox entries.
     } catch (e) {
       hcpError = e instanceof Error ? e.message : String(e)
       console.error('[lead-form] HCP createEstimate failed:', hcpError)
@@ -410,9 +407,6 @@ export async function POST(req: NextRequest) {
         hcpMatchVia: hcpMatchedBy,
         hcpError,
       })
-      if (hcpInboxLeadId) {
-        await attachHcpLeadId(storedLeadId, hcpInboxLeadId)
-      }
     } catch (e) {
       console.error('[lead-form] attachHcpEstimate failed (non-fatal):', e)
     }
@@ -494,7 +488,6 @@ export async function POST(req: NextRequest) {
     leadId: storedLeadId,
     hcpCustomerId: hcpCustomer?.id || null,
     hcpEstimateId: hcpEstimateId || null,
-    hcpInboxLeadId: hcpInboxLeadId || null,
     hcpCustomerExisting,
     hcpError: hcpError || null,
     channel,
