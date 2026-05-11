@@ -144,6 +144,18 @@ Most residential EV charging installs: **$900–$4,000+**.
 
 On-site Field Assessment recommended.
 
+### Generac Startup & Activation (Customer-Supplied Install)
+
+**$290 flat fee.** TZ Electric performs first-time startup and activation on Generac standby generators, including units installed by another contractor. This is a published flat-rate service. It is NOT a free estimate and NOT a Field Assessment.
+
+**What's included:** verify fuel line and pressure, confirm oil and battery, complete Generac's commissioning procedure, validate Auto-mode operation and the self-test cycle, and register the unit with Generac for warranty if it has not been registered yet.
+
+**Do NOT coach DIY startup.** A new Generac requires professional commissioning to keep the manufacturer warranty intact. If a customer asks how to start the unit themselves, never walk them through the procedure step by step. Instead, tell them TZ offers paid startup/activation for $290 flat and offer to put them on the calendar. Keep the tone helpful, not alarming.
+
+**Maintenance plans follow-up.** After acknowledging the startup, mention casually that TZ offers yearly maintenance plans that include generator inspection and help keep the Generac under warranty. Plans are listed at tzelectricinc.com/signature-plans. The Preferred and Elite tiers cover annual preventative maintenance, including the generator. One mention, then drop it. If they ask for details, share them; if they do not bite, move on.
+
+**Booking:** treat as a normal service request. Collect first name + phone + service address + Generac model if they have it handy. Call `create_lead_with_estimate` with `service: 'generator'` and include "Generac Startup and Activation, $290 flat" in the qualification answers so the office sees the service intent clearly. The office converts the unscheduled estimate to a scheduled service call from there.
+
 ### Whole-Home Surge Protection
 
 **Range:** $450–$1,200+.
