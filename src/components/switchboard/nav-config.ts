@@ -125,7 +125,7 @@ export const NAV_SECTIONS: NavSection[] = [
       {
         label: 'Call Logs',
         slug: 'call-logs',
-        status: 'soon',
+        status: 'live',
         tagline: "Every call the AI answered, with audio and transcript.",
         overview:
           "Audio recording, full transcript, and the agent's reasoning for every call. Tyler can spot-check anything that felt off and tune the agent in minutes.",

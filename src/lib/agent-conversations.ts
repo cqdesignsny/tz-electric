@@ -34,6 +34,7 @@ export type AgentConversation = {
   closed_reason: string | null
   total_input_tokens: number
   total_output_tokens: number
+  external_call_id: string | null
   created_at: string
   updated_at: string
 }
@@ -62,17 +63,37 @@ export type StartConversationInput = {
   tzLeadId?: string | null
   attributionChannel?: string | null
   attributionFirstTouch?: Record<string, unknown> | null
+  /**
+   * Upstream provider's call id (Vapi `call.id`, Twilio `MessagingSid`,
+   * etc.). When supplied, the lookup also tries this id first so
+   * multiple webhook events from the same vendor call stitch back to
+   * the same conversation row. Voice (Vapi) relies on this because the
+   * caller phone isn't always known at `assistant-request` time but
+   * subsequent `tool-calls` events do carry the call id.
+   */
+  externalCallId?: string | null
 }
 
 /**
- * Find an open conversation for this channel + phone, or start a new one.
- * SMS conversations are keyed by customer phone — same number reaching
- * out within an open thread continues the same conversation.
+ * Find an open conversation for this channel + phone, or start a new
+ * one. Lookup precedence: externalCallId (when given) → channel+phone
+ * → fresh insert. SMS conversations are keyed by customer phone, voice
+ * conversations are keyed by Vapi call id (since the caller phone is
+ * captured asynchronously).
  */
 export async function findOrStartConversation(
   input: StartConversationInput,
 ): Promise<AgentConversation> {
   const sql = db()
+
+  if (input.externalCallId) {
+    const existing = (await sql`
+      SELECT * FROM tz_agent_conversations
+      WHERE external_call_id = ${input.externalCallId}
+      LIMIT 1
+    `) as AgentConversation[]
+    if (existing.length > 0) return existing[0]
+  }
 
   if (input.customerPhone) {
     const existing = (await sql`
@@ -90,7 +111,8 @@ export async function findOrStartConversation(
     INSERT INTO tz_agent_conversations (
       channel, customer_phone, customer_email, customer_name,
       hcp_customer_id, tz_lead_id,
-      attribution_channel, attribution_first_touch
+      attribution_channel, attribution_first_touch,
+      external_call_id
     ) VALUES (
       ${input.channel},
       ${input.customerPhone ?? null},
@@ -99,11 +121,29 @@ export async function findOrStartConversation(
       ${input.hcpCustomerId ?? null},
       ${input.tzLeadId ?? null},
       ${input.attributionChannel ?? null},
-      ${input.attributionFirstTouch ? JSON.stringify(input.attributionFirstTouch) : null}::jsonb
+      ${input.attributionFirstTouch ? JSON.stringify(input.attributionFirstTouch) : null}::jsonb,
+      ${input.externalCallId ?? null}
     )
     RETURNING *
   `) as AgentConversation[]
   return rows[0]
+}
+
+/**
+ * Lookup-only variant for follow-up webhooks (Vapi `tool-calls`,
+ * `end-of-call-report`, `status-update`) where we only have the call id
+ * and need the existing conversation. Returns null if not found.
+ */
+export async function findConversationByExternalCallId(
+  externalCallId: string,
+): Promise<AgentConversation | null> {
+  const sql = db()
+  const rows = (await sql`
+    SELECT * FROM tz_agent_conversations
+    WHERE external_call_id = ${externalCallId}
+    LIMIT 1
+  `) as AgentConversation[]
+  return rows[0] || null
 }
 
 export type AppendMessageInput = {
