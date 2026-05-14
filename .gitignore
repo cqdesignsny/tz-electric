@@ -34,3 +34,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# claude code (project-local settings can carry api keys; keep them off git)
+.claude/settings.local.json
+.claude/.env*
