@@ -69,7 +69,10 @@ type VapiCall = {
 }
 
 type VapiArtifactMessage = {
-  role: 'assistant' | 'user' | 'system' | 'tool_calls' | 'tool_call_result' | string
+  // Vapi uses `bot` (not `assistant`) for the agent's spoken turns in
+  // the end-of-call artifact. `tool_calls` / `tool_call_result` carry
+  // the tool surface. `system` is the system prompt (not a turn).
+  role: 'assistant' | 'bot' | 'user' | 'system' | 'tool_calls' | 'tool_call_result' | string
   message?: string
   time?: number
   endTime?: number
@@ -304,16 +307,29 @@ async function handleEndOfCallReport(message: VapiServerMessage) {
     return
   }
 
+  // Vapi role conventions in the artifact transcript don't match our
+  // tz_agent_messages roles 1:1. Normalize:
+  //   - `bot` → `assistant` (Vapi calls Claire "bot" in the transcript)
+  //   - `user` → `user`
+  //   - `system` → skip (it's the system prompt, not a conversation turn)
+  //   - `tool_calls` / `tool_call_result` → skip (already persisted live
+  //     via the `tool-calls` webhook earlier in the call)
   const artifactMessages = message.artifact?.messages ?? []
   for (const m of artifactMessages) {
-    // Skip the live-persisted tool roles; we already wrote them.
-    if (m.role === 'tool_calls' || m.role === 'tool_call_result') continue
-    if (m.role !== 'user' && m.role !== 'assistant' && m.role !== 'system') continue
-    if (!m.message) continue
+    const text = (m.message ?? '').trim()
+    if (!text) continue
+
+    let role: 'user' | 'assistant' | null = null
+    if (m.role === 'user') role = 'user'
+    else if (m.role === 'assistant' || m.role === 'bot') role = 'assistant'
+    // Anything else (system prompt, tool_calls, tool_call_result, etc.)
+    // we ignore here.
+    if (!role) continue
+
     await appendMessage({
       conversationId: conv.id,
-      role: m.role as 'user' | 'assistant' | 'system',
-      content: m.message,
+      role,
+      content: text,
       externalId: m.time ? `${callId}:${m.time}` : null,
     })
   }
