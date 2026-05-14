@@ -2,7 +2,7 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-05-08, end of session 18 (extended through morning of 2026-05-08). Major batch of Tyler's feedback + a critical office-notification hotfix shipped. Net new since last verified: two public pages (`/stay-cool` billboard QR landing, `/hvac-maintenance` modular pricing), Reports module live with daily digest email cron at 8 AM ET, full Claire notification path (every flag/escalate/lead booking now emails Tyler+Terry within seconds), HCP routing settled on dual-record (estimate with `lead_source` preset for rich notes + `/leads` POST for inbox card visibility), floating buttons made less intrusive, agent prompt got 9 AM scheduling rule + stay-in-lane policy, dead newsletter form replaced with real CTAs, two `#plans` scroll-CTAs relabeled, Claire welcome line tightened. Vapi + Twilio accounts created, credentials in hand, awaiting phone-number purchase to wire the voice channel. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
+**Last verified:** 2026-05-13, end of session 19. **Voice Claire is LIVE.** Tyler made his first real test calls today and was happy. Net new since last verified: voice agent fully wired (Vapi assistant config, dynamic server-URL pattern, full tool surface, recording, transcript persistence), Call Logs viewer at `/switchboard/call-logs`, new Twilio account on Tyler's email (tyler@tzelectricinc.com) with Hudson Valley number `+15186786153`, all 9 voice-related env vars set on Vercel, Generac startup KB section ($290 flat-fee service) per Tyler's 2026-05-11 feedback, two diagnostic scripts (find-conversation, list-kb-overrides), backfill script that restored 44 missing transcript turns after a Vapi role-mapping fix, Vapi MCP server + Vapi CLI + Twilio CLI installed for direct backend access. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
 
 ## Picking up on a different machine
 
@@ -76,11 +76,13 @@ A handful of blockers remain before the SMS or voice agent can ship; see "What's
 ### What's live in production
 
 - **Public site:** https://tzelectricinc.com (Cloudflare DNS, Vercel hosting)
+- **Voice Claire:** dial **+15186786153** (Hudson Valley Twilio number on Tyler's account, voice via Vapi BYON, Claude Haiku 4.5 + 11labs Eryn voice, full TZ knowledge base injected per call via dynamic server-URL pattern, all six lead-booking tools wired)
 - **Web Chat Claire:** https://tzelectricinc.com/claire (full-page immersive chat, smart assistant persona, books leads into HCP via the same backend as the website form)
 - **Lead form:** https://tzelectricinc.com/quote (3-step form, multi-channel attribution, HCP routing)
 - **Stay Cool billboard landing:** https://tzelectricinc.com/stay-cool (single-page promo for the summer mini-split billboard; QR code target with UTM params for `summer-2026-minisplit` campaign tracking; `noindex` so it doesn't compete with `/mitsubishi` for organic search). See "Stay Cool billboard landing" section below.
 - **HVAC Maintenance landing:** https://tzelectricinc.com/hvac-maintenance (modular per-component maintenance pricing from Tyler's 2026-05-07 doc; per-component pricing matrix, common-system pricing matrix, FAQs, deep-clean policy; sends bookings to `/quote?service=hvac&promo=maintenance`).
 - **TZ Switchboard:** https://tzelectricinc.com/switchboard (Google OAuth, role-gated)
+- **Call Logs module:** https://tzelectricinc.com/switchboard/call-logs (live viewer for every inbound voice call: status filter pills, inline audio player with the Vapi recording URL, two-sided transcript with collapsible tool-call rows, Vapi call-id debug pill, deep link to captured lead in Lead Pipeline)
 - **Reports module:** https://tzelectricinc.com/switchboard/reports (live dashboard: lead volume by day stacked by channel, channel breakdown with pipeline value, service mix, Claire conversation health, "Conversations to review" with reason badges for flagged/escalated/no-contact cases). CSV export per period. **Daily digest email at 8 AM ET** to Tyler/Terry/Cesar via Vercel Cron + Resend, skips on zero-activity days.
 - **Web Chat module:** https://tzelectricinc.com/switchboard/web-chat (live thread viewer, attribution, takeover, lead deep-link)
 - **Login:** https://tzelectricinc.com/switchboard/login
@@ -191,18 +193,57 @@ Full-page immersive chat at https://tzelectricinc.com/claire. Replaces the old P
 - Vercel BotID `@vercel/botid` package integration if dashboard toggle isn't enough abuse protection.
 - Friendlier limit-reached UX on the client (currently the 429 surfaces as the generic "Something went wrong" UI; the friendly `message` field in the JSON body is ignored by useChat).
 
-### Voice Claire (Vapi) — setup status (2026-05-08)
+### Voice Claire (Vapi) — LIVE as of 2026-05-13
 
-**Accounts created.** Vapi workspace and Twilio account both provisioned. Credentials in Cesar's hands, not yet wired into Vercel env. Awaiting phone-number purchase before the wiring step.
+**Tyler's first real test calls landed and were successful.** Dial **+15186786153** to reach Claire. Persona, knowledge base, tools, and Resend notifications match the web-chat experience. Full transcript + recording playback in the Switchboard within ~30 seconds of hangup.
 
 | Item | Status | Notes |
 |---|---|---|
-| Vapi workspace | created (`tzelectricoffice@gmail.com`) | API key collected → goes into `VAPI_PRIVATE_KEY` |
-| Vapi Assistant "Claire" | created with placeholder system prompt | Voice still on default "Elliot" male — needs flip to female (Sarah/Cole/Jenny). First Message and System Prompt will be overridden via Vapi Server URL pattern when we wire `/api/agents/voice/server` |
-| Twilio account | created with friendly name "TZ Electric" | Account SID + Auth Token + API Key (SK + secret) collected |
-| Twilio phone number | NOT YET PURCHASED | Tyler/Cesar buys at twilio.com → Phone Numbers → Buy a Number, area code 518/845/914, Voice + SMS + MMS capabilities, ~$1.15/mo |
-| A2P 10DLC registration | not yet started | Triggered after number purchase. Required for SMS, NOT for voice. 1-2 week carrier review |
-| `/api/agents/voice/*` route handlers | not yet built | System prompt loader (Vapi Server URL pattern) + the six tool endpoints (`update_visitor_contact`, `find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`). Voice channel framing already exists in `agent-prompt.ts`. ETA ~90 min once phone number is bought and creds in Vercel |
+| Vapi workspace | live (`tzelectricoffice@gmail.com`) | Private API key in `VAPI_PRIVATE_KEY` on Vercel + `.env.local`. Used by MCP server, CLI, and any future outbound calls |
+| Vapi Assistant "Claire" | configured + published | id `6aa271db-9bec-446a-9f47-9949b5020d5a`. Voice 11labs Eryn (`DXFkLCBUTmvXpp2QwZjA`), model Anthropic Claude Haiku 4.5 (`claude-haiku-4-5-20251001`), transcriber Deepgram nova-3, `backgroundSound: "off"` (was "office" by default — Tyler heard call-center ambience on first calls, dimmed via PATCH). Server URL + secret set on both the assistant AND the phone number so inbound calls fire `assistant-request` to our backend. Fallback system prompt is a TZ-flavored degraded-mode script ("technical issue, leave name and callback number") in case our server URL ever 5xxs |
+| Twilio account | live (Tyler's own, `tyler@tzelectricinc.com`) | **The original "TZ Electric" account from 2026-05-08 (under tzelectricoffice@gmail.com) is now orphaned** — Tyler created his own account, verified, paid out of pocket. Credentials of record: Account SID + Auth Token wired on Vercel (Auth Token sensitive). Live values readable via `vercel env pull .env.local --yes`. No API Key/Secret created yet — Auth Token is sufficient for Vapi BYON and our SMS webhook verification |
+| Twilio phone number | live | `+15186786153` (Hudson Valley 518). Voice URL → `api.vapi.ai/twilio/inbound_call` (set by Vapi during BYON). Messaging URL → `tzelectricinc.com/api/agents/sms/webhook` (dormant until A2P 10DLC clears). Status callback → Vapi. Phone number id: `c6ab9b17-69b6-461c-a907-c7260429b8fc` |
+| A2P 10DLC registration | not yet started | Required for SMS, NOT for voice. Voice already works. Tyler kicks this off in his Twilio console; 1-2 week carrier review. When clear: SMS Claire goes live with the existing webhook (we still need to swap the TODO in `src/app/api/agents/sms/webhook/route.ts` for a real `generateText` call) |
+| `/api/agents/voice/server` route | shipped (commit `03b2c41`, transcript fix `478bea4`) | Single dispatch endpoint switching on `message.type`. Handles `assistant-request` (returns full assistant config inline with dynamic KB), `tool-calls` (executes via shared `buildAgentTools()` adapter), `end-of-call-report` (persists transcript + recording URL), `status-update` (logs). Auth via `VAPI_SERVER_URL_SECRET` checked as either `Authorization: Bearer` or `X-Vapi-Secret` header, constant-time compared |
+| `/switchboard/call-logs` viewer | shipped (commit `03b2c41`) | Cloned the web-chat viewer pattern. Two-pane layout, status filter, inline audio playback, expandable tool-call rows, Vapi call-id debug pill, lead deep-link. Read-only — voice takeover via text-reply isn't a thing; a future Phase could add "click to dial" so the office picks up the customer from the Switchboard |
+
+### Voice Claire architecture (how the pieces fit)
+
+End-to-end path for an inbound call to `+15186786153`:
+
+1. **Twilio** receives the inbound voice call. Voice URL forwards to `api.vapi.ai/twilio/inbound_call` (configured during BYON import).
+2. **Vapi** picks up. The phone number has no static `assistantId`, so Vapi POSTs `assistant-request` to our Server URL (`https://tzelectricinc.com/api/agents/voice/server`) with the call id + caller phone number.
+3. **Our route** (`handleAssistantRequest`) verifies the Bearer secret, creates a `tz_agent_conversations` row keyed by `external_call_id`, builds the system prompt via `buildSystemPrompt({channel: 'voice'})` (66-70k chars: full KB + persona + voice channel framing + security rules), translates `buildAgentTools(ctx)` into Vapi's function format via `buildVapiFunctionDefinitions`, returns the full inline `assistant` config.
+4. **Vapi** initializes the call with that config and plays the opener ("Hi, thanks for calling TZ Electric...") in Eryn's voice.
+5. Customer talks → Claire qualifies → Claire decides to run a tool → **Vapi** POSTs `tool-calls` to the same Server URL → our `handleToolCalls` looks up the conversation, persists `tool_use` + `tool_result` message rows, executes via the shared tool surface (HCP customer match, lead insert, estimate creation, office email via Resend), returns `{ results: [...] }` to Vapi → Claire speaks the next turn.
+6. Customer hangs up → **Vapi** POSTs `end-of-call-report` with the full transcript artifact + recording URL → our `handleEndOfCallReport` normalizes roles (Vapi uses `bot` for Claire; we map to `assistant`), bulk-inserts the user + assistant turns keyed by `external_id = "<callId>:<time>"` for idempotency, closes the conversation with the recording URL stashed in `closed_reason`.
+7. Office sees the call at `/switchboard/call-logs` with playback + transcript + tool-call audit trail.
+
+### Tools wired into Voice Claire
+
+Exactly the same six tool surface as web chat (literal code reuse via `buildAgentTools(ctx)` with `channel: 'voice'`):
+
+- `update_visitor_contact` — saves first name + phone to the conversation. On voice, the carrier already provided the phone via caller ID; this tool just adds the name.
+- `find_existing_customer` — HCP lookup by phone/email/name before booking, to avoid duplicates.
+- `create_lead_with_estimate` — the booking call. Same dual-record flow as web chat: tz_leads insert + HCP customer find-or-create + unscheduled estimate with `lead_source: "CSR AI"` + `/leads` POST for inbox notification + Resend email to Tyler/Terry/service@/cesar@.
+- `lookup_business_hours` — check if office is open right now.
+- `flag_for_office_review` — soft escalation, sends a flag email but no SMS page yet.
+- `escalate_emergency` — hard escalation, fires the red-banner emergency email. SMS paging layers on top once A2P clears.
+
+### Background sound
+
+Vapi's default `backgroundSound: "office"` adds subtle call-center ambience to the assistant's audio. Tyler heard it on his first calls and asked to dim it. Set to `"off"` on 2026-05-13. **One curl call to flip back on** if anyone misses the texture:
+
+```bash
+curl -X PATCH "https://api.vapi.ai/assistant/6aa271db-9bec-446a-9f47-9949b5020d5a" \
+  -H "Authorization: Bearer $VAPI_PRIVATE_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"backgroundSound": "office"}'
+```
+
+### Transcript role mapping (gotcha worth knowing)
+
+Vapi's `end-of-call-report` artifact uses `role: "bot"` for Claire's spoken turns, not `role: "assistant"`. Our initial route filter dropped every Claire turn for that reason — first wave of Tyler's test calls landed with only the customer side visible in the Switchboard. Fixed at commit `478bea4`: route now normalizes `bot` → `assistant`, `user` → `user`, skips `system` (it's the prompt, not a turn) and skips `tool_calls` / `tool_call_result` (those persist live during the call via the `tool-calls` webhook instead). Backfill script `scripts/backfill-voice-transcripts.mjs` walks every voice conversation, refetches the Vapi artifact, and inserts any missing turns idempotently via `external_id = "<callId>:<time>"`. Already executed against production: 44 messages restored across 5 calls.
 
 **Phone-number routing strategy** (decided 2026-05-01, unchanged):
 
@@ -331,13 +372,17 @@ The agent prompt assembler (`src/lib/agent-prompt.ts`) reads the merged content 
 | `DIGEST_TO_EMAILS` | not set | Comma-separated recipients for the daily 8 AM digest. Default: `tyler@tzelectricinc.com,terry@tzelectricinc.com,cesar@creativequalitymarketing.com`. |
 | `DIGEST_FROM_EMAIL` | not set | Optional override for the digest sender. Defaults to `AGENT_TRAINING_FROM_EMAIL`. |
 | `DIGEST_REPLY_TO` | not set | Optional override for the digest reply-to. Defaults to `AGENT_TRAINING_REPLY_TO`. |
-| `VAPI_PRIVATE_KEY` | pending wire | Vapi private API key. Created 2026-05-08, in Cesar's hands; will be set when voice route handlers ship. |
-| `VAPI_SERVER_URL_SECRET` | pending | Vapi → us webhook signing secret. Generated when we configure the Vapi Server URL. |
-| `TWILIO_ACCOUNT_SID` | pending wire | Twilio account SID. Created 2026-05-08, in Cesar's hands. |
-| `TWILIO_AUTH_TOKEN` | pending wire | Twilio account auth token. Same. |
-| `TWILIO_API_KEY_SID` | pending wire | Twilio API Key SID (preferred over Auth Token for production). Created 2026-05-08, friendly name "TZ Electric", "Main" key type. |
-| `TWILIO_API_KEY_SECRET` | pending wire | Paired secret for the API Key. Twilio shows once at create time; rotate to a "Standard" scoped key after first cutover. |
-| `TWILIO_PHONE_NUMBER` | pending purchase | Hudson Valley E.164 number Tyler will buy at twilio.com (518/845/914 area). Same number does double duty: voice via Vapi BYO + SMS via our webhook once A2P 10DLC clears. |
+| `VAPI_PRIVATE_KEY` | yes (sensitive) | Vapi private API key. Used by the MCP server, the local CLI via `VAPI_API_KEY` env, and any future outbound calls our backend initiates. |
+| `VAPI_SERVER_URL_SECRET` | yes (sensitive) | 64-char hex secret for verifying inbound Vapi webhooks at `/api/agents/voice/server`. Mirrors the same value configured in the Vapi assistant + phone-number server settings. Rotate via PATCH to both Vapi endpoints + Vercel env if leaked. |
+| `VAPI_VOICE_PROVIDER` | yes | TTS provider for Claire (`11labs`). |
+| `VAPI_VOICE_ID` | yes | 11labs voice id for Claire (`DXFkLCBUTmvXpp2QwZjA`, "Eryn"). Custom voice from TZ's 11labs subscription via BYOK — Vapi credential is wired in Vapi dashboard so the voice consumes Tyler's 11labs quota directly. |
+| `VAPI_MODEL_PROVIDER` | yes | LLM provider for voice (`anthropic`). |
+| `VAPI_MODEL_NAME` | yes | LLM model identifier (`claude-haiku-4-5-20251001`). Web chat still uses Sonnet via AI Gateway for nuanced text Q&A; voice uses Haiku for sub-second latency. |
+| `TWILIO_ACCOUNT_SID` | yes | Tyler's own Twilio account (`tyler@tzelectricinc.com`). Account SID `ACc6fcf0...`. The old `tzelectricoffice@gmail.com` account from 2026-05-08 is orphaned and should be closed by Cesar when convenient. |
+| `TWILIO_AUTH_TOKEN` | yes (sensitive) | Tyler's Twilio auth token. Used both by Vapi BYON (Vapi stores its own copy server-side from the dashboard import) and by our `/api/agents/sms/webhook` for signature verification. |
+| `TWILIO_PHONE_NUMBER` | yes | `+15186786153`. Hudson Valley local number on Tyler's account, voice via Vapi BYON, SMS dormant until A2P 10DLC clears. |
+| `TWILIO_API_KEY_SID` | not set | Optional, more secure than Auth Token. Skip until we need outbound SMS sends from our backend at scale; Auth Token suffices for v1. |
+| `TWILIO_API_KEY_SECRET` | not set | Same. |
 
 All of the above are on Production and Development. Preview is intentionally skipped (Vercel CLI bug around all-preview-branches; we don't use feature-branch previews here so this is fine).
 
@@ -393,6 +438,23 @@ The `tz-electric` project has been transferred from `cq-marketings-projects` to 
 - [x] ~~Switchboard auth: Google OAuth + per-user roles + per-module access overrides.~~ Domain-restricted to `tzelectricinc.com` + `creativequalitymarketing.com`. Owners (Tyler, Terry, Cesar) can promote / demote / disable users from `/switchboard/users` and toggle module access per-user via Customize access. Login_count + last sign-in tracked per user.
 - [x] ~~Vercel + Neon handoff to TZ Electric team.~~ Project + domain transferred to Tyler's TZ team (`team_rgs4fNAHW2dNT1fCPsjf5aVg`, owned by `tzelectricoffice@gmail.com`, Pro plan). Neon migrated from CQ Marketplace to TZ-DB Marketplace via `pg_dump 17` → `psql` restore — schema + data identical pre/post. Old CQ Neon deleted by Cesar. Stripe + HCP secret env vars converted to Vercel `sensitive` type for production+preview.
 - [x] ~~Web Chat Claire shipped at /claire.~~ Full-page immersive chat. AI SDK v6 + AI Gateway with OIDC auth and Anthropic prompt caching. Helpful-first qualification flow. Captures contact via `update_visitor_contact`, books leads via `create_lead_with_estimate` (same backend as the website form). Voice & Style + Security & Abuse Resistance + Estimates Policy hard-coded into the system prompt. TZ Switchboard Web Chat module live with takeover, attribution, and lead deep-link. See "Web Chat Claire (LIVE...)" section above for the full operational doc.
+
+### Session 19 deliverables (2026-05-11/13, voice channel goes live)
+
+Two sub-sessions: first half on 2026-05-11 (Generac KB update from Tyler's feedback on a web chat); second half across 2026-05-13 wiring voice Claire end-to-end. Shipped:
+
+- [x] **Generac startup & activation KB section (commit `5d28ce4`).** Customer in web chat 2026-05-11 asked Claire how to first-start a brand-new Generac generator. Claire walked them through DIY procedure (oil, fuel valve, Auto mode), which risks voiding Generac's manufacturer warranty. Tyler took over and offered the paid startup service. New KB subsection in section 1: $290 flat fee, hard "do NOT coach DIY startup" rule, casual mention of yearly maintenance plans at `/signature-plans` (Preferred + Elite tiers include generator inspection), normal `create_lead_with_estimate` booking flow with the service intent in the option notes.
+- [x] **Diagnostic scripts (commit `f194a96`).** `scripts/find-conversation.mjs <id-fragment>` looks up a `tz_agent_conversations` row by a short ID fragment (matches the Switchboard's "visitor 2AE 3CD23" label format) and dumps the full transcript including tool calls, office takeover replies, and customer / assistant turns. `scripts/list-kb-overrides.mjs` lists every override row from `tz_kb_overrides`. Both reuse the existing `@neondatabase/serverless` + dotenv pattern from `scripts/migrate.mjs`.
+- [x] **Voice Claire shipped end-to-end (commit `03b2c41`).** See full "Voice Claire (Vapi) — LIVE" section above. Net new: migration 009 adds `external_call_id` column + partial index to `tz_agent_conversations`; `src/lib/vapi-signature.ts` verifies Bearer or X-Vapi-Secret header constant-time; `src/lib/vapi-tools.ts` adapts our AI SDK `buildAgentTools()` surface to Vapi's function-tool format via Zod 4's `z.toJSONSchema`; `src/app/api/agents/voice/server/route.ts` is one dispatch endpoint switching on `message.type` (assistant-request returns inline assistant config, tool-calls executes + returns results, end-of-call-report persists transcript + recording, status-update logs). New viewer at `src/components/switchboard/CallLogsClient.tsx` mirrors the web-chat viewer pattern with audio player + Vapi call-id debug pill + lead deep-link; `/switchboard/call-logs` nav flipped from "soon" to "live".
+- [x] **`.gitignore` hardening (commit `d0cfbe2`).** Added `.claude/settings.local.json` and `.claude/.env*` to gitignore so the project-local Vapi MCP credential (and any future project-local secrets) can't accidentally land in git.
+- [x] **Transcript role-mapping fix + backfill (commit `478bea4`).** Tyler's first wave of test calls landed in the Switchboard with only the customer side visible. Root cause: Vapi's `end-of-call-report` artifact uses `role: "bot"` for Claire's spoken turns; our route filter only accepted `role: "assistant"` so every Claire turn was silently dropped. Route now normalizes `bot` → `assistant`, `user` → `user`, skips system + tool roles. New script `scripts/backfill-voice-transcripts.mjs` walks every voice conversation, refetches each call's Vapi artifact, and inserts any missing turns keyed by `external_id = "<callId>:<time>"` for idempotency. Already ran against production: 44 messages restored across 5 calls.
+- [x] **Tyler's feedback on first calls.** Two items relayed by Cesar after Tyler's first batch: (1) background sounded like a call center — turned out to be Vapi's default `backgroundSound: "office"` ambience; set to `"off"` via PATCH; one-liner curl documented to flip back on if anyone misses it. (2) Switchboard transcript only showed customer responses — same bug as above, fixed by the role-mapping change + backfill.
+- [x] **Tyler's Twilio account (under his own email).** The original "TZ Electric" Twilio account from session 18 (`tzelectricoffice@gmail.com`, the office shared mailbox) is now orphaned. Tyler created his own at `tyler@tzelectricinc.com`, completed identity verification, bought `+15186786153` on his card. New credentials wired to Vercel as `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_PHONE_NUMBER`. Old account credentials should be left to dissolve naturally; nothing references them anymore.
+- [x] **Voice cost tuning per Cesar's "this looks expensive" eyeball.** Initial Vapi config picked Claude Sonnet 4.5 + 11labs scribe v1 transcriber → ~$0.18/min average cost, ~3,300ms latency (unusable). Flipped to Deepgram nova-3 transcriber (100ms latency, same $0.01) + Claude Haiku 4.5 (drop from 2,000ms → 800ms, $0.09 → $0.03). New steady state: ~$0.12/min, ~1,400ms latency. Web chat keeps Sonnet for richer Q&A; voice gets Haiku for sub-second response feel.
+- [x] **Tooling for direct backend access.** Three new surfaces wired so future debugging doesn't require Cesar screenshotting dashboards:
+  - **Vapi MCP server** at `https://mcp.vapi.ai/mcp` configured in `.claude/settings.local.json` via `npx mcp-remote` + Bearer auth using `VAPI_PRIVATE_KEY`. Loads on next Claude Code session restart. 10 tools exposed: `list_assistants` / `get_assistant` / `create_assistant` / `list_calls` / `get_call` / `create_call` / `list_phone_numbers` / `get_phone_number` / `list_tools` / `get_tool`.
+  - **Vapi CLI** installed at `~/.vapi/bin/vapi` (v0.2.1) via `curl -sSL https://vapi.ai/install.sh | bash`. Authenticates with `VAPI_API_KEY` env var. Read paths work fine (`vapi assistant get`, `vapi phone list`); write paths (`vapi assistant update`) panic without `vapi login`, so prefer `curl` against `api.vapi.ai/assistant/{id}` for PATCH operations.
+  - **Twilio CLI** installed at `/opt/homebrew/bin/twilio` (v6.2.4) via `brew install twilio/brew/twilio`. Authenticates via existing `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` env vars from `.env.local`. Used to inspect the new number's webhook config (`twilio api:core:incoming-phone-numbers:fetch --sid <PN-sid> -o json`).
 
 ### Session 18 deliverables (2026-05-07/08, post-launch polish)
 
@@ -481,10 +543,10 @@ Documented to save the next person from re-discovering. All probe scripts are in
 ### Next on deck: AI agents (Claire), in this order
 
 1. ~~**Web chat Claire**~~ — **DONE** (2026-05-01). Live at `/claire`. See full section above.
-2. **Voice Claire via Vapi (NEXT).** Same `agent-prompt.ts` (channel `voice` already framed: 1-2 sentence turns, digit-spelling for phone/email, the Tyler-approved opener line, 15-min max before forced handoff, contact capture handled via caller ID). Same tool surface (`update_visitor_contact`, `find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`). Vapi handles audio + transcription + TTS; we build the tool endpoints. **See "Voice Claire (Vapi) — phone-number routing strategy" + "One Twilio number for BOTH voice and SMS" sections above** for the full carrier / number-ownership story (TL;DR: Tyler keeps his main number with current carrier and forwards to a single new Twilio number that handles both voice via Vapi BYON and SMS via our webhook). Estimated ~2-3 hours once Tyler has a Vapi + Twilio account. Cost expectation: ~$0.50-1.00 per 8-min call (Vapi telephony + model tokens combined).
-3. **SMS Claire (long pole, 1-2 week vendor wait).** Scaffolding fully shipped end of session 14: webhook signature verification, conversation persistence, takeover UI at `/switchboard/sms-conversations`. Blocked on Twilio A2P 10DLC carrier review (1-2 weeks regardless of how fast we move). Cutover when vendor unblocks: replace one TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call (pseudocode is in the comment, but mirror the web-chat route's pattern: gateway() wrapper, prompt caching, system prompt as `SystemModelMessage` with Anthropic ephemeral cache, `MAX_OUTPUT_TOKENS` cap, gateway user/tags). Set `TWILIO_*` env vars on Vercel, point Twilio webhook at the existing route. ~30 min once Tyler shares creds. Cost expectation: ~$120-150/mo SMS + $13/mo fixed Twilio fees + per-conversation tokens.
+2. ~~**Voice Claire via Vapi**~~ — **DONE** (2026-05-13). Live at `+15186786153`. See "Voice Claire (Vapi) — LIVE" section above.
+3. **SMS Claire (long pole, 1-2 week vendor wait).** Scaffolding fully shipped end of session 14: webhook signature verification, conversation persistence, takeover UI at `/switchboard/sms-conversations`. Twilio number, account creds, and Messaging URL are all wired now — only A2P 10DLC carrier review remains. Tyler kicks off A2P registration from his Twilio console; expect 1-2 weeks of carrier vetting. **Cutover when vendor unblocks**: replace one TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call (pseudocode is in the comment, but mirror the web-chat route's pattern: gateway() wrapper, prompt caching, system prompt as `SystemModelMessage` with Anthropic ephemeral cache, `MAX_OUTPUT_TOKENS` cap, gateway user/tags). Point Twilio messaging webhook at the existing route (already done). Cost expectation: ~$120-150/mo SMS + per-conversation tokens.
 
-After voice + SMS: Phase R1 reports (~2 hr, charts off `tz_leads`), then Phase 7 self-improving learning loop (transcript flagging → approved edits land as KB overrides via the existing override mechanism).
+After SMS clears: Phase R1 reports already shipped (charts off `tz_leads` at `/switchboard/reports`). Next phases on the roadmap: R2 HCP Won/Lost integration (close rates by channel), R3 ad-cost integration (Google/Meta APIs → CPL/CPA/ROAS), R4 per-channel agent reporting. Then Phase 7 self-improving learning loop (transcript flagging → approved edits land as KB overrides via the existing override mechanism).
 
 **Reusable across all three channels:** voice and SMS share the same `agent-prompt.ts` (KB + persona + voice + security + mission + per-channel framing), the same tool surface in `agent-tools.ts`, and the same persistence in `agent-conversations.ts`. The web-chat route (`src/app/api/agents/web-chat/stream/route.ts`) is the reference implementation for AI Gateway wiring, prompt caching, abuse guardrails, and tool-call persistence — copy its shape for voice and SMS routes.
 

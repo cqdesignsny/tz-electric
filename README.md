@@ -142,11 +142,13 @@ The TZ Switchboard at `/switchboard` is the operational backend for TZ Electric.
 - **Knowledge Base** (`/switchboard/knowledge-base`), structured browseable view of the agent training answers doc with sticky section nav, scroll-spy, and full markdown styling. Owners + admins see Edit / Revert per section. Tyler-authored overrides land in `tz_kb_overrides` (Neon) and **always win on render and in agent prompts**, even if CQ later updates the base markdown. `tz_kb_override_history` keeps every revision; `tz_audit_log` stamps every edit.
 - **Lead Pipeline** (`/switchboard/lead-pipeline`), reads from `tz_leads` (Neon). Filters (search, service, channel, status). Two-way HCP Won/Lost sync. Channel chip + paid/organic/referral/direct stat cards. Deep-link to HCP estimate.
 - **Web Chat** (`/switchboard/web-chat`) **— LIVE 2026-05-01.** Office-side viewer for `/claire` conversations. Thread list with visitor name + phone + attribution channel + "Lead captured" badge. Active thread shows full transcript including collapsible tool-call rows, first-touch attribution strip with lead deep-link, takeover/release/close, office reply composer. Channel-agnostic actions API at `/api/agents/web-chat/conversations`.
-- **SMS Conversations** (`/switchboard/sms-conversations`), live SMS thread viewer with takeover. Same shape as Web Chat. Awaits the SMS Claire model wire-up + Twilio creds to populate; until then any inbound test SMS persists as transcript.
+- **Call Logs** (`/switchboard/call-logs`) **— LIVE 2026-05-13.** Read-only viewer for Voice Claire (`+15186786153`) inbound calls. Two-pane layout, status filter pills, inline audio playback of the Vapi recording, two-sided transcript (customer + Claire) with collapsible tool-call rows, Vapi call-id debug pill, deep link to any lead Claire booked.
+- **SMS Conversations** (`/switchboard/sms-conversations`), live SMS thread viewer with takeover. Same shape as Web Chat. Twilio number + webhooks wired; awaits A2P 10DLC carrier review (1-2 weeks) before real-customer SMS delivers reliably.
+- **Reports** (`/switchboard/reports`) **— LIVE 2026-05-08.** Lead volume by day stacked by channel, channel breakdown with pipeline value, service mix, Claire conversation health, "Conversations to review" with reason badges. CSV export. Daily digest email at 8 AM ET to ownership via Vercel Cron + Resend.
 - **Users** (`/switchboard/users`), owner-only. Invite, role grant / revoke, disable, login_count + last sign-in tracking, per-user module access overrides.
 
 **Coming Soon and Planned modules:** every sidebar item is clickable and opens a dedicated info page describing what we'll build there. Shared `ModuleInfoPage` template reads from `nav-config.ts`:
-- Reports, Employee Training (Trainual), Call Logs
+- Employee Training (Trainual)
 - Email Assistant, Office Operations, Warehouse & Inventory, Sales & Outbound
 
 **Theme:** Light / Dark / System segmented toggle in the topbar, prominent on every screen size. Defaults to System (follows OS preference). The `dark` variant is scoped to `[data-theme="dark"]` so it only applies inside the TZ Switchboard. Public site stays light only.
@@ -256,8 +258,13 @@ All scripts loaded directly in `(public)/layout.tsx` so they only fire on the pu
 | Trust Index | Live | Google reviews widget on homepage + reviews page |
 | Neon Postgres (`tz-db`) | Live | Vercel Marketplace integration. `tz_leads` + `tz_agent_conversations` + `tz_agent_messages` + `tz_kb_overrides` + `tz_users`. Migrations in `migrations/`, run with `npm run migrate`. |
 | Native lead form | Live | `/quote`, replaces the old Typeform popup. Posts to HCP `/leads` and `tz_leads`. GCLID + UTM capture, branded email via Resend. |
-| Vercel AI Gateway | Live | Powers Web Chat Claire via OIDC auth (no API key on Vercel). Anthropic Sonnet 4.6 with ephemeral prompt caching. Same Gateway will power voice and SMS Claire when those ship. Per-visitor rate-limit ceilings configurable in dashboard. |
-| Anthropic (via Gateway) | Live | Sonnet 4.6 model behind Web Chat Claire. ~90% input cost reduction on cache hits. |
+| Vercel AI Gateway | Live | Powers Web Chat Claire via OIDC auth (no API key on Vercel). Anthropic Sonnet 4.6 with ephemeral prompt caching. Per-visitor rate-limit ceilings configurable in dashboard. |
+| Anthropic (via Gateway) | Live | Sonnet 4.6 behind Web Chat Claire. ~90% input cost reduction on cache hits. |
+| Anthropic (direct, via Vapi) | Live | Claude Haiku 4.5 behind Voice Claire. Sub-second latency vs Sonnet, model fees billed by Vapi. |
+| Vapi (voice agent platform) | Live | Inbound voice at `+15186786153`. Dynamic server-URL pattern — Vapi POSTs `assistant-request` to `/api/agents/voice/server` for the dynamic assistant config per call, plus `tool-calls`, `end-of-call-report`, `status-update`. BYON Twilio number, BYOK 11labs voice. |
+| Twilio (voice + SMS) | Live (voice) / awaiting A2P 10DLC (SMS) | Tyler's own account (`tyler@tzelectricinc.com`). One number `+15186786153` doing double duty: voice via Vapi BYON, SMS via our webhook once A2P clears. |
+| ElevenLabs (TTS) | Live (BYOK) | TZ's own 11labs subscription connected via Vapi credential. Custom-cloned voice "Eryn" plays as Claire on the phone. Speech eats Tyler's 11labs character quota; Vapi just orchestrates. |
+| Deepgram (transcription) | Live (via Vapi) | nova-3 model, 100ms latency, phone-audio tuned. |
 | NextAuth.js v5 (Google OAuth) | Live | TZ Switchboard sign-in. Domain-restricted to `tzelectricinc.com` + `creativequalitymarketing.com`. Per-user roles + module access overrides. |
 | Typeform (job app) | Active | `ghfs29y37tj.typeform.com/to/hsBm2HUf`, to be replaced with native form (Phase later) |
 
@@ -285,13 +292,15 @@ The persona for all customer-facing agents is **Claire** (warm / neighborly / pr
 
 ## What's next (in build order)
 
-Cesar's preferred sequence: **web chat shipped 2026-05-01**, voice next, SMS last (because A2P 10DLC carrier review is the only 1-2 week external blocker). After all three: Phase R1 reports, then Phase 7 self-improving learning loop.
+Web chat shipped 2026-05-01, voice shipped 2026-05-13, SMS waits on A2P 10DLC carrier review (1-2 weeks). After all three: Phase R2 HCP Won/Lost integration, Phase R3 ad-cost integration, then Phase 7 self-improving learning loop.
 
 1. ~~**Web chat Claire.**~~ **DONE 2026-05-01.** Live at `/claire`.
-2. **Voice Claire (Vapi).** Tyler signs up at vapi.ai, connects his Twilio number when it lands. Same prompt + tools as web chat. Estimated 2-3 hours after Vapi account is ready. Cost: ~$0.50-1.00 per 8-min call (Vapi telephony + model tokens combined).
-3. **SMS Claire.** Replace the TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call, mirroring the web-chat route's wiring (gateway() wrapper, prompt caching, system prompt as `SystemModelMessage` with Anthropic ephemeral cache, `MAX_OUTPUT_TOKENS` cap, gateway user/tags). Set `TWILIO_*` env vars, point Twilio inbound webhook at the existing route. ~30 min once A2P 10DLC approves and Tyler shares creds.
-4. **Phase R1 reports** at `/switchboard/reports`. Charts off `tz_leads`: lead volume over time stacked by channel, channel breakdown pie, service mix, funnel by channel, lead value at risk. ~2 hours, all data already in place.
-5. **Phase 7 self-improving learning loop.** Office flags transcripts in the agent conversation views; flagged items become proposed KB overrides; owners approve and they merge into `tz_kb_overrides` via the existing override mechanism. Reports module gains agent KPIs: handoff rate, false-escalation count, sentiment proxy, top failure modes.
+2. ~~**Voice Claire (Vapi).**~~ **DONE 2026-05-13.** Live at `+15186786153`. Vapi-managed assistant on Tyler's Twilio number; Claude Haiku 4.5 + 11labs Eryn (BYOK); full TZ knowledge base + 6-tool surface injected per call via dynamic server-URL pattern; transcript + recording at `/switchboard/call-logs`. ~$0.12/min.
+3. **SMS Claire.** Replace the TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call, mirroring the web-chat route's wiring (gateway() wrapper, prompt caching, system prompt as `SystemModelMessage` with Anthropic ephemeral cache, `MAX_OUTPUT_TOKENS` cap, gateway user/tags). Twilio number, creds, and Messaging URL all wired already; only A2P 10DLC carrier review remains. ~30 min of code once A2P clears.
+4. **Phase R1 reports** at `/switchboard/reports`. **DONE 2026-05-08.** Charts off `tz_leads`: lead volume over time stacked by channel, channel breakdown pie, service mix, conversation health, "conversations to review" queue. CSV export. Daily 8 AM digest email.
+5. **Phase R2 HCP Won/Lost integration.** Close rate by channel, average time-to-won, won lead value. Needs total_amount sync from HCP estimates.
+6. **Phase R3 ad-cost integration.** Google Ads + Meta Marketing API → CPL, CPA, ROAS by campaign. Daily cron pulls cost into `tz_ad_spend`.
+7. **Phase 7 self-improving learning loop.** Office flags transcripts in the agent conversation views; flagged items become proposed KB overrides; owners approve and they merge into `tz_kb_overrides` via the existing override mechanism. Reports module gains agent KPIs: handoff rate, false-escalation count, sentiment proxy, top failure modes.
 
 ### Two dashboard toggles to enable for production rate-limiting (no code change, just clicks)
 
