@@ -493,7 +493,7 @@ The tool:
 
 ### Cascade worker
 
-`/api/cron/dispatch-escalation` runs every 5 minutes via Vercel Cron. Pulls `status='open' AND window='standard_after_hours' AND next_attempt_at <= now` rows (max 25 per tick), advances the cascade:
+`/api/cron/dispatch-escalation` runs every 5 minutes via Vercel Cron. Pulls `status='open' AND time_window='standard_after_hours' AND next_attempt_at <= now` rows (max 25 per tick), advances the cascade. The `time_window` column had to be renamed from `window` because `window` is a reserved keyword in PostgreSQL — caught immediately at migration apply time.
 
 | attempt_no | Action | Next |
 |---|---|---|

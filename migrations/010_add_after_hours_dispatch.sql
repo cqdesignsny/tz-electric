@@ -41,7 +41,7 @@ CREATE TABLE IF NOT EXISTS tz_emergency_dispatches (
   customer_address      TEXT,
   issue_description     TEXT NOT NULL,
   safety_flags          TEXT[],
-  window                TEXT NOT NULL CHECK (window IN (
+  time_window           TEXT NOT NULL CHECK (time_window IN (
                           'standard_after_hours',
                           'overnight'
                         )),

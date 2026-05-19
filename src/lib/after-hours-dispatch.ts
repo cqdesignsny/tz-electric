@@ -31,7 +31,7 @@ export type DispatchResult =
   | {
       ok: true
       dispatchId: string
-      window: 'standard_after_hours' | 'overnight'
+      timeWindow: 'standard_after_hours' | 'overnight'
       onCallTech: { name: string; matched: boolean }
       attemptsFired: number
       message: string
@@ -120,9 +120,9 @@ export async function dispatchAfterHoursEmergencyImpl(
   ctx: AgentToolContext,
 ): Promise<DispatchResult> {
   const now = new Date()
-  const window = classifyWindow(now)
+  const timeWindow = classifyWindow(now)
 
-  if (window === 'business_hours') {
+  if (timeWindow === 'business_hours') {
     return {
       ok: false,
       error:
@@ -156,18 +156,18 @@ export async function dispatchAfterHoursEmergencyImpl(
   // Open the dispatch row. next_attempt_at depends on the window.
   // Overnight = no follow-up. Standard = T+15 minutes from now.
   const nextAttemptAt =
-    window === 'overnight' ? null : new Date(now.getTime() + 15 * 60 * 1000)
+    timeWindow === 'overnight' ? null : new Date(now.getTime() + 15 * 60 * 1000)
   const dispatchRows = (await sql`
     INSERT INTO tz_emergency_dispatches (
       conversation_id, customer_name, customer_phone, customer_address,
-      issue_description, safety_flags, window, status,
+      issue_description, safety_flags, time_window, status,
       next_attempt_at, next_attempt_no
     ) VALUES (
       ${ctx.conversationId}, ${input.customerName}, ${input.customerPhone},
       ${input.customerAddress}, ${input.issueDescription}, ${input.safetyFlags as string[]},
-      ${window}, 'open',
+      ${timeWindow}, 'open',
       ${nextAttemptAt ? nextAttemptAt.toISOString() : null},
-      ${window === 'overnight' ? 99 : 1}
+      ${timeWindow === 'overnight' ? 99 : 1}
     )
     RETURNING id
   `) as unknown as { id: string }[]
@@ -177,7 +177,7 @@ export async function dispatchAfterHoursEmergencyImpl(
   const techVoice = buildTechVoiceMessage(input)
   let attemptsFired = 0
 
-  if (window === 'overnight') {
+  if (timeWindow === 'overnight') {
     // One text to tech. One text to supervisor. Done.
     if (onCallTech) {
       const r = await sendSms({ to: onCallTech.phone, body: techMessage })
@@ -239,7 +239,7 @@ export async function dispatchAfterHoursEmergencyImpl(
 
   // Build the customer-facing confirmation message Claire reads back.
   const customerMessage =
-    window === 'overnight'
+    timeWindow === 'overnight'
       ? `Got it. I've alerted our on-call team and the supervisor. Given the time of night, response is not guaranteed tonight. Our team will follow up as soon as possible, potentially between 5 AM and 7:30 AM depending on when they see the message, and guaranteed during normal business hours of 7:30 AM to 4:00 PM.`
       : `Got it. I've alerted ${
           onCallTech ? onCallTech.personName.split(' ')[0] : 'the on-call team'
@@ -248,7 +248,7 @@ export async function dispatchAfterHoursEmergencyImpl(
   return {
     ok: true,
     dispatchId,
-    window,
+    timeWindow,
     onCallTech: {
       name: onCallTech?.personName || 'unassigned',
       matched: Boolean(onCallTech),
@@ -282,11 +282,11 @@ export async function runEscalationTick(): Promise<{
   const due = (await sql`
     SELECT
       id, conversation_id, customer_name, customer_phone, customer_address,
-      issue_description, safety_flags, window, next_attempt_no, opened_at,
+      issue_description, safety_flags, time_window, next_attempt_no, opened_at,
       customer_callback_sent_at
     FROM tz_emergency_dispatches
     WHERE status = 'open'
-      AND window = 'standard_after_hours'
+      AND time_window = 'standard_after_hours'
       AND next_attempt_at IS NOT NULL
       AND next_attempt_at <= ${now.toISOString()}
     ORDER BY next_attempt_at ASC
@@ -299,7 +299,7 @@ export async function runEscalationTick(): Promise<{
     customer_address: string | null
     issue_description: string
     safety_flags: string[] | null
-    window: 'standard_after_hours' | 'overnight'
+    time_window: 'standard_after_hours' | 'overnight'
     next_attempt_no: number
     opened_at: string
     customer_callback_sent_at: string | null
