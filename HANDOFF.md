@@ -2,7 +2,7 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-05-13, end of session 19. **Voice Claire is LIVE.** Tyler made his first real test calls today and was happy. Net new since last verified: voice agent fully wired (Vapi assistant config, dynamic server-URL pattern, full tool surface, recording, transcript persistence), Call Logs viewer at `/switchboard/call-logs`, new Twilio account on Tyler's email (tyler@tzelectricinc.com) with Hudson Valley number `+15186786153`, all 9 voice-related env vars set on Vercel, Generac startup KB section ($290 flat-fee service) per Tyler's 2026-05-11 feedback, two diagnostic scripts (find-conversation, list-kb-overrides), backfill script that restored 44 missing transcript turns after a Vapi role-mapping fix, Vapi MCP server + Vapi CLI + Twilio CLI installed for direct backend access. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
+**Last verified:** 2026-05-18, end of session 20. **Pre-launch Claire fixes + after-hours dispatch foundation shipped.** Tyler's testing batch from 2026-05-13/14 landed plus a fresh round from 2026-05-18: (1) Voice Claire stops reading numbers digit-by-digit (BTUs, dollar amounts, ranges spoken naturally; phone numbers and emails stay digit-spelled). (2) Mini-split single-zone install range corrected to $5,500–$9,000 (was hallucinating $3,500). (3) Small-repair pricing now discloses the diagnostic / Field Assessment fee + parts on top, never a flat number alone. (4) New "Same-Day Priority Dispatch ($275)" branch for non-emergency urgent jobs during business hours. (5) Business hours canonicalized to **7:30 AM – 4:00 PM** per Tyler's new after-hours SOP doc — `lookupBusinessHoursImpl` rewritten with minute-resolution + after-hours-window classifier (overnight vs standard). (6) Hiring-inquiry handler added — Claire redirects to `/careers` and never books a hiring inquiry as a service lead. (7) Overhead/underground intake simplified — second question always shown with "no preference" option, prompt rule says accept "I don't know" without drilling. (8) After-hours emergency dispatch built end-to-end: migration `010_add_after_hours_dispatch.sql` with `tz_on_call_schedule` + `tz_emergency_dispatches` + `tz_dispatch_attempts`; `src/lib/twilio-outbound.ts` for SMS + voice via Twilio REST; `src/lib/on-call.ts` lookup helper; `src/lib/after-hours-dispatch.ts` with the new `dispatch_after_hours_emergency` Claire tool plus the cascade worker `runEscalationTick()`; `/api/cron/dispatch-escalation` every 5 minutes in `vercel.json`; seed script `scripts/seed-on-call-schedule.mjs` that parses the KB calendar (section 3) into the schedule table. Tech rotation, supervisor chain (Ty / Sam / Tyler), and HVAC + plumbing emergency contacts all pull from the existing KB. **Strategic shift locked:** Claire is being expanded from "booking agent" to "TZ AI" — one brain, multiple surfaces (customer-facing, admin chat, office-staff chat, tech SMS, training mode), role-gated tool registry, MCP wrapper deferred until after the in-app surfaces stabilize. See new "Claire as TZ AI (architecture direction)" section below. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
 
 ## Picking up on a different machine
 
@@ -417,6 +417,107 @@ The `tz-electric` project has been transferred from `cq-marketings-projects` to 
 - **Reply-to:** `service@tzelectricinc.com`
 - **Plan:** Free tier (3,000 / month, 100 / day). Upgrade to Pro ($20 / mo, 50k) before launch volume kicks in.
 - **Migration note:** Resend is already TZ-owned, so it skips the Tyler handoff entirely.
+
+## Claire as TZ AI (architecture direction, locked 2026-05-18)
+
+We are expanding Claire from "the customer-facing booking agent" to **the TZ AI** — one persona, one knowledge base, multiple surfaces, role-gated tool registry. Tyler joked about a "TZ Alexa" in the 2026-05-15 meeting; that is what we are actually building.
+
+### Surfaces (in build order)
+
+| Surface | Audience | What she does |
+|---|---|---|
+| Web chat / voice / SMS (current) | Customers | Book leads, qualify, escalate, after-hours dispatch |
+| **In-app Claire (next)** | Switchboard users | Slide-out chat panel always available; conversational interface for everything below |
+| Admin chat | Tyler, Terry, Cesar | Edit KB sections, set on-call rotation, review calls, query analytics in plain English |
+| Office chat | Office staff (Molly, April) | "How do I handle a refund pushback?" "What's the deposit policy?" SOP lookup |
+| Tech SMS | Field technicians | "12k FX compressor, quarter-by-three line set, right?" Material verification, code lookup |
+| Training mode | New hires | Self-paced curriculum, weekly modules, Friday quizzes, pre-screening assessments |
+
+### Why in-app first, MCP later
+
+We explicitly considered exposing an MCP server so Tyler could wire his own Claude into TZ. **Decision: build in-app Claire first.** Reasons:
+
+- The hard work is the tool layer (auth, audit, versioning, role-gating, destructive-action confirmations). The in-app surfaces stress-test that more thoroughly because they get hit by every role (owner, admin, office staff, eventually techs) — not just Tyler-as-power-user.
+- Tyler doesn't currently use Claude Code. Setting him up with MCP would mean Cesar configuring his machine. Easier first interaction: he logs into the Switchboard, the chat is already there.
+- The in-app surface is a controlled, branded environment. MCP exposes everything to whatever client speaks the protocol. Build trust in the tool layer before opening it up.
+- The MCP wrapper is thin once the tool registry exists. ~2 sessions of work to add after in-app stabilizes.
+
+### Architectural pieces to build (in order)
+
+1. **Refactor `agent-prompt.ts`** from per-channel branching to a layered builder: `buildPrompt({ surface, role, user, context })`. Surface picks which KB layers + tool sets to mount. Channel is a sub-aspect of surface.
+2. **Tool registry abstraction.** Each tool registers with `{ name, scopes, handler, description, destructive }`. Role-gating happens at registry resolution time — admin tools never appear in office-staff prompts. Destructive ops require an explicit confirmation step.
+3. **Karpathy file structure in the shared Drive** (`Shared drives/CQ Marketing AI Files/tz/`):
+   - `customer/` — current public KB (move from `docs/agent-training-answers.md`, keep that file as the build artifact that ingests this folder)
+   - `office/` — internal SOPs: refund handling, deposit pushback scripts, building permit walkthroughs, J numbers, scheduling baselines
+   - `tech/` — material specs, NEC code references, TZ install patterns, breaker sizing rules
+   - `training/` — curriculum, weekly modules, quizzes
+   - `prompts/` — per-surface system-prompt fragments
+4. **Right-side slide-out chat panel** in the TZ Switchboard. Always present, collapsed by default, opens with a keystroke. Mobile: full-screen modal. Lives at `/switchboard/claire` for long sessions too.
+5. **Admin chat surface first** — Tyler is the bottleneck. Solving his use case (edit KB conversationally, set on-call without clicking forms) frees the most velocity. Two starter tools: `update_kb_section`, `set_on_call_today`.
+6. **Office chat surface second** — Molly + April get answers without paging Tyler. Internal SOPs go into `office/`.
+7. **Tech SMS third** — material verification + code lookup. Higher engineering depth but huge field-error reduction.
+8. **Training mode fourth** — onboarding curriculum + assessments.
+9. **Multimodal fifth** — image ingestion (estimates, panels, line sets), voice notes, PDF SOP upload.
+10. **QC auditor sixth** — nightly CSR call review, surfaces coaching moments for Tyler's weekly review.
+11. **MCP seventh** — wrap the tool registry. Per-user OAuth tokens via the existing Google sign-in. One-click installer in the Switchboard. Sellable platform asset.
+
+### Risks worth re-naming each session
+
+- **Internal hallucination is more dangerous than customer-facing.** Every internal answer must cite the source section in the KB. If no source exists, Claire says "no SOP for this, ask Tyler" and flags it for him to add. Never invent internal policy.
+- **Destructive admin operations require diff preview + confirmation.** "Wipe the Generac section" shows the diff and waits for yes. Versioned via `tz_kb_override_history` (already wired).
+- **Per-surface prompts, not one mega-prompt.** Accuracy drops if we pile every layer into one context. Each surface mounts only what it needs.
+- **Role isolation is non-negotiable.** Customer reply must never leak internal pricing logic. Office reply must never miss internal context. Strict per-surface system prompts + `redact_for_role` middleware.
+- **Cost discipline.** Per-user rate limits + monthly Gateway caps. Already have the user-attribution + tags wiring on the public surfaces.
+
+### Naming + UX decisions locked
+
+- **One name across all surfaces: "Claire".** Customer-facing trust signal stays consistent; internal users develop a single mental model. No "Office Claire" / "Customer Claire" split.
+- **In-app surface UX:** slide-out chat on the right side of every Switchboard page, plus a dedicated `/switchboard/claire` for long sessions. Mobile collapses to a full-screen modal with a clear close affordance.
+- **Admin / edit access roles:** Cesar, Tyler, Terry only at launch. Office staff get read + ask, not edit. Owner-only for destructive operations.
+
+## After-Hours Dispatch (shipped 2026-05-18)
+
+Implements Tyler's `TZ_Electric_After_Hours_SOP.md` end-to-end. Built as a real cascade, not just a notification.
+
+### Tool surface
+
+Claire calls `dispatch_after_hours_emergency` whenever lookup_business_hours says the office is closed AND the issue is a genuine emergency. Inputs: `issue_description`, `customer_phone`, optional `customer_name` / `customer_address`, optional `safety_flags[]` (active_leak, no_heat, smoke_sparks, gas_smell, electrical_hazard, sewage_backup, medical_equipment_loss, total_power_loss), and `customer_acknowledged_fees` (boolean — she must confirm the $475 fee with the customer before dispatching).
+
+The tool:
+1. Reclassifies the window from local NY time (`business_hours` / `standard_after_hours` / `overnight`). Rejects business-hours calls.
+2. Looks up the on-call tech (date-bound) and the supervisor chain (always-on) via `tz_on_call_schedule`.
+3. Opens a `tz_emergency_dispatches` row with `status='open'`.
+4. **Overnight (10 PM – 5 AM):** sends one SMS each to the on-call tech and the on-call supervisor with the full call details. Sets `next_attempt_no=99` so the cron worker leaves it alone. Done.
+5. **Standard after-hours (4 PM – 10 PM, 5 AM – 7:30 AM):** fires T+0 SMS + voice call to the on-call tech, schedules `next_attempt_at` for T+15 with `next_attempt_no=1`.
+6. Returns a customer-facing confirmation message Claire reads back ("I've alerted Nick, he should be calling you within 10 to 15 minutes…" or the overnight version).
+
+### Cascade worker
+
+`/api/cron/dispatch-escalation` runs every 5 minutes via Vercel Cron. Pulls `status='open' AND window='standard_after_hours' AND next_attempt_at <= now` rows (max 25 per tick), advances the cascade:
+
+| attempt_no | Action | Next |
+|---|---|---|
+| 1 (T+15) | text + call tech again | schedule T+30 |
+| 2 (T+30) | text + call tech AND text + call supervisor | schedule T+60 |
+| 3 (T+60) | final text + call to both | schedule customer callback T+65 |
+| 4 (T+65) | call customer with "team tied up" script | close dispatch as `closed_no_response` |
+
+Every Twilio call writes a row to `tz_dispatch_attempts` with the SID for traceback. The unique index `(dispatch_id, attempt_no, target_role, channel)` makes the worker idempotent — a cron retry on the same tick is a no-op.
+
+### Privacy
+
+The SOP says never read a tech's personal number to a customer. The current implementation honors this by never sharing the tech's number — the tech calls the customer back. A future Phase will add Vapi `transferCall` to bridge the tech directly when they answer the inbound call from Twilio (`<Dial>` already on the path).
+
+### On-call schedule source of truth
+
+`tz_on_call_schedule` is seeded from the KB calendar in section 3 by `scripts/seed-on-call-schedule.mjs`. Run once after the migration applies. Resede after any rotation swap by editing the KB calendar (`docs/agent-training-answers.md`) and re-running the script. Future: admin Claire chat will edit this conversationally.
+
+### Open follow-ups (post-launch routing day)
+
+- **Twilio outbound smoke test.** The first real after-hours dispatch should be a Cesar-initiated test call to verify Twilio SMS + outbound voice both fire correctly. Twilio Auth Token + the new number are already on Vercel.
+- **Bridge call.** Replace the "tech calls customer back" pattern with a Twilio `<Dial>` bridge so the tech can accept the inbound and be live with the customer in one step.
+- **Tech response acknowledgment.** Today the cron blindly escalates. A future tick reads inbound SMS replies ("ON IT" / "OK") to mark `status='resolved_tech_responded'` and stop the cascade. Twilio webhook scaffolding already exists at `/api/agents/sms/webhook`.
+- **Routing flip on Tyler's main number.** Per the meeting, Option A first: HCP rings the office 4–5x during business hours, rolls to Claire's `+15186786153` on no-answer; after-hours forwards directly. Option B (Claire replaces the HCP phone tree entirely) is queued for a later session.
 
 ## What's open right now
 

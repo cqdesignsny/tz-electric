@@ -31,8 +31,8 @@ export type Question = {
   /**
    * Optional show condition. The question only renders when the
    * specified prior question (`when`) has the answer in `equals`.
-   * Used for the underground-conversion follow-up on electrical and
-   * the residential / commercial split on generator.
+   * Used for the residential / commercial split on generator and
+   * any other scope-dependent follow-up.
    */
   showWhen?: { when: string; equals: string[] }
 }
@@ -244,11 +244,14 @@ export const SERVICES: ServiceConfig[] = [
       },
       {
         id: 'undergroundConversion',
-        label: 'Are you looking to change your service from overhead to underground?',
+        label: 'Any preference for the new service to be overhead or underground?',
         type: 'radio',
         required: false,
-        options: ['Yes', 'No', 'Maybe / open to it'],
-        showWhen: { when: 'serviceStyle', equals: ['Overhead'] },
+        options: ['Overhead', 'Underground', 'No preference / not sure'],
+        showWhen: {
+          when: 'scope',
+          equals: ['Panel upgrade or service upgrade'],
+        },
       },
       {
         id: 'serviceSize',

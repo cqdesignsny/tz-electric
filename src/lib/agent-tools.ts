@@ -34,6 +34,7 @@ import {
   sendEmergencyEscalationEmail,
   sendOfficeFlagEmail,
 } from './agent-notifications'
+import { dispatchAfterHoursEmergencyImpl } from './after-hours-dispatch'
 
 export type AgentChannelLabel = 'sms' | 'voice' | 'web_chat'
 
@@ -295,6 +296,55 @@ export function buildAgentTools(ctx: AgentToolContext) {
             'The office has been alerted and will reach out as fast as possible. Keep your phone close, someone will call you back within minutes.',
         }
       },
+    }),
+
+    dispatch_after_hours_emergency: tool({
+      description:
+        "Open an after-hours emergency dispatch and start the technician escalation cascade per Tyler's 2026-05-18 SOP. Time-of-day aware: overnight (10 PM – 5 AM) sends ONE text each to the on-call tech and supervisor with no calls and no follow-ups; standard after-hours (4 PM – 10 PM, 5 AM – 7:30 AM) fires the full T+0 / T+15 / T+30 (add supervisor) / T+60 cascade. Use ONLY when (1) it is after-hours per lookup_business_hours AND (2) the issue is a genuine emergency. Never call this during business hours — use create_lead_with_estimate or flag_for_office_review instead. Never read the technician's phone number to the customer; the dispatch handles privacy via call bridge.",
+      inputSchema: z.object({
+        issue_description: z
+          .string()
+          .describe(
+            'What the customer is reporting. Include the safety signal (e.g. "Active leak in basement, water pooling", "No heat, outside is 24°F, baby in the home", "Sparking outlet in kitchen").',
+          ),
+        customer_phone: z
+          .string()
+          .describe('Customer callback number. On voice, this is from caller ID.'),
+        customer_name: z.string().optional(),
+        customer_address: z.string().optional(),
+        safety_flags: z
+          .array(
+            z.enum([
+              'active_leak',
+              'no_heat',
+              'smoke_sparks',
+              'gas_smell',
+              'electrical_hazard',
+              'sewage_backup',
+              'medical_equipment_loss',
+              'total_power_loss',
+            ]),
+          )
+          .optional()
+          .describe('Tag the specific emergency type(s) for routing.'),
+        customer_acknowledged_fees: z
+          .boolean()
+          .describe(
+            'Has the customer been told about and approved the after-hours emergency dispatch fee ($475 + on-site work)?',
+          ),
+      }),
+      execute: async (input) =>
+        dispatchAfterHoursEmergencyImpl(
+          {
+            issueDescription: input.issue_description,
+            customerPhone: input.customer_phone,
+            customerName: input.customer_name ?? null,
+            customerAddress: input.customer_address ?? null,
+            safetyFlags: input.safety_flags ?? [],
+            customerAcknowledgedFees: input.customer_acknowledged_fees,
+          },
+          ctx,
+        ),
     }),
   }
 }
@@ -599,19 +649,38 @@ function buildAgentEstimateNotes(
 function lookupBusinessHoursImpl() {
   const now = new Date()
   const day = now.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/New_York' })
-  const hour = Number.parseInt(
-    now.toLocaleString('en-US', { hour: '2-digit', hour12: false, timeZone: 'America/New_York' }),
-    10,
-  )
+  const parts = now.toLocaleString('en-US', {
+    timeZone: 'America/New_York',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  })
+  const [hh, mm] = parts.split(':').map((s) => Number.parseInt(s, 10))
+  const minutesIntoDay = hh * 60 + mm
+  const OPEN_AT = 7 * 60 + 30 // 07:30 = 450
+  const CLOSE_AT = 16 * 60 // 16:00 = 960
   const isWeekday = !['Saturday', 'Sunday'].includes(day)
-  const officeOpen = isWeekday && hour >= 7 && hour < 17
+  const officeOpen = isWeekday && minutesIntoDay >= OPEN_AT && minutesIntoDay < CLOSE_AT
+
+  // After-hours window classification per the SOP (revision 2026-05-18):
+  //   Overnight: 22:00 – 05:00 (single text each, no follow-ups)
+  //   Standard after-hours: 04:00 PM – 10:00 PM, and 05:00 AM – 07:30 AM
+  const isOvernight = minutesIntoDay >= 22 * 60 || minutesIntoDay < 5 * 60
+  const afterHoursWindow = officeOpen
+    ? 'business_hours'
+    : isOvernight
+      ? 'overnight'
+      : 'standard_after_hours'
+
   return {
     now_local: now.toLocaleString('en-US', { timeZone: 'America/New_York' }),
     day,
-    hour_local: hour,
+    hour_local: hh,
+    minute_local: mm,
     office_open: officeOpen,
+    after_hours_window: afterHoursWindow,
     saturday_emergencies_only: day === 'Saturday',
     sunday_closed: day === 'Sunday',
-    standard_hours: 'Mon-Fri 7am to 5pm. Saturday is emergency dispatch only. Sunday closed.',
+    standard_hours: 'Mon-Fri 7:30 AM to 4:00 PM. Saturday is emergency dispatch only. Sunday is closed except for emergencies.',
   }
 }

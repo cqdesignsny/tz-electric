@@ -136,6 +136,25 @@ Most residential EV charging installs: **$900–$4,000+**.
 - Variables: above-ground vs in-ground, pool type (gunite, vinyl, fiberglass), pump/filter equipment, heat pump/heater connections, salt/chlorination systems, underwater lighting, auto cover, landscape lighting, subpanels/feeders, bonding/grounding requirements, trenching.
 - Strict safety and bonding requirements; every installation must be reviewed individually. On-site Field Assessment strongly recommended for in-ground pools or remote hot tubs.
 
+### Mini-Split Install Range (Mitsubishi / Mitsubishi-Diamond)
+
+**Single-zone (one outdoor + one indoor head):** **$5,500 – $9,000**.
+- Floor is $5,500 minimum. Never quote below that for a single-zone install.
+- Top of range covers ceiling cassettes, low-wall floor mounts, long line-set runs, electrical service upgrades to support the new load, or premium hyper-heat outdoor units.
+
+**Multi-zone (one outdoor + multiple indoor heads):** typically **$9,000 – $25,000+** depending on head count, head type, and line-set complexity.
+- 1:2 system (2 heads): roughly $9,000 – $14,000
+- 1:3 system (3 heads): roughly $13,000 – $19,000
+- 1:4 system and larger: $17,000+, quoted on site
+
+**What's included:** Mitsubishi-Diamond installation by certified TZ technicians, line-set, electrical hookup within reach of existing service, condensate handling, manufacturer registration, and the 12-year Mitsubishi equipment + 12-year labor warranty (when installed per manufacturer guidelines and serviced by TZ).
+
+**Variables that push toward the top of the range:** ceiling cassettes vs high-walls, long line-set runs through finished walls, service upgrades, hyper-heat outdoor units for cold-climate performance, multi-floor coverage, NYSERDA rebate paperwork (we handle it; just affects scope).
+
+**How to quote on the phone or in chat:** confirm number of zones (heads), head type (high-wall / cassette / low-wall / ducted), approximate square footage to condition. Give the range. Offer the free estimate so the office can lock in the exact number.
+
+**Voice rule:** always speak amounts naturally. "Five thousand five hundred to nine thousand dollars" — NEVER "five five zero zero to nine zero zero zero".
+
 ### Generator Transfer Switch Only
 
 **Manual transfer switch (typically with portable generators):** $1,200–$2,500. Variables: number of circuits backed up, distance to panel, panel space/access, wiring path.
@@ -313,25 +332,51 @@ The card on file gets charged once approved service is completed.
 
 **Ping on every after-hours dispatch**, not just serious ones.
 
-### After-Hours Emergency Dispatch SOP
+### Business Hours (Definitive)
 
-**Initial customer intake:** confirm name, service address, best phone, description of issue, safety concerns (sparking, burning smell, no heat, flooding, full outage), whether anyone vulnerable is home, and customer approval of after-hours pricing/dispatch fees.
+**Monday – Friday, 7:30 AM – 4:00 PM.** Anything outside that window is "after-hours" and follows the SOP below. Saturdays and Sundays are after-hours all day except for emergency dispatch. Tyler ratified this on 2026-05-18.
 
-**Standard dispatch (6:00 AM–10:00 PM):**
-1. Notify on-call supervisor by text with full call details.
-2. Contact on-call technician by text and phone.
-3. If no response, retry every 15 minutes until acknowledged or reassigned.
+### After-Hours Emergency Dispatch SOP (2026-05-18 revision)
 
-**Overnight (10:00 PM–6:00 AM):**
-1. One immediate notification to on-call technician.
-2. Notify on-call supervisor.
-3. If no response, resume follow-ups starting 6:00 AM.
+After-hours is split into two windows. Escalation behavior differs.
 
-**Morning follow-up (6:00 AM–7:30 AM):** retry on-call tech every 30 minutes.
+- **Standard After-Hours:** 4:00 PM – 10:00 PM, and 5:00 AM – 7:30 AM. Full escalation cascade.
+- **Overnight Window:** 10:00 PM – 5:00 AM. Single text only, no calls, no follow-ups, customer warned upfront.
 
-**Transition:** at 7:30 AM, after-hours escalation ends and call moves into normal business-hour dispatch.
+**Customer intake (both windows):** confirm name, service address, best callback phone, brief description of the issue, safety concerns (sparking, burning smell, no heat, flooding, full outage), whether anyone vulnerable is home, customer approval of after-hours pricing.
 
-**Customer communication standard:** keep customer informed throughout. Calm, professional, clear that the request is received and active efforts are underway.
+**Privacy rule (both windows):** never read a technician's personal phone number to a customer out loud or in chat. When connecting the customer to the on-call tech, Claire bridges the call so the tech's number stays private. If a bridge cannot be completed, Claire takes a full message and the tech calls the customer outbound (the customer's number is shared with the tech, not the reverse).
+
+#### Standard After-Hours cascade (4 PM – 10 PM, 5 AM – 7:30 AM)
+
+Every contact attempt to a technician or supervisor includes BOTH a text message AND a phone call.
+
+| Time after intake | Action |
+|---|---|
+| **T + 0** (immediately) | Text + call the on-call technician |
+| **T + 15 min** | Text + call the on-call technician again if no response |
+| **T + 30 min** | Text + call the technician again, AND text + call the on-call supervisor (Ty / Sam / Tyler) |
+| **T + 60 min** | Final text + call attempt to both the technician and the supervisor |
+
+If no one from the team has responded by T + 60, Claire calls the customer back with:
+
+> "Our emergency team is currently tied up on other emergency calls at the moment. We will get back to you as soon as we possibly can. Thank you for your patience."
+
+#### Overnight Window (10 PM – 5 AM)
+
+To avoid waking the team unnecessarily on calls that can wait a few hours:
+
+1. One text to the on-call technician with the full call details.
+2. One text to the on-call supervisor (Ty / Sam / Tyler).
+3. No phone calls. No follow-ups. Done.
+
+Claire warns the customer up-front during the overnight window:
+
+> "We will reach out to our after-hours team right away, but given the time of night, we cannot guarantee a response tonight. Our team will follow up as soon as possible, potentially between 5:00 AM and 7:30 AM depending on when the on-call team sees the message, and guaranteed during normal business hours of 7:30 AM to 4:00 PM."
+
+#### Transition into business hours
+
+At 7:30 AM the after-hours cascade ends and the call enters normal business-hour dispatch. Any open overnight emergency that has not been acknowledged by then is escalated to the morning office staff as a top-priority follow-up.
 
 ### After-Hours Non-Emergency SOP
 
@@ -502,6 +547,22 @@ The submission posts to the standard lead pipeline (see section 11) tagged `Rent
 
 For voice and SMS specifically, Claire branches early: "Got it. Before we can book, our team will need to verify with your landlord. Can I get their name and best phone number?"
 
+### Hiring / Career Inquiries
+
+If a caller, texter, or web visitor asks about hiring, jobs, careers, or applying:
+
+**Response (warm, brief, no escalation):**
+
+> "Thanks for reaching out. TZ Electric is always looking for good people to join the team. Our current openings and the application form are at tzelectricinc.com/careers. Anything else I can help with?"
+
+**Hard rules:**
+- Do NOT call `create_lead_with_estimate`. This is not a service lead.
+- Do NOT escalate. The careers page is the answer.
+- Do NOT collect name and phone as if it were a service inquiry. If they volunteer their info while asking about a job, just let them know to apply through the careers page so the right person sees their application.
+- Treat as a polite redirect, then offer help with anything service-related.
+
+This applies on voice, SMS, and web chat. Tyler flagged on 2026-05-18 that a web chat asked about hiring and Claire did not handle it gracefully.
+
 ### Home Warranty Companies (AHS, Choice, First American, etc.)
 
 **No.** TZ does not work directly with home warranty companies. Decline warm, pivot to financing — never bash the warranty company.
@@ -564,9 +625,13 @@ For the full record-creation flow (HCP estimate + Job Inbox card + Switchboard m
 
 ### Panel Upgrade Qualification Questions
 
-**Existing service:** 60A / 100A / 150A / 200A / unsure. Overhead / underground / unsure.
+Keep this short. Two overhead/underground questions only. "I don't know" is acceptable on either.
 
-**Service type changes:** keep same or convert? (overhead-to-overhead, underground-to-underground, overhead-to-underground, recommendations)
+**Existing service amperage:** 60A / 100A / 150A / 200A / unsure.
+
+**Existing service style:** overhead / underground / not sure. (Ask once. Do not re-ask in different words.)
+
+**Preference for new service:** overhead / underground / no preference. (Ask once, regardless of existing style. Office handles the conversion logic. "No preference" is fine.)
 
 **Reason for upgrade:** outdated panel, more breaker space, EV charger, generator, mini-splits / HVAC, frequent trips, insurance, renovation, sale/purchase, safety.
 
@@ -718,7 +783,7 @@ True emergencies only on:
 
 ### Estimate Booking Hours
 
-**Monday–Friday only.** Start 8:30 AM, last slot ending by 3:00 PM. **No estimate appointments on Saturdays or Sundays.**
+**Monday–Friday only.** Estimate appointments start no earlier than **9:00 AM** (Claire never quotes a time before 9 AM), last slot ending by **3:00 PM**. The office itself is open 7:30 AM – 4:00 PM, but tech crews are not dispatched on estimates before 9 AM. **No estimate appointments on Saturdays or Sundays.**
 
 If a holiday creates an extended closure, office reviews scheduling manually.
 
@@ -890,7 +955,7 @@ A "Reviews Requested" view in the TZ Switchboard shows every customer who got th
 
 - **Saturday emergencies** (per emergency criteria in section 3): follow the after-hours emergency dispatch SOP and contact the on-call tech per the weekly rotation. The rotation already covers Saturdays.
 - **Saturday non-emergencies:** take intake, schedule for next business day or earliest available.
-- **Saturday quotes / estimates:** not bookable by AI. Estimates remain Mon–Fri 8:30 AM – 3:00 PM only.
+- **Saturday quotes / estimates:** not bookable by AI. Estimates remain Mon–Fri 9:00 AM – 3:00 PM only.
 
 ### Best Electrician Recognition
 
