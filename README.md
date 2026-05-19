@@ -120,7 +120,12 @@ src/
     ├── agent-prompt.ts            # buildSystemPrompt — KB + persona + voice + security + mission + per-channel framing
     ├── agent-tools.ts             # buildAgentTools — update_visitor_contact, find_existing_customer,
     │                              # create_lead_with_estimate, lookup_business_hours, flag_for_office_review,
-    │                              # escalate_emergency. Shared by web chat, voice, SMS.
+    │                              # escalate_emergency, dispatch_after_hours_emergency. Shared by web chat, voice, SMS.
+    ├── after-hours-dispatch.ts    # dispatchAfterHoursEmergencyImpl (the Claire tool body) + runEscalationTick
+    │                              # (cron worker). Real Twilio cascade per Tyler's SOP: T+0 / T+15 / T+30 add
+    │                              # supervisor / T+60 final / T+65 customer "team tied up" callback.
+    ├── on-call.ts                 # getOnCall(role, at) + getSupervisorChain() — reads tz_on_call_schedule
+    ├── twilio-outbound.ts         # sendSms + placeCall via Twilio REST (no SDK dep)
     ├── agent-conversations.ts     # tz_agent_conversations + tz_agent_messages helpers (find/start, append, takeover, etc.)
     ├── agent-knowledge-base.ts    # Loads + merges base KB (markdown) with tz_kb_overrides (Tyler-edited)
     ├── leads-store.ts             # tz_leads insert + HCP linkage helpers
@@ -128,7 +133,7 @@ src/
     ├── lead-tracking.ts           # Client-side first/last-touch tracking (gclid, utm_*, referrer)
     ├── db.ts                      # Neon HTTP client (singleton)
     ├── housecall-pro.ts           # HCP API client + empirical findings docs
-    ├── twilio-signature.ts        # Twilio webhook signature verification
+    ├── twilio-signature.ts        # Twilio inbound webhook signature verification
     ├── email-templates.ts         # Branded HTML email layout + per-email functions
     └── utils.ts                   # cn(), formatPhone()
 ```
@@ -288,19 +293,23 @@ The persona for all customer-facing agents is **Claire** (warm / neighborly / pr
 - ✓ **Account handoff to TZ team.** Vercel project + domain transferred to `tzelectricoffice@gmail.com` (Pro plan). Neon migrated from CQ Marketplace to TZ-DB Marketplace via `pg_dump 17` → `psql` restore. Old CQ Neon deleted. Stripe + HCP secrets converted to Vercel `sensitive` type. Every paid resource for tz-electric is on Tyler's billing.
 - ✓ **Web Chat Claire (LIVE).** Full-page immersive chat at `/claire`. AI SDK v6 + Vercel AI Gateway with OIDC auth (model `anthropic/claude-sonnet-4.6`). Anthropic ephemeral prompt caching enabled (~90% input cost reduction on cache hits). Helpful-first qualification flow: answers questions using KB ranges, captures name + phone via `update_visitor_contact` within 2-3 turns, weaves in per-service qualification questions from KB section 6, offers free estimate, books via `create_lead_with_estimate` (same backend as the website form). Server-side guardrails: 2000-char per-message cap, 50 user-messages per-conversation cap, 1200 max output tokens, 8 max tool steps, AI Gateway per-user attribution via `sha256(visitorIP)`. Prompt-side guardrails: stay-in-role, refuse prompt injection, never reveal sensitive data, detect spam/solicitors/bots. UX: full-viewport iMessage-style layout, fixed composer above iOS keyboard, smart auto-scroll that respects scroll-up intent, light/dark labeled toggle, Start Over button, Claire portrait next to messages, contrasting bubbles. **Live at https://tzelectricinc.com/claire.**
 - ✓ **TZ Switchboard Web Chat module (LIVE).** Office-side viewer at `/switchboard/web-chat`. Thread list with visitor name + phone, attribution channel, "Lead captured" badge, takeover state. Active thread shows transcript with collapsible tool-call rows, first-touch attribution strip, lead deep-link to Lead Pipeline. Takeover / release / close actions; office reply composer (saves to transcript, customer-side delivery is a small follow-up).
-- ✓ **SMS Claire scaffolding.** Webhook signature verification, conversation persistence (`tz_agent_conversations` + `tz_agent_messages`), takeover UI at `/switchboard/sms-conversations`, system prompt assembler with channel-aware framing (sms / voice / web_chat), AI SDK v6 tool surface (`update_visitor_contact`, `find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`). Just needs the model call + Twilio creds to go live; mirror the web-chat route's shape for prompt caching, abuse guardrails, and gateway user attribution.
+- ✓ **SMS Claire scaffolding.** Webhook signature verification, conversation persistence (`tz_agent_conversations` + `tz_agent_messages`), takeover UI at `/switchboard/sms-conversations`, system prompt assembler with channel-aware framing (sms / voice / web_chat), AI SDK v6 tool surface (`update_visitor_contact`, `find_existing_customer`, `create_lead_with_estimate`, `lookup_business_hours`, `flag_for_office_review`, `escalate_emergency`, `dispatch_after_hours_emergency`). Just needs the model call + Twilio creds to go live; mirror the web-chat route's shape for prompt caching, abuse guardrails, and gateway user attribution.
+- ✓ **Voice Claire (LIVE).** Inbound voice at `+15186786153` on Tyler's Twilio account. Vapi-managed assistant with Claude Haiku 4.5 model + 11labs Eryn voice + Deepgram nova-3 transcriber. Full KB + tool surface injected per call via dynamic server-URL pattern at `/api/agents/voice/server`. Transcript + recording playback in `/switchboard/call-logs`. Voice channel framing in `agent-prompt.ts` enforces natural number reading (BTUs, dollars, ranges spoken as words; digit-by-digit reserved for phone numbers + emails only). ~$0.12/min steady state.
+- ✓ **After-hours emergency dispatch cascade (LIVE 2026-05-18).** Implements Tyler's `TZ_Electric_After_Hours_SOP.md` end-to-end. New `dispatch_after_hours_emergency` Claire tool, real Twilio SMS + voice outbound (no SDK dep). Two windows: Standard after-hours (4 PM – 10 PM, 5 AM – 7:30 AM) fires T+0 / T+15 / T+30+supervisor / T+60 / T+65 customer-callback cascade; Overnight (10 PM – 5 AM) sends one text each to tech + supervisor with no follow-ups. Privacy rule: never reads tech's number to customer. On-call rotation in `tz_on_call_schedule` (seeded from KB calendar section 3). Cron worker at `/api/cron/dispatch-escalation` every 5 minutes. Smoke test verified Twilio outbound live.
+- ✓ **Pre-launch Claire voice + content fixes (2026-05-18).** Natural number reading rule, mini-split single-zone install range ($5,500-$9,000), small-repair fee disclosure rule, same-day priority dispatch ($275) branch, business hours canonicalized to 7:30 AM – 4:00 PM, hiring inquiry redirect to `/careers`, "accept I don't know" rule, overhead/underground form simplified.
 
 ## What's next (in build order)
 
-Web chat shipped 2026-05-01, voice shipped 2026-05-13, SMS waits on A2P 10DLC carrier review (1-2 weeks). After all three: Phase R2 HCP Won/Lost integration, Phase R3 ad-cost integration, then Phase 7 self-improving learning loop.
+Original launch list is now fully shipped (web chat, voice, after-hours dispatch, all of Tyler's pre-launch fixes). New priorities locked 2026-05-18:
 
-1. ~~**Web chat Claire.**~~ **DONE 2026-05-01.** Live at `/claire`.
-2. ~~**Voice Claire (Vapi).**~~ **DONE 2026-05-13.** Live at `+15186786153`. Vapi-managed assistant on Tyler's Twilio number; Claude Haiku 4.5 + 11labs Eryn (BYOK); full TZ knowledge base + 6-tool surface injected per call via dynamic server-URL pattern; transcript + recording at `/switchboard/call-logs`. ~$0.12/min.
-3. **SMS Claire.** Replace the TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call, mirroring the web-chat route's wiring (gateway() wrapper, prompt caching, system prompt as `SystemModelMessage` with Anthropic ephemeral cache, `MAX_OUTPUT_TOKENS` cap, gateway user/tags). Twilio number, creds, and Messaging URL all wired already; only A2P 10DLC carrier review remains. ~30 min of code once A2P clears.
-4. **Phase R1 reports** at `/switchboard/reports`. **DONE 2026-05-08.** Charts off `tz_leads`: lead volume over time stacked by channel, channel breakdown pie, service mix, conversation health, "conversations to review" queue. CSV export. Daily 8 AM digest email.
-5. **Phase R2 HCP Won/Lost integration.** Close rate by channel, average time-to-won, won lead value. Needs total_amount sync from HCP estimates.
-6. **Phase R3 ad-cost integration.** Google Ads + Meta Marketing API → CPL, CPA, ROAS by campaign. Daily cron pulls cost into `tz_ad_spend`.
-7. **Phase 7 self-improving learning loop.** Office flags transcripts in the agent conversation views; flagged items become proposed KB overrides; owners approve and they merge into `tz_kb_overrides` via the existing override mechanism. Reports module gains agent KPIs: handoff rate, false-escalation count, sentiment proxy, top failure modes.
+1. **Switchboard team-invite email deliverability.** Tyler flagged 2026-05-18 morning that team invites aren't landing. Resend log check, fix the trigger or domain auth. Quick next-session opener.
+2. **In-app Claire (the major arc).** Refactor `agent-prompt.ts` from per-channel branching to layered `buildPrompt({ surface, role, user, context })`. Build tool registry abstraction with role-gating + destructive-action confirmation. Ship right-side slide-out chat panel in the TZ Switchboard. Wire admin chat surface first (`update_kb_section`, `set_on_call_today` are the two starter tools — Tyler is the bottleneck). Office chat surface second. Tech SMS third. Training mode fourth. Multimodal fifth. QC auditor sixth. MCP wrapper seventh. See HANDOFF.md "Claire as TZ AI (architecture direction)" for the full plan.
+3. **SMS Claire model wire-up.** Replace the TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call once A2P 10DLC carrier review clears (Tyler kicks off in his Twilio console). ~30 min of code.
+4. **Tech response acknowledgment + Vapi `<Dial>` bridge.** Post-launch polish on the after-hours cascade once it sees real traffic. Inbound SMS "ON IT" reply stops escalation; `<Dial>` bridge for privacy-preserving direct tech-customer call.
+5. **Blogs back on the site.** Code is ready, nav was hidden during the agent push.
+6. **Phase R2 HCP Won/Lost integration.** Close rate by channel, average time-to-won, won lead value. Needs `total_amount` sync from HCP estimates.
+7. **Phase R3 ad-cost integration.** Google Ads + Meta Marketing API → CPL, CPA, ROAS by campaign. Daily cron pulls cost into `tz_ad_spend`.
+8. **Phase 7 self-improving learning loop.** Office flags transcripts in the agent conversation views; flagged items become proposed KB overrides; owners approve and they merge into `tz_kb_overrides` via the existing override mechanism. Reports module gains agent KPIs: handoff rate, false-escalation count, sentiment proxy, top failure modes.
 
 ### Two dashboard toggles to enable for production rate-limiting (no code change, just clicks)
 
