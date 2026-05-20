@@ -53,14 +53,6 @@ export const TEAM_MEMBERS: TeamMember[] = [
     category: 'support',
   },
   {
-    name: 'Averie Handschuh',
-    role: 'Customer Service',
-    photo: '/images/team/averie-handschuh.webp',
-    bio: 'When you are calling for a service provider, you want someone friendly and highly effective. That\'s Averie! Did you know that when she was little, she dreamt of being friends with Godzilla? Imagine the size of that friendship bracelet.',
-    category: 'support',
-  },
-
-  {
     name: 'April Walcott',
     role: 'Office Support',
     photo: '/images/team/April-Walcott.jpg',
