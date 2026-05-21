@@ -36,6 +36,7 @@ type FormState = {
   landlordPermission: boolean
   referralSource: string
   customerNotes: string
+  smsConsent: boolean
 }
 
 const INITIAL_STATE: FormState = {
@@ -55,6 +56,7 @@ const INITIAL_STATE: FormState = {
   landlordPermission: false,
   referralSource: '',
   customerNotes: '',
+  smsConsent: false,
 }
 
 function formatPhone(raw: string): string {
@@ -265,6 +267,7 @@ export default function LeadForm({ initialServiceKey }: Props) {
           landlordPermission: state.landlordPermission,
           referralSource: state.referralSource || undefined,
           customerNotes: state.customerNotes.trim() || undefined,
+          smsConsent: state.smsConsent,
           tracking,
         }),
       })
@@ -783,6 +786,33 @@ function Step3Contact({
             </option>
           ))}
         </select>
+      </div>
+
+      <div className="mt-8 rounded-2xl border border-gray-200 bg-gray-50 p-5">
+        <label className="flex cursor-pointer items-start gap-3">
+          <input
+            type="checkbox"
+            checked={state.smsConsent}
+            onChange={(e) => update('smsConsent', e.target.checked)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-gray-400 text-blue focus:ring-blue"
+          />
+          <span className="text-sm text-gray-700">
+            <span className="font-semibold text-navy">
+              Text me updates about my service request. (optional)
+            </span>
+            <span className="mt-1 block text-xs leading-relaxed text-gray-600">
+              By checking this box, I agree to receive SMS text messages from TZ Electric, including
+              messages from our smart assistant Claire, about my service request, appointment
+              confirmations, technician dispatch, and follow-ups. Message frequency varies. Message
+              and data rates may apply. Reply <strong>STOP</strong> to unsubscribe at any time,{' '}
+              <strong>HELP</strong> for help. See our{' '}
+              <a href="/privacy-policy" className="font-semibold text-blue hover:underline">
+                Privacy Policy
+              </a>{' '}
+              for details. No mobile information will be shared with third parties for marketing.
+            </span>
+          </span>
+        </label>
       </div>
 
       {submitError && (

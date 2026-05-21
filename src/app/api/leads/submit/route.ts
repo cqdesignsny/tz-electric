@@ -38,6 +38,7 @@ type SubmitBody = {
   landlordPermission?: boolean
   referralSource?: string
   customerNotes?: string
+  smsConsent?: boolean
   tracking?: {
     gclid?: string
     gbraid?: string
@@ -124,6 +125,10 @@ function buildEstimatePrivateNotes(
     lines.push('--- Customer notes ---')
     lines.push(body.customerNotes)
   }
+  lines.push('')
+
+  lines.push('--- Consent ---')
+  lines.push(`SMS consent: ${body.smsConsent ? 'YES (express opt-in via web form)' : 'no'}`)
   lines.push('')
 
   lines.push('--- Property ---')
