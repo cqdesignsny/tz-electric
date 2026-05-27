@@ -102,10 +102,19 @@ export const NAV_SECTIONS: NavSection[] = [
     label: 'AI Agents',
     items: [
       {
-        label: 'Agent Training',
+        label: 'Talk to Claire',
         slug: 'agent-training',
         status: 'live',
-        tagline: 'Discovery questionnaire that feeds the knowledge base.',
+        tagline: 'Chat with Claire to edit the KB and review her daily learning reports.',
+        overview:
+          'The living interface for keeping Claire sharp. Tyler / Terry / Cesar talk to Claire conversationally to read and edit the knowledge base, browse her nightly self-improvement reports, and look up specific calls. Every KB edit goes through a propose then approve flow so nothing changes without sign-off. Owner + admin only.',
+        willDo: [
+          'Edit any KB section by asking Claire in plain English',
+          'Browse the last 14 nightly self-improvement reports',
+          'Search recent conversations by keyword',
+          'Apply proposed prompt rules and KB additions with one click',
+        ],
+        needs: [],
       },
       {
         label: 'Knowledge Base',

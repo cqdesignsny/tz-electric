@@ -7,7 +7,7 @@
  */
 import { db } from './db'
 
-export type AgentChannel = 'sms' | 'voice' | 'web_chat'
+export type AgentChannel = 'sms' | 'voice' | 'web_chat' | 'admin_chat'
 export type AgentConversationStatus = 'open' | 'closed' | 'escalated'
 export type AgentMessageRole =
   | 'user'

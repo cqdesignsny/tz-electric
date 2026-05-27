@@ -60,7 +60,7 @@ export const MODULES: ModuleEntry[] = [
   // AI Agents
   {
     slug: 'agent-training',
-    label: 'Agent Training',
+    label: 'Talk to Claire',
     category: 'agents',
     defaultRoles: ['owner', 'admin'],
   },
