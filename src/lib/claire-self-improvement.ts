@@ -610,7 +610,16 @@ export async function runLLMAnalysis(
     })
     .join('\n')
 
-  const model = 'anthropic/claude-sonnet-4.6'
+  // Opus 4.7 is the right intelligence tier for this work — the
+  // analyzer reasons across the full day of transcripts and produces
+  // judgment calls about what's a real pattern vs noise. Cesar
+  // specifically asked for this on 2026-05-27 evening: "use a higher
+  // intelligence than Sonnet." Standard Opus 4.7 context (200k) is more
+  // than enough — our typical input is 15-30k tokens; we don't need the
+  // 1M variant unless a single day ever exceeds 50+ long voice calls.
+  // Cost moves from ~$0.10/day (Sonnet) to ~$0.50/day (Opus). Still
+  // trivial relative to the failure modes the analyzer catches.
+  const model = 'anthropic/claude-opus-4.7'
   const userPrompt = ANALYZER_USER_TEMPLATE({
     dateLabel: data.range.dateLabel,
     metrics,
