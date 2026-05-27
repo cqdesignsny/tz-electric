@@ -2,7 +2,7 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-05-26, session 21 in progress, paused for pickup on home laptop. **Voice Claire routing flip is in flight.** Major discovery: the published number (518) 678-1230 lives **inside HCP Phone Pro**, not on a separate external carrier as the original 2026-05-01 plan assumed. HCP Phone Pro's `Forward to: an employee or external number` step type confirmed available. A new "Claire call flow" is scaffolded in HCP (separate from Default call flow, currently 0 numbers assigned) and needs (a) the Simul-Ring step removed and replaced with a Forward-to-Claire step pointing at `+1 (518) 678-6153`, (b) one of the 4 numbers on Default flow detached and attached to Claire flow for a smoke test, (c) flip 518-678-1230 over once smoke test passes. Voicemail concern verified real: Vapi cannot push callers back into HCP's named voicemail boxes, but Claire IS the voicemail upgrade (structured leads instead of audio recordings). Option 3 (Claire-first, drop the press tree entirely) chosen. Mid-session side incident: **Vercel AI Gateway credits dried up around 10 AM ET**, killing web chat Claire for ~1 hour. Topped up in dashboard, web chat back online immediately; voice was unaffected (Vapi BYOK path). After-hours behavior re-audited end-to-end before the flip and **all green** (Jimmy Neville on this week's rotation matches HCP Default closed-hours Press 1, supervisor chain seeded, Twilio + cron worker confirmed, dispatch tool correctly classifies overnight vs standard windows). Cesar also kicked off A2P 10DLC registration this session, so SMS Claire is now on a 1-2 week vendor-review clock instead of a "Tyler hasn't started yet" blocker. **Tyler's plate is nearly empty:** only the drain cleaning rate KB placeholder remains, plus a courtesy heads-up FYI before flip. Cesar is the one with HCP access, not Tyler, so all HCP edits and BU UUID lookups are Cesar-side now. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start. **Pick-up plan for the home laptop is at the end of the Session 21 deliverables section.** Previous session summary preserved below: Pre-launch Claire fixes + after-hours dispatch foundation shipped on 2026-05-18. Tyler's testing batch from 2026-05-13/14 landed plus a fresh round from 2026-05-18: (1) Voice Claire stops reading numbers digit-by-digit (BTUs, dollar amounts, ranges spoken naturally; phone numbers and emails stay digit-spelled). (2) Mini-split single-zone install range corrected to $5,500–$9,000 (was hallucinating $3,500). (3) Small-repair pricing now discloses the diagnostic / Field Assessment fee + parts on top, never a flat number alone. (4) New "Same-Day Priority Dispatch ($275)" branch for non-emergency urgent jobs during business hours. (5) Business hours canonicalized to **7:30 AM – 4:00 PM** per Tyler's new after-hours SOP doc — `lookupBusinessHoursImpl` rewritten with minute-resolution + after-hours-window classifier (overnight vs standard). (6) Hiring-inquiry handler added — Claire redirects to `/careers` and never books a hiring inquiry as a service lead. (7) Overhead/underground intake simplified — second question always shown with "no preference" option, prompt rule says accept "I don't know" without drilling. (8) After-hours emergency dispatch built end-to-end: migration `010_add_after_hours_dispatch.sql` with `tz_on_call_schedule` + `tz_emergency_dispatches` + `tz_dispatch_attempts`; `src/lib/twilio-outbound.ts` for SMS + voice via Twilio REST; `src/lib/on-call.ts` lookup helper; `src/lib/after-hours-dispatch.ts` with the new `dispatch_after_hours_emergency` Claire tool plus the cascade worker `runEscalationTick()`; `/api/cron/dispatch-escalation` every 5 minutes in `vercel.json`; seed script `scripts/seed-on-call-schedule.mjs` that parses the KB calendar (section 3) into the schedule table. Tech rotation, supervisor chain (Ty / Sam / Tyler), and HVAC + plumbing emergency contacts all pull from the existing KB. **Strategic shift locked:** Claire is being expanded from "booking agent" to "TZ AI" — one brain, multiple surfaces (customer-facing, admin chat, office-staff chat, tech SMS, training mode), role-gated tool registry, MCP wrapper deferred until after the in-app surfaces stabilize. See new "Claire as TZ AI (architecture direction)" section below. All three locations (GitHub / SSD / Dropbox) synced. Run the sanity check at the bottom of this doc to confirm before you start.
+**Last verified:** 2026-05-27, session 22 (afternoon, home laptop). **Voice Claire is fully wired and routing leads end-to-end for the first time.** Headline this session: a critical Vapi tool-call payload parsing bug was discovered — *every* voice tool call since launch (46/46 since 2026-05-13) had been failing silently with `Unknown tool: undefined`. Claire was promising callers "I'll flag this for the office" / "I'll book your estimate" / "I'll get you a callback" but no tools were actually firing, no leads were routing to HCP, no office notifications were sending. Marina Long, Alex Sadeh, Abigail @ Central Hudson and three more recent callers walked away thinking they'd be called back and the office had no idea any of them called. Root cause: Vapi sends tool calls in OpenAI's nested format (`{ id, function: { name, arguments: <JSON string> } }`) but our parser read `call.name` and `call.arguments` at the top level — both undefined. Patched in commit `e95fe2d` with a new `extractVapiCall()` helper in `src/lib/vapi-tools.ts` that unwraps both the nested function shape and the legacy top-level fallback, and JSON-parses the string-encoded arguments. Wired into both `executeVapiToolCall` (so tools actually run) and the `tool_use` persistence in `voice/server/route.ts` (so `/switchboard/call-logs` shows real tool names + parsed args going forward). Plus three voice-prompt waves landed on top: (1) Brevity rule (CRITICAL) — match reply length to question size, 15-sec speech ceiling, stop reciting hours/numbers, stop summarizing what the caller just said; (2) Voicemail intent handler — when caller asks to leave a message, Claire invites it then stays silent for the Vapi recording, fires `flag_for_office_review` with a one-line summary so office gets the email + can play back the audio; (3) No-fake-transfers policy — never promise "please hold while I transfer you" (no warm-transfer wired); instead take info + `flag_for_office_review` for human-request branches. Commit `b647bb7` added voice prompt v2: (a) one-piece-at-a-time on structured intake (don't bundle name + phone + address); (b) always-confirm name + ask-to-spell only on ambiguous/multi-syllable/foreign-origin names; (c) voicemail hang-up cue ("Once you're finished, you can hang up and the office will get back to you"). Commit `035830d` added the after-hours emergency routing hotfix: Tyler did a test call at 4:51 PM ET with "downed wires" — Claire correctly identified the emergency and collected all the info, but called `escalate_emergency` (email-only, business-hours tool) instead of `dispatch_after_hours_emergency` (Twilio cascade to on-call tech). Two-pronged fix: (i) prompt — mission section rewritten to force `lookup_business_hours` as the first action on any emergency, then explicit branch by window; (ii) code safety net — `escalate_emergency` now detects after-hours via `classifyWindow()` and auto-triggers `dispatchAfterHoursEmergencyImpl` with mapped args (`customer_acknowledged_fees: true` forced — life-safety overrides the fee gate). Both fire belt-and-suspenders. **HCP Phone Pro routing flip COMPLETED this session.** Final Claire Flow shape: Incoming → Call hours (Mon-Fri 7:30 AM – 4:00 PM ET) → open branch routes through a Call menu with Press 1-5 each Simul-Ringing one team member (Molly / Sam / Ty / Terry / Tyler Z) then falling through to `+15186786153` (Claire); closed branch goes straight to Claire. Tyler chose to keep the press menu pattern; works fine, just different UX than Claire-first. **Six recent callers need manual office callback** because the parser bug stranded them: Marina Long (310-962-6382, called 3x), Alex Sadeh (917-576-7433, electrical work at 72 Squirrel Hill Rd Haines Falls), Abigail @ Central Hudson (845-452-2010, service upgrade at 301 Platte Clove Rd), billing caller 518-567-1275, "trying to reach Tyler" caller 845-541-6754, and 845-452-2000 — full transcripts in `/switchboard/call-logs`. Switchboard team rollout still pending — Cesar's list of names + roles needed. **One CLI gotcha:** Cesar's Vercel CLI links to `cq-marketings-projects/tz-electric` (the old project shell pre-handoff to Tyler's team), so `vercel env pull` returns only Vercel system vars and no app secrets. Workaround: use the SSD copy's `.env.local` at `/Volumes/CQ-PRO-4TB/CQ Marketing/TZ-Electric/TZ-Site-2026/tz-site/.env.local` which still has the full env (DATABASE_URL, Twilio keys, Vapi keys, Resend key, HCP key). Three commits this session: `e95fe2d`, `b647bb7`, `035830d`. All three locations (GitHub / SSD / Dropbox) synced via the post-commit hook. Previous session summary preserved below: Session 21 (2026-05-26) was voice routing flip prep + AI Gateway credits outage triage. Pre-launch Claire fixes + after-hours dispatch foundation shipped on 2026-05-18 (commit `b38bcb6` + `4c13a46`): natural number reading rule, mini-split range fix, small-repair fee disclosure, same-day priority dispatch ($275) branch, business hours canonicalized to 7:30 AM – 4:00 PM, hiring-inquiry redirect, "accept I don't know" rule, overhead/underground intake simplified, AND the full after-hours emergency dispatch cascade with migration 010, Twilio outbound module, on-call schedule lookup, the new `dispatch_after_hours_emergency` Claire tool, and the cron worker. **Strategic shift locked 2026-05-18:** Claire expanding from "booking agent" to "TZ AI" — one brain, multiple surfaces, role-gated tool registry, MCP wrapper deferred. See "Claire as TZ AI (architecture direction)" below.
 
 ## Picking up on a different machine
 
@@ -542,7 +542,176 @@ The SOP says never read a tech's personal number to a customer. The current impl
 - [x] ~~Vercel + Neon handoff to TZ Electric team.~~ Project + domain transferred to Tyler's TZ team (`team_rgs4fNAHW2dNT1fCPsjf5aVg`, owned by `tzelectricoffice@gmail.com`, Pro plan). Neon migrated from CQ Marketplace to TZ-DB Marketplace via `pg_dump 17` → `psql` restore — schema + data identical pre/post. Old CQ Neon deleted by Cesar. Stripe + HCP secret env vars converted to Vercel `sensitive` type for production+preview.
 - [x] ~~Web Chat Claire shipped at /claire.~~ Full-page immersive chat. AI SDK v6 + AI Gateway with OIDC auth and Anthropic prompt caching. Helpful-first qualification flow. Captures contact via `update_visitor_contact`, books leads via `create_lead_with_estimate` (same backend as the website form). Voice & Style + Security & Abuse Resistance + Estimates Policy hard-coded into the system prompt. TZ Switchboard Web Chat module live with takeover, attribution, and lead deep-link. See "Web Chat Claire (LIVE...)" section above for the full operational doc.
 
-### Session 21 (2026-05-26, voice routing flip prep + Claire web outage triage) — IN PROGRESS
+### Session 22 (2026-05-27, voice flip executed + critical Vapi parser fix + emergency routing safety net + 3x voice prompt waves)
+
+Continuation of the home-laptop pickup planned at the end of session 21. Major day for Voice Claire: the flip actually happened, then a critical multi-week silent bug was discovered the moment Tyler started watching live calls. Three commits shipped: `e95fe2d`, `b647bb7`, `035830d`.
+
+#### 1. HCP Phone Pro Claire Flow — built, saved, flipped
+
+Worked with Dennis live in HCP Phone Pro to build out the new "Claire Flow" alongside the existing Default flow (Default stays untouched as the rollback path). Three design decisions made during the build:
+
+- **Open-hours pattern: press menu, NOT single Simul-Ring.** Earlier conversation considered a flat 5-person Simul-Ring that rings all phones at once. Tyler reviewed and chose to keep the press menu pattern — caller hears "press 1 for Molly, 2 for Sam, 3 for Ty, 4 for Terry, 5 for Tyler," each press goes to a single-person Simul-Ring then falls through to `+15186786153` (Claire) if that one person doesn't answer. Tradeoff acknowledged: with the press menu, Claire catches more "wrong-person-pressed" misses than she would with simul-ring-all, but Tyler preferred the routing predictability.
+- **Closed branch: direct to Claire.** Mon-Fri 7:30 AM – 4:00 PM ET defines open hours; everything else routes straight to `+15186786153`. No voicemail box, no press tree — Claire handles all after-hours routing internally and decides emergency vs non-emergency via her own tools.
+- **HCP "Call menu" required a default-action config.** First save failed with `"Option is required and a valid number action is required"` — turned out the Call menu node needs a default action for "no-press" and "invalid-press" cases. Fixed by setting the default to Forward-to-Claire so callers who don't navigate the menu still land with her.
+
+Final shape:
+
+```
+Incoming call → Call hours (Mon-Fri 7:30 AM – 4:00 PM ET)
+    ├─ During open hours → Call menu (5 options):
+    │     ├─ Press 1: Simul-Ring Molly Slater (web phone) → Forward +15186786153 → End
+    │     ├─ Press 2: Simul-Ring Samuel Tigges (mobile app) → Forward +15186786153 → End
+    │     ├─ Press 3: Simul-Ring Ty Stein (mobile app) → Forward +15186786153 → End
+    │     ├─ Press 4: Simul-Ring Terry Evanson (mobile app) → Forward +15186786153 → End
+    │     ├─ Press 5: Simul-Ring Tyler Zitz (mobile app) → Forward +15186786153 → End
+    │     └─ (default / no-press / invalid) → Forward +15186786153 → End
+    └─ During closed hours → Forward +15186786153 → End
+```
+
+Flip confirmed live during the session — calls landed on Claire and persisted to `tz_agent_conversations` with `channel='voice'`. Default flow remains scaffolded with the remaining 3 numbers as instant rollback.
+
+#### 2. CRITICAL: Vapi tool-call payload parser bug (commit `e95fe2d`)
+
+Tyler reported voice calls were landing but no leads were routing to HCP, no office notifications were firing, and Claire was promising things that never happened. Investigation via `/switchboard/call-logs` + direct DB read of `tz_agent_messages`:
+
+```sql
+SELECT COUNT(*) FILTER (WHERE tool_name IS NULL) AS null_names,
+       COUNT(*) FILTER (WHERE tool_name IS NOT NULL) AS named
+  FROM tz_agent_messages m
+  JOIN tz_agent_conversations c ON c.id = m.conversation_id
+ WHERE c.channel = 'voice' AND m.role IN ('tool_use','tool_result');
+-- 46 NULL, 0 named.
+```
+
+**Every voice tool call since launch on 2026-05-13 had failed silently.** Claire was reaching the tool-use step (the model was making the right decisions), but our parser couldn't extract the tool name from the Vapi payload, so `executeVapiToolCall` returned `{ok:false, error:"Unknown tool: undefined"}` to the model every time. The model treated that as "tool not available, keep talking" and the conversation continued without any real action.
+
+**Root cause:** Vapi sends tool calls in OpenAI's nested function-tool format:
+
+```json
+{
+  "id": "call_abc",
+  "type": "function",
+  "function": {
+    "name": "create_lead_with_estimate",
+    "arguments": "{\"first_name\":\"Marina\",...}"
+  }
+}
+```
+
+But `src/lib/vapi-tools.ts` was reading `call.name` (undefined) and `call.arguments` (undefined). The arguments string also needed `JSON.parse()` since Vapi sends args as a string, not a parsed object.
+
+**Fix:** new exported `extractVapiCall(call)` helper that unwraps either the nested function shape or the legacy top-level shape, and JSON-parses the arguments string. Wired into both:
+
+1. `executeVapiToolCall` — so tools actually run with the right name + args
+2. The `tool_use` `appendMessage` call in `src/app/api/agents/voice/server/route.ts` — so `/switchboard/call-logs` shows the real tool name and parsed input going forward instead of NULL/`{}`
+
+Backwards-compatible — the legacy top-level fallback path preserved in case Vapi's payload shape changes again. Type system updated: `VapiToolCall` now includes an optional `function: { name?, arguments?: string | Record }`.
+
+**Stranded callers:** the 46 historical failed calls cannot be retroactively executed (tools never ran, so we can't reconstruct what they should have done). Six specific callers identified from today's transcripts (12:59 PM – 1:30 PM ET, ~30 min window before the fix shipped) need manual office callback:
+
+- **Marina Long** — 310-962-6382 (called 3x asking for status on a prior estimate)
+- **Alex Sadeh** — 917-576-7433 (electrical work at 72 Squirrel Hill Rd, Haines Falls)
+- **Abigail @ Central Hudson** — 845-452-2010 (service upgrade at 301 Platte Clove Rd)
+- Billing caller — 518-567-1275 (asked for invoice transfer)
+- "Trying to reach Tyler" caller — 845-541-6754 (billing/invoice help)
+- 845-452-2000 (called 17:24, transcript in call-logs)
+
+Full transcripts viewable in `/switchboard/call-logs`. Logged in MEMORY + this doc; office team should follow up before Monday.
+
+#### 3. Voice prompt v1: brevity + voicemail intent + no-fake-transfers (commit `e95fe2d`, same commit as the parser fix)
+
+Reviewing the transcripts also surfaced three conversational failure modes worth fixing now that tools actually work:
+
+- **Wordiness.** Claire was responding in 3-5 sentences per turn for every question, reciting the office phone number and business hours multiple times per call, summarizing what the caller just told her back to them, and pre-emptively explaining policies nobody asked about. Added a "Brevity (CRITICAL)" section to the voice channel framing: match reply length to question size, one-word questions get one-sentence answers, hard ceiling 15 seconds of speech per reply, don't volunteer office number / hours / "in the meantime" filler, don't summarize.
+
+- **Voicemail intent.** Abigail @ Central Hudson explicitly said "can I leave a message?" — Claire responded by reciting business hours instead of taking the message. Added a "Voicemail intent" section: when caller signals message-leaving intent, Claire says "Of course. Go ahead and leave your message — we're picking up everything you say…" then **stays quiet** so the Vapi recording captures the message, then fires `flag_for_office_review` with the summary so the office gets the email AND can play back the audio from `/switchboard/call-logs`.
+
+- **Fake transfers.** Claire was saying "please hold while I transfer you now" on billing requests — but no warm-transfer mechanism exists in the system. Added an explicit "You cannot transfer calls. Do not promise transfers." section: for billing / specific-person requests, take the name + phone, call `flag_for_office_review`, set expectation of callback. For after-hours genuine emergencies use `dispatch_after_hours_emergency`. For business-hours genuine emergencies use `escalate_emergency`.
+
+#### 4. Voice prompt v2: one-piece intake + name confirmation + voicemail hang-up cue (commit `b647bb7`)
+
+Tyler did a test call after the v1 fix landed and reported three more issues:
+
+- **Multi-piece responses stumble her.** When callers gave name + phone in one breath, transcription + the model sometimes whiffed. Added a "Collecting structured information one piece at a time (CRITICAL)" section: NEVER bundle "name and phone" or "name, address, and phone." Ask for ONE piece per turn, wait, process, confirm if needed, then move on. If the caller volunteers multiple pieces anyway, accept what they gave and continue with the next piece — don't re-ask.
+
+- **Voicemail hang-up uncertainty.** Callers were staying on the line after Claire invited them to leave a message, not sure when to stop. Updated the voicemail script: "Of course. Go ahead and leave your message — we're picking up everything you say. Once you're finished with your message, you can hang up, and the office will get back to you. Take as long as you need." Plus the post-message close adds "you can hang up whenever you're ready."
+
+- **Name misheard.** Speech-to-text was substituting letters on unusual names (Leung → Lung, Sadeh → Sade). Added a "Confirming names + when to ask for spelling" section: always repeat the name back. For common clearly-heard names (John, Sarah, Mike) just confirm briefly. For ambiguous / multi-syllable / foreign-origin / had-to-repeat names, ask the caller to spell it. Rule of thumb: if Claire would bet twenty dollars she heard it right, just confirm; if she'd hesitate, ask to spell. Concrete examples in the prompt: Sadeh / Leung / Catherine vs Kathryn → spell; John / Sarah / Mike → confirm.
+
+#### 5. After-hours emergency routing safety net (commit `035830d`)
+
+Tyler tested an after-hours emergency at 4:51 PM ET with a "downed wires" scenario. Claire collected name + phone + address correctly using the new one-piece intake rule, then called the WRONG emergency tool — `escalate_emergency` (which only sends an email to the office) instead of `dispatch_after_hours_emergency` (which fires the Twilio SMS + voice cascade to the on-call tech). Tyler heard nothing on his phone because the cascade never ran. Office got an email but Tyler expected the SMS+call ping as supervisor.
+
+Two-pronged fix so emergency routing never strands an after-hours caller again:
+
+- **Prompt rewrite** in `src/lib/agent-prompt.ts` mission section. Claire MUST call `lookup_business_hours` as her FIRST action on any identified emergency, then branch explicitly:
+  - `business_hours` → `escalate_emergency`
+  - `standard_after_hours` → `dispatch_after_hours_emergency`
+  - `overnight` → `dispatch_after_hours_emergency` (tool handles overnight window internally)
+  
+  The dispatch tool is called out in the prompt as the ONLY tool that actually pages a human after-hours, with the SOP cascade ladder spelled out (T+0 / T+15 / T+30 supervisor / T+60 / T+65 customer fallback).
+
+- **Code safety net** in `src/lib/agent-tools.ts`. Even when Claire picks `escalate_emergency` by mistake after-hours, the tool body now detects the window via `classifyWindow()` and ALSO triggers `dispatchAfterHoursEmergencyImpl` with mapped args (`issueDescription` from `reason`; `customerAcknowledgedFees: true` forced — documented choice, life-safety overrides the fee gate, tech sorts pricing on site). Both actions fire belt-and-suspenders: email goes out for office visibility AND the on-call cascade runs. Auto-dispatch failure is non-fatal and logged; email still fires regardless.
+
+  `classifyWindow()` is now exported from `src/lib/after-hours-dispatch.ts` so the safety net uses the same DST-safe local-time logic as the primary dispatch path.
+
+On-call rotation verified correct in DB:
+- This week's tech (5/25–5/31): Jimmy Neville, 518-947-9861 ✓ matches KB section 3
+- Supervisor chain seeded: Sam Tigges → Ty Stein → Tyler Zitz (Tyler is `supervisors[2]` — at T+60 final ping only)
+
+**Important for Tyler's retest:** Jimmy's phone is the one that rings first on after-hours emergencies, not Tyler's. Tyler should verify success via `/switchboard/call-logs` (look for `dispatch_after_hours_emergency` tool-call rows) or by querying `tz_emergency_dispatches` directly. Tyler should also give Jimmy a heads-up before the next test so Jimmy doesn't think the downed-wires scenario is real.
+
+#### 6. Users page audit + Switchboard team rollout still pending
+
+Verified `/switchboard/users` end-to-end against the live audit log. Page is solid and battle-tested:
+
+- Owner-only access enforced at page render and on every API route (`canManageUsers(role)` check)
+- Domain allowlist enforced on invite (`@tzelectricinc.com` + `@creativequalitymarketing.com` only)
+- Self-demotion blocked (an owner can't accidentally lock themselves out)
+- Disabled users kicked out next request (session reads role from DB on every hit)
+- Idempotent invites (re-inviting clears `disabled_at`, updates role)
+- Audit log captures every action with actor + target + metadata
+
+Audit log shows Tyler personally used the page on 2026-05-17 (invites for Mike, Ty Stein, Terry; role change for Mike) and again 35 min ago at 2:24 PM ET (permission customizations for Mike + Terry). Working in production.
+
+Current `tz_users` state (5 active):
+
+| email | role | logins | status |
+|---|---|---|---|
+| `tyler@tzelectricinc.com` | owner | 3 | active |
+| `cesar@creativequalitymarketing.com` | owner | 5 | active |
+| `terry@tzelectricinc.com` | office ← *should be owner per OWNER_EMAILS in code* | 1 | signed in once |
+| `tstein@tzelectricinc.com` (Ty Stein) | office | 0 | invited, never signed in |
+| `mike@tzelectricinc.com` | office | 0 | invited, never signed in |
+
+**Three open follow-ups for next session:**
+1. Promote Terry from "office" to "owner" to match the OWNER_EMAILS allowlist in `src/lib/auth-config.ts`. His role stayed at "office" because his row was created via invite before the OWNER_EMAILS flag took effect, and `upsertUserOnSignIn` deliberately doesn't overwrite roles on conflict.
+2. Nudge Mike + Ty Stein to actually sign in at `/switchboard/login` — they have pending invites from 10 days ago that they've never activated.
+3. Roll out the rest of the team. Cesar needs to send the list (names + `@tzelectricinc.com` emails + roles). Most office staff → `office`; supervisors / right-hands → `admin`. Anyone TZ wants on the Switchboard must have an `@tzelectricinc.com` Google Workspace email first (personal Gmail won't work).
+
+#### 7. Vercel CLI auth gotcha — Cesar's account is on the OLD team
+
+Discovered while pulling env vars on the home laptop. The current `.vercel/project.json` links to project ID `prj_wtBcaXPS6KOeXJniJroHRYnxiDtm` on `team_nSvXagrumMTVvAjEfQW5vPnw` (the original CQ Marketing team). But the live production project (post the 2026-04-28 handoff to Tyler) lives on Tyler's TZ Electric team (`team_rgs4fNAHW2dNT1fCPsjf5aVg`, owned by `tzelectricoffice@gmail.com`). The Vercel CLI logged in as `cqdesignsny` returns "No Environment Variables found" because there's an empty pre-handoff project shell still under the CQ team.
+
+**Workaround used this session:** the SSD copy's `.env.local` at `/Volumes/CQ-PRO-4TB/CQ Marketing/TZ-Electric/TZ-Site-2026/tz-site/.env.local` still has the full env (DATABASE_URL, Twilio keys, Vapi keys, Resend, HCP) — sourced from there in shell sessions to access the live production database for transcript queries.
+
+**Real fix for next session:** Cesar needs to be invited to Tyler's Vercel team (`tzelectricoffice@gmail.com` team) so `vercel link` + `vercel env pull` from his account both work against the live project. Until then, the SSD copy is the source of truth for env vars on Cesar's machines.
+
+#### 8. Tasks closed + tasks carried forward
+
+Closed: voice flip planning + execution, Vapi parser diagnosis + fix, voice prompt v1+v2, emergency routing hotfix, DB env access, users page audit.
+
+Carried forward to next session:
+- **Verify the v2 + emergency-routing hotfix on Tyler's next test call** once deploy lands. Confirm `dispatch_after_hours_emergency` actually fires after-hours (not just `escalate_emergency`), check `tz_emergency_dispatches` for new rows, confirm Jimmy gets paged.
+- **Office: manually call the 6 stranded callers** before Monday (Marina Long, Alex Sadeh, Abigail, billing caller, "for Tyler" caller, 845-452-2000).
+- **Switchboard team rollout** — waiting on Cesar's list.
+- **Terry's role promotion** (office → owner) — quick DB update or click-through.
+- **Mike + Ty Stein sign-in nudge** — they have pending invites.
+- **Cesar Vercel team migration** — ask Tyler to invite Cesar to TZ Electric's Vercel team so the CLI works locally.
+
+---
+
+### Session 21 (2026-05-26, voice routing flip prep + Claire web outage triage)
 
 Picked up on the SSD mid-day; paused to continue on home laptop. No code shipped this session, docs-only commit. The plan to actually flip the routing is at the end of this section ("Pick-up plan for the home laptop"). Below is what changed in our understanding and what's been staged.
 
@@ -1226,18 +1395,22 @@ vercel redeploy <last-prod-url>
 
 ## What Cesar wants next
 
-Original launch list is all checked off as of 2026-05-18 (questionnaire, native lead form, KB editor, web chat Claire, voice Claire, after-hours dispatch). New priorities in order:
+Original launch list + the voice routing flip are all checked off as of session 22 (2026-05-27). New priorities in order:
 
-1. **Voice Claire routing flip via HCP Phone Pro (in progress, session 21).** Resume on home laptop. Run Twilio SMS smoke test, build Claire call flow in HCP, smoke-test on a non-main number, then flip (518) 678-1230 onto Claire. See "Session 21 deliverables" above for the full step-by-step. **This is now the top priority.**
-2. **Cesar's own follow-throughs from session 21 (post-flip):** grab HCP Business Unit UUIDs from his own HCP browser DevTools and drop into `HCP_BU_*_UUID` Vercel env vars; fix the `ClientCareSercices` typo while in HCP; text Tyler the FYI after the flip is live.
-3. **Tyler still owes us (heavily shrunken vs session 20 list):** (c) confirm drain cleaning rate (KB has an "OPEN — answer was cut off" placeholder; not blocking voice go-live). That's it. Items (a) HCP BU UUIDs, (b) A2P 10DLC kickoff, and (d) carrier-side forwarding are now Cesar-side or moot. See session 21 deliverables section 9 for the full status walk-through.
-4. **Switchboard team-invite email deliverability.** Tyler flagged 2026-05-18 that team invites aren't landing. Resend log check first; if it's a domain-auth or trigger bug, fix and re-send. Short, finishable.
-5. **AI Gateway credit hardening (session 21 outage follow-up).** Three items: friendlier failure UI on web chat when gateway 402s, hourly health-monitor cron that emails on Claire-down, enable the Vercel AI Gateway low-credit email alert in the dashboard. Cheap wins, prevent silent re-occurrence of today's outage.
-6. **In-app Claire (the major arc).** Strategic shift locked in session 20. Refactor agent-prompt.ts into a layered builder, build the tool registry abstraction, ship the right-side slide-out chat in the TZ Switchboard, wire the admin chat surface first. See "Claire as TZ AI (architecture direction)" section above. Tyler is the bottleneck and admin chat unblocks him most.
-7. **SMS Claire model wire-up** once A2P 10DLC clears (1-2 weeks from session 21's kickoff). One TODO block to replace, ~30 minutes of work plus a smoke test.
-8. **Tech response acknowledgment + Vapi `<Dial>` bridge** as post-launch polish on the after-hours cascade once it's seen real traffic.
-9. **v2 Claire voice tool: `transfer_to_staff`** so when a caller asks "I need Sam directly" Claire can dial Sam's mobile via Vapi `transferCall`. ~2 hours of work. Worth doing after a few weeks of Option 3 traffic to see if customer demand for direct-dial is real.
-10. **Blogs back on the site.** Code is ready, just need to flip the nav back on after the agent push lands.
-11. **Reports R2/R3/R4.** HCP Won/Lost integration → close rates by channel, ad-cost integration → CPL/CPA/ROAS, per-channel agent reporting.
+1. **Verify the session-22 hotfixes on Tyler's next test call.** Three things to confirm once Vercel finishes deploying commit `035830d` (~3 min after push): (a) `dispatch_after_hours_emergency` actually fires after-hours — query `tz_emergency_dispatches` for new rows + verify Jimmy Neville's phone gets paged at T+0; (b) brevity rule is taking effect — Claire's replies are noticeably shorter, no more reciting hours/office number multiple times; (c) voicemail intent works — caller asks "can I leave a message?" → Claire invites + stays quiet for the recording + fires `flag_for_office_review` afterward. Use `/switchboard/call-logs` (tool-call rows now show real tool names + parsed args thanks to the parser fix) or direct DB query.
+2. **Office: manually call the 6 stranded callers** before Monday. They got broken promises from Claire because of the parser bug. List with phone numbers in session 22 deliverables above. Full transcripts in `/switchboard/call-logs`.
+3. **Switchboard team rollout.** Cesar needs to send Tyler the list of remaining team members to invite (names + `@tzelectricinc.com` emails + roles). Users page is verified working. Most office staff → `office` role; supervisors → `admin`. Anyone TZ wants on the Switchboard needs an `@tzelectricinc.com` Google Workspace email first.
+4. **Terry's role promotion** (office → owner). Quick task: he's in OWNER_EMAILS but his DB row is still `office` from when he was first invited.
+5. **Mike + Ty Stein invite nudge.** They have pending invites from 10 days ago and haven't signed in. Text them the `/switchboard/login` URL.
+6. **Cesar to Vercel team migration.** Cesar's CLI is on `cq-marketings-projects` (old, pre-handoff). Ask Tyler to invite `cqdesignsny@gmail.com` to TZ Electric's Vercel team so `vercel link` + `vercel env pull` work from Cesar's machine. Until then the SSD copy's `.env.local` is the source of truth for env on Cesar's side.
+7. **Cesar's own follow-throughs from session 21:** grab HCP Business Unit UUIDs from HCP browser DevTools and drop into `HCP_BU_*_UUID` Vercel env vars; fix the `ClientCareSercices` typo in HCP while in there.
+8. **Tyler still owes us:** (c) confirm drain cleaning rate (KB has an "OPEN — answer was cut off" placeholder; not blocking anything live). That's it.
+9. **AI Gateway credit hardening (session 21 outage follow-up).** Three items: friendlier failure UI on web chat when gateway 402s, hourly health-monitor cron that emails on Claire-down, enable the Vercel AI Gateway low-credit email alert in the dashboard. Cheap wins, prevent silent re-occurrence.
+10. **In-app Claire (the major arc).** Strategic shift locked in session 20. Refactor agent-prompt.ts into a layered builder, build the tool registry abstraction, ship the right-side slide-out chat in the TZ Switchboard, wire the admin chat surface first. See "Claire as TZ AI (architecture direction)" section above. Tyler is the bottleneck and admin chat unblocks him most.
+11. **SMS Claire model wire-up** once A2P 10DLC clears (1-2 weeks from session 21's kickoff). One TODO block to replace, ~30 minutes of work plus a smoke test.
+12. **Tech response acknowledgment + Vapi `<Dial>` bridge** as post-launch polish on the after-hours cascade once it's seen real traffic.
+13. **v2 Claire voice tool: `transfer_to_staff`** so when a caller asks "I need Sam directly" Claire can dial Sam's mobile via Vapi `transferCall`. ~2 hours of work. Worth doing after a few weeks of Option 3 traffic to see if customer demand for direct-dial is real.
+14. **Blogs back on the site.** Code is ready, just need to flip the nav back on after the agent push lands.
+15. **Reports R2/R3/R4.** HCP Won/Lost integration → close rates by channel, ad-cost integration → CPL/CPA/ROAS, per-channel agent reporting.
 
 The TZ Switchboard is Tyler's permanent operational backend. Every future agent (email assistant, office ops, warehouse, sales, marketing) ships as a new module — or, increasingly, as a new Claire surface inside the existing slide-out chat. The customer-facing persona stays Claire across voice, SMS, web chat. Internal Claire (admin, office, tech, training) uses the same persona to keep one trust signal.
