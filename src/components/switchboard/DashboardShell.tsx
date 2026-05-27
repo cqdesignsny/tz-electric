@@ -45,13 +45,29 @@ function ShellContent({
     }
   }, [mobileOpen])
 
+  // True 3-column agentic layout when Claire's right panel is mounted.
+  // The panel is `position: fixed` so it doesn't participate in flex
+  // sizing; reserve the corresponding right-side gutter on the row
+  // container so left nav + main content together don't run underneath
+  // the panel. Width tiers match SwitchboardClairePanel:
+  //   lg 1024-1279px  → 320px
+  //   xl 1280-1535px  → 380px
+  //   2xl 1536+       → 420px
+  // Only applied when the panel is actually rendered (owner/admin + Google).
+  const showRightPanel =
+    sidebarUser?.source === 'google' &&
+    (sidebarUser.role === 'owner' || sidebarUser.role === 'admin')
+  const rowGutterClass = showRightPanel
+    ? 'lg:pr-[320px] xl:pr-[380px] 2xl:pr-[420px]'
+    : ''
+
   return (
     <div className="min-h-screen flex flex-col">
       <TopBar
         onMobileToggle={() => setMobileOpen((v) => !v)}
         mobileOpen={mobileOpen}
       />
-      <div className="flex-1 flex relative">
+      <div className={`flex-1 flex relative ${rowGutterClass}`}>
         {/* Desktop sidebar */}
         <aside className="hidden md:block w-64 flex-shrink-0 border-r border-gray-200 dark:border-navy-light/40 bg-white dark:bg-[#0A1128]">
           <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
@@ -78,14 +94,13 @@ function ShellContent({
 
       {/* Persistent right-side Claire (admin chat) — owner + admin only.
           Google sign-in required because KB edits need real attribution. */}
-      {sidebarUser?.source === 'google' &&
-        (sidebarUser.role === 'owner' || sidebarUser.role === 'admin') && (
-          <SwitchboardClairePanel
-            actorName={sidebarUser.name}
-            actorEmail={sidebarUser.email}
-            actorRole={sidebarUser.role}
-          />
-        )}
+      {showRightPanel && sidebarUser && (
+        <SwitchboardClairePanel
+          actorName={sidebarUser.name}
+          actorEmail={sidebarUser.email}
+          actorRole={sidebarUser.role as 'owner' | 'admin'}
+        />
+      )}
     </div>
   )
 }

@@ -1,27 +1,30 @@
 'use client'
 /**
- * Persistent right-side Claire panel — visible on every Switchboard
- * page for owner + admin users. Replaces the "go to /agent-training to
- * talk to Claire" workflow with an always-on chat that follows you
- * around the dashboard.
+ * Persistent Claire panel — the right column of the agentic-style
+ * Switchboard layout. Owner + admin only.
  *
- * Desktop: vertical edge tab on the right collapses to a small handle.
- * Click to open a ~400px slide-out. Click X to collapse.
+ * Desktop (lg ≥ 1024px): **always open**, no toggle. Renders as a
+ * fixed-positioned right column. DashboardShell adds matching
+ * `lg:pr-[…]` to the main row so the content area doesn't sit
+ * underneath the panel — true 3-column layout (left nav, content,
+ * right Claire). Panel width:
+ *   - lg (1024-1279px): 320px
+ *   - xl (1280-1535px): 380px
+ *   - 2xl (1536+):      420px
  *
- * Mobile (<md): floating circular Claire button bottom-right. Tap to
- * open a full-screen modal chat.
+ * Mobile (<lg): floating circular Claire button bottom-right. Tap
+ * opens a full-screen modal with the same chat thread.
  *
- * Persistence (so the panel feels continuous across page navigation):
- * - conversationId in sessionStorage (per-tab thread).
- * - visible messages in localStorage keyed by conversationId (so
- *   refresh + reload preserves the visible thread).
- * - open/collapsed state in localStorage.
+ * State persistence (so the panel feels continuous across page nav
+ * AND between viewport sizes):
+ * - conversationId in sessionStorage (per-tab thread)
+ * - visible messages in localStorage keyed by conversationId
  *
- * Mounted inside DashboardShell so it persists across in-app navigation
- * without unmounting. Backend is the same /api/agents/admin-chat/stream
- * endpoint; the page Tyler is on at request time is passed via the
- * `currentPath` field so Claire can ground "this call" / "this lead"
- * references.
+ * Mounted inside DashboardShell so it survives in-app navigation
+ * without unmounting (React state stays alive between page renders).
+ * Backend is /api/agents/admin-chat/stream; current pathname goes into
+ * the request body so Claire can ground "this call" / "this lead" /
+ * "this page" references.
  */
 import {
   useCallback,
@@ -38,7 +41,6 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, isTextUIPart, type UIMessage } from 'ai'
 
 const CONVERSATION_KEY = 'tz-claire-panel-conversation-id'
-const OPEN_KEY = 'tz-claire-panel-open'
 const messagesKeyFor = (id: string) => `tz-claire-panel-messages:${id}`
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
@@ -88,32 +90,14 @@ function uiMessageText(m: UIMessage): string {
 export default function SwitchboardClairePanel({ actorName, actorEmail, actorRole }: Props) {
   const pathname = usePathname() || '/switchboard'
   const [conversationId, setConversationId] = useState('')
-  const [open, setOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [draft, setDraft] = useState('')
-  const composerRef = useRef<HTMLTextAreaElement | null>(null)
-  const scrollerRef = useRef<HTMLDivElement | null>(null)
   const firstName = actorName?.split(' ')[0] || actorEmail.split('@')[0]
 
-  // Hydrate conversation id + open state on first client mount.
+  // Hydrate the conversation id on mount.
   useEffect(() => {
     setConversationId(readOrCreateConversationId())
-    try {
-      const stored = window.localStorage.getItem(OPEN_KEY)
-      if (stored === '1') setOpen(true)
-    } catch {
-      // ignore
-    }
   }, [])
-
-  // Persist open state.
-  useEffect(() => {
-    if (!conversationId) return
-    try {
-      window.localStorage.setItem(OPEN_KEY, open ? '1' : '0')
-    } catch {
-      // ignore
-    }
-  }, [open, conversationId])
 
   const transport = useMemo(() => {
     if (!conversationId) return null
@@ -126,8 +110,7 @@ export default function SwitchboardClairePanel({ actorName, actorEmail, actorRol
     })
   }, [conversationId, pathname])
 
-  // Hydrate messages from localStorage on mount + when conversationId
-  // changes (e.g., after Start over).
+  // Hydrate visible messages from localStorage.
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | undefined>(undefined)
   useEffect(() => {
     if (!conversationId) return
@@ -155,55 +138,20 @@ export default function SwitchboardClairePanel({ actorName, actorEmail, actorRol
   // Persist visible messages on every change.
   useEffect(() => {
     if (!conversationId) return
-    if (initialMessages === undefined) return // hydration pending
+    if (initialMessages === undefined) return
     try {
       window.localStorage.setItem(messagesKeyFor(conversationId), JSON.stringify(messages))
     } catch {
-      // localStorage quota or disabled — non-fatal.
+      // ignore
     }
   }, [messages, conversationId, initialMessages])
 
   const isStreaming = status === 'submitted' || status === 'streaming'
 
-  // Auto-scroll on new messages (don't yank if user scrolled up).
-  const lastScrollTopRef = useRef(0)
-  const userScrolledUpRef = useRef(false)
-  useEffect(() => {
-    const el = scrollerRef.current
-    if (!el) return
-    const onScroll = () => {
-      const dy = el.scrollTop - lastScrollTopRef.current
-      lastScrollTopRef.current = el.scrollTop
-      if (dy < 0) userScrolledUpRef.current = true
-      const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 80
-      if (nearBottom) userScrolledUpRef.current = false
-    }
-    el.addEventListener('scroll', onScroll)
-    return () => el.removeEventListener('scroll', onScroll)
-  }, [open])
-  useLayoutEffect(() => {
-    if (!open) return
-    const el = scrollerRef.current
-    if (!el) return
-    if (userScrolledUpRef.current) return
-    el.scrollTop = el.scrollHeight
-  }, [messages, status, open])
-
-  // Focus composer when opening (desktop only — mobile keyboard pop is jarring).
-  useEffect(() => {
-    if (!open) return
-    if (window.matchMedia('(min-width: 768px)').matches) {
-      const t = setTimeout(() => composerRef.current?.focus(), 100)
-      return () => clearTimeout(t)
-    }
-  }, [open])
-
   const startOver = useCallback(() => {
     const fresh = generateConversationId()
     try {
       window.sessionStorage.setItem(CONVERSATION_KEY, fresh)
-      // Clear the OLD conversation's stored messages so it doesn't
-      // hang around in localStorage forever.
       if (conversationId) {
         window.localStorage.removeItem(messagesKeyFor(conversationId))
       }
@@ -227,47 +175,44 @@ export default function SwitchboardClairePanel({ actorName, actorEmail, actorRol
     [conversationId, sendMessage],
   )
 
-  function onSubmit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (isStreaming) return
-    submit(draft)
-  }
-
-  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      submit(draft)
-    }
-  }
-
-  // Don't render anything until we have a conversation id (hydration
-  // race avoidance — prevents server/client mismatch flicker).
+  // Don't render anything until we have a conversation id — prevents
+  // server / client hydration mismatch flicker.
   if (!conversationId) return null
 
+  // Render both wrappers (desktop inline + mobile bubble/modal). CSS
+  // hides whichever doesn't match the viewport. The chat state lives at
+  // this outer component so it stays consistent across re-renders even
+  // if the viewport changes mid-conversation.
   return (
     <>
-      {/* Collapsed handle (desktop) — vertical edge tab */}
-      {!open && (
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          aria-label="Open Claire chat"
-          className="hidden md:flex fixed right-0 top-1/2 -translate-y-1/2 z-40 items-center gap-1.5 bg-blue dark:bg-blue-light text-white dark:text-navy px-2 py-3 rounded-l-lg shadow-lg hover:bg-blue-dark dark:hover:bg-blue transition-colors group"
-          style={{ writingMode: 'vertical-rl' }}
-        >
-          <span className="text-xs font-mono uppercase tracking-wider rotate-180">
-            Ask Claire
-          </span>
-        </button>
-      )}
+      {/* DESKTOP — always-open inline column (lg+) */}
+      <aside
+        aria-label="Claire chat"
+        className="hidden lg:flex fixed right-0 top-16 bottom-0 z-30 flex-col bg-white dark:bg-[#0A1128] border-l border-gray-200 dark:border-navy-light/40 shadow-lg
+                   lg:w-[320px] xl:w-[380px] 2xl:w-[420px]"
+      >
+        <ChatBody
+          firstName={firstName}
+          actorRole={actorRole}
+          pathname={pathname}
+          messages={messages}
+          isStreaming={isStreaming}
+          error={error?.message ?? null}
+          draft={draft}
+          setDraft={setDraft}
+          submit={submit}
+          startOver={startOver}
+          mode="inline"
+        />
+      </aside>
 
-      {/* Collapsed bubble (mobile) — floating bottom-right */}
-      {!open && (
+      {/* MOBILE BUBBLE (<lg) */}
+      {!mobileOpen && (
         <button
           type="button"
-          onClick={() => setOpen(true)}
+          onClick={() => setMobileOpen(true)}
           aria-label="Open Claire chat"
-          className="md:hidden fixed bottom-4 right-4 z-40 w-14 h-14 rounded-full bg-blue dark:bg-blue-light text-white dark:text-navy shadow-2xl flex items-center justify-center hover:scale-105 transition-transform"
+          className="lg:hidden fixed bottom-4 right-4 z-40 w-14 h-14 rounded-full bg-blue dark:bg-blue-light text-white dark:text-navy shadow-2xl flex items-center justify-center hover:scale-105 transition-transform"
         >
           <svg
             width="24"
@@ -285,148 +230,244 @@ export default function SwitchboardClairePanel({ actorName, actorEmail, actorRol
         </button>
       )}
 
-      {/* Open panel */}
-      {open && (
+      {/* MOBILE FULL-SCREEN MODAL (<lg, when open) */}
+      {mobileOpen && (
         <>
-          {/* Mobile backdrop */}
           <div
-            className="md:hidden fixed inset-0 z-40 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
-            onClick={() => setOpen(false)}
+            className="lg:hidden fixed inset-0 z-40 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
             aria-hidden
           />
-
-          <div
-            className="fixed z-50 bg-white dark:bg-[#0A1128] shadow-2xl border-l border-gray-200 dark:border-navy-light/40 flex flex-col
-                       inset-0 md:inset-auto md:right-0 md:top-16 md:bottom-0 md:w-[400px] lg:w-[420px]"
-          >
-            <header className="border-b border-gray-200 dark:border-navy-light/40 px-4 py-3 flex items-center justify-between gap-3 flex-shrink-0">
-              <div className="min-w-0">
-                <div className="text-xs uppercase tracking-wider font-mono text-blue dark:text-blue-light/80">
-                  Claire · admin · Opus 4.7
-                </div>
-                <h2 className="text-sm font-bold text-navy dark:text-white mt-0.5 truncate">
-                  Hey {firstName}
-                </h2>
-              </div>
-              <div className="flex items-center gap-1.5 flex-shrink-0">
-                <button
-                  type="button"
-                  onClick={startOver}
-                  className="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
-                  title="Start over (new conversation)"
-                >
-                  New
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setOpen(false)}
-                  aria-label="Close Claire chat"
-                  className="w-8 h-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors flex items-center justify-center"
-                >
-                  <svg
-                    width="18"
-                    height="18"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden
-                  >
-                    <line x1="18" y1="6" x2="6" y2="18" />
-                    <line x1="6" y1="6" x2="18" y2="18" />
-                  </svg>
-                </button>
-              </div>
-            </header>
-
-            <div className="px-4 py-2 text-[10px] font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-navy-light/30 flex-shrink-0 truncate">
-              Page: {pathname}
-            </div>
-
-            <div
-              ref={scrollerRef}
-              className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5"
-            >
-              {messages.length === 0 && (
-                <div className="text-center pt-6 pb-3 px-2">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-                    I follow you around the Switchboard. Ask me anything about
-                    the page you&apos;re on, the knowledge base, recent calls, or my
-                    daily reports.
-                  </p>
-                  <div className="flex flex-col gap-1.5 max-w-full">
-                    <PanelChip
-                      label="What's on this page?"
-                      onSubmit={submit}
-                      prompt={`I'm on ${pathname}. What can you tell me about this page or the data on it?`}
-                    />
-                    <PanelChip
-                      label="Yesterday's report"
-                      onSubmit={submit}
-                      prompt="Show me yesterday's daily learning report. Summarize the key failure patterns and proposed prompt rules."
-                    />
-                    <PanelChip
-                      label="KB gaps this week"
-                      onSubmit={submit}
-                      prompt="Look at the daily reports from the last 7 days. What KB gaps came up most often and what would you propose adding?"
-                    />
-                  </div>
-                </div>
-              )}
-
-              {messages.map((m) => (
-                <PanelMessage key={m.id} message={m} />
-              ))}
-
-              {isStreaming && (
-                <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 font-mono uppercase tracking-wider">
-                  <span className="w-1.5 h-1.5 rounded-full bg-blue dark:bg-blue-light animate-pulse" />
-                  Claire is thinking...
-                </div>
-              )}
-
-              {error && (
-                <div className="rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3 text-[11px] text-red-800 dark:text-red-300">
-                  <div className="font-bold mb-1">Something went wrong</div>
-                  <code className="font-mono">{error.message}</code>
-                </div>
-              )}
-            </div>
-
-            <form
-              onSubmit={onSubmit}
-              className="border-t border-gray-200 dark:border-navy-light/40 p-3 bg-gray-50 dark:bg-[#0A1128] flex-shrink-0"
-            >
-              <div className="flex items-end gap-2">
-                <textarea
-                  ref={composerRef}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={onKeyDown}
-                  placeholder="Ask Claire..."
-                  rows={1}
-                  disabled={isStreaming}
-                  className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue dark:focus:ring-blue-light disabled:opacity-50"
-                  style={{ minHeight: '38px', maxHeight: '160px', fontSize: 'max(16px, 0.95rem)' }}
-                />
-                <button
-                  type="submit"
-                  disabled={!draft.trim() || isStreaming}
-                  className="px-3 py-2 rounded-lg bg-blue dark:bg-blue-light text-white dark:text-navy text-sm font-semibold hover:bg-blue-dark dark:hover:bg-blue transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Send
-                </button>
-              </div>
-              <div className="mt-1.5 text-[9px] uppercase tracking-wider font-mono text-gray-400 dark:text-gray-500 flex items-center justify-between">
-                <span>Enter to send · Shift+Enter newline</span>
-                <span>{actorRole}</span>
-              </div>
-            </form>
+          <div className="lg:hidden fixed inset-0 z-50 bg-white dark:bg-[#0A1128] flex flex-col">
+            <ChatBody
+              firstName={firstName}
+              actorRole={actorRole}
+              pathname={pathname}
+              messages={messages}
+              isStreaming={isStreaming}
+              error={error?.message ?? null}
+              draft={draft}
+              setDraft={setDraft}
+              submit={submit}
+              startOver={startOver}
+              mode="modal"
+              onClose={() => setMobileOpen(false)}
+            />
           </div>
         </>
       )}
+    </>
+  )
+}
+
+// =============================================================================
+// Shared chat body (renders inside both inline aside + mobile modal)
+// =============================================================================
+
+type ChatBodyProps = {
+  firstName: string
+  actorRole: 'owner' | 'admin'
+  pathname: string
+  messages: UIMessage[]
+  isStreaming: boolean
+  error: string | null
+  draft: string
+  setDraft: (v: string) => void
+  submit: (text: string) => void
+  startOver: () => void
+  mode: 'inline' | 'modal'
+  onClose?: () => void
+}
+
+function ChatBody(props: ChatBodyProps) {
+  const {
+    firstName,
+    actorRole,
+    pathname,
+    messages,
+    isStreaming,
+    error,
+    draft,
+    setDraft,
+    submit,
+    startOver,
+    mode,
+    onClose,
+  } = props
+  const scrollerRef = useRef<HTMLDivElement | null>(null)
+  const composerRef = useRef<HTMLTextAreaElement | null>(null)
+  const lastScrollTopRef = useRef(0)
+  const userScrolledUpRef = useRef(false)
+
+  // Smart auto-scroll (per-instance — inline and modal each have their
+  // own scroll position, which is fine since only one is visible at a
+  // time).
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    const onScroll = () => {
+      const dy = el.scrollTop - lastScrollTopRef.current
+      lastScrollTopRef.current = el.scrollTop
+      if (dy < 0) userScrolledUpRef.current = true
+      const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 80
+      if (nearBottom) userScrolledUpRef.current = false
+    }
+    el.addEventListener('scroll', onScroll)
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [])
+  useLayoutEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    if (userScrolledUpRef.current) return
+    el.scrollTop = el.scrollHeight
+  }, [messages, isStreaming])
+
+  // Focus the composer when the modal opens.
+  useEffect(() => {
+    if (mode !== 'modal') return
+    const t = setTimeout(() => composerRef.current?.focus(), 100)
+    return () => clearTimeout(t)
+  }, [mode])
+
+  function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (isStreaming) return
+    submit(draft)
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      submit(draft)
+    }
+  }
+
+  return (
+    <>
+      <header className="border-b border-gray-200 dark:border-navy-light/40 px-4 py-3 flex items-center justify-between gap-3 flex-shrink-0">
+        <div className="min-w-0">
+          <div className="text-xs uppercase tracking-wider font-mono text-blue dark:text-blue-light/80">
+            Claire · admin · Opus 4.7
+          </div>
+          <h2 className="text-sm font-bold text-navy dark:text-white mt-0.5 truncate">
+            Hey {firstName}
+          </h2>
+        </div>
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          <button
+            type="button"
+            onClick={startOver}
+            className="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            title="Start over (new conversation)"
+          >
+            New
+          </button>
+          {mode === 'modal' && onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close Claire chat"
+              className="w-8 h-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors flex items-center justify-center"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
+        </div>
+      </header>
+
+      <div className="px-4 py-2 text-[10px] font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-navy-light/30 flex-shrink-0 truncate">
+        Page: {pathname}
+      </div>
+
+      <div ref={scrollerRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5">
+        {messages.length === 0 && (
+          <div className="text-center pt-6 pb-3 px-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+              I follow you around the Switchboard. Ask me anything about the
+              page you&apos;re on, the knowledge base, recent calls, or my daily
+              reports.
+            </p>
+            <div className="flex flex-col gap-1.5 max-w-full">
+              <PanelChip
+                label="What&apos;s on this page?"
+                onSubmit={submit}
+                prompt={`I'm on ${pathname}. What can you tell me about this page or the data on it?`}
+              />
+              <PanelChip
+                label="Yesterday&apos;s report"
+                onSubmit={submit}
+                prompt="Show me yesterday's daily learning report. Summarize the key failure patterns and proposed prompt rules."
+              />
+              <PanelChip
+                label="KB gaps this week"
+                onSubmit={submit}
+                prompt="Look at the daily reports from the last 7 days. What KB gaps came up most often and what would you propose adding?"
+              />
+            </div>
+          </div>
+        )}
+
+        {messages.map((m) => (
+          <PanelMessage key={m.id} message={m} />
+        ))}
+
+        {isStreaming && (
+          <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 font-mono uppercase tracking-wider">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue dark:bg-blue-light animate-pulse" />
+            Claire is thinking...
+          </div>
+        )}
+
+        {error && (
+          <div className="rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3 text-[11px] text-red-800 dark:text-red-300">
+            <div className="font-bold mb-1">Something went wrong</div>
+            <code className="font-mono">{error}</code>
+          </div>
+        )}
+      </div>
+
+      <form
+        onSubmit={onSubmit}
+        className="border-t border-gray-200 dark:border-navy-light/40 p-3 bg-gray-50 dark:bg-[#0A1128] flex-shrink-0"
+      >
+        <div className="flex items-end gap-2">
+          <textarea
+            ref={composerRef}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={onKeyDown}
+            placeholder="Ask Claire..."
+            rows={1}
+            disabled={isStreaming}
+            className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue dark:focus:ring-blue-light disabled:opacity-50"
+            style={{ minHeight: '38px', maxHeight: '160px', fontSize: 'max(16px, 0.95rem)' }}
+          />
+          <button
+            type="submit"
+            disabled={!draft.trim() || isStreaming}
+            className="px-3 py-2 rounded-lg bg-blue dark:bg-blue-light text-white dark:text-navy text-sm font-semibold hover:bg-blue-dark dark:hover:bg-blue transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Send
+          </button>
+        </div>
+        <div className="mt-1.5 text-[9px] uppercase tracking-wider font-mono text-gray-400 dark:text-gray-500 flex items-center justify-between">
+          <span>Enter to send · Shift+Enter newline</span>
+          <span>{actorRole}</span>
+        </div>
+      </form>
     </>
   )
 }
