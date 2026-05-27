@@ -33,10 +33,19 @@ export default function CallLogsClient(props: CallLogsClientProps) {
     return conversations.filter((c) => c.status === filter)
   }, [conversations, filter])
 
+  // Master-detail pattern for mobile (fix to 2026-05-27 PM Tyler feedback —
+  // on phone/iPad, the threadlist + activepane stack vertically so the
+  // transcript and audio player were buried below 50 thread rows. On
+  // mobile we now show one or the other based on activeId; desktop still
+  // shows both side by side.
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4 lg:gap-6">
-      {/* Thread list */}
-      <aside className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
+      {/* Thread list — hidden on mobile when a call is selected */}
+      <aside
+        className={`rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden ${
+          activeId ? 'hidden lg:block' : 'block'
+        }`}
+      >
         <div className="flex items-center gap-1 p-2 border-b border-gray-200 dark:border-gray-800">
           {(['all', 'open', 'closed', 'escalated'] as const).map((f) => (
             <button
@@ -54,7 +63,7 @@ export default function CallLogsClient(props: CallLogsClientProps) {
             </button>
           ))}
         </div>
-        <ul className="max-h-[70vh] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
+        <ul className="max-h-[80vh] lg:max-h-[70vh] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
           {filtered.length === 0 && (
             <li className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
               No calls yet.
@@ -96,8 +105,12 @@ export default function CallLogsClient(props: CallLogsClientProps) {
         </ul>
       </aside>
 
-      {/* Active conversation pane */}
-      <section className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden flex flex-col min-h-[60vh]">
+      {/* Active conversation pane — hidden on mobile when no call selected */}
+      <section
+        className={`rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden flex-col min-h-[60vh] ${
+          !activeId ? 'hidden lg:flex' : 'flex'
+        }`}
+      >
         {!active ? (
           <div className="flex-1 grid place-items-center text-sm text-gray-500 dark:text-gray-400 p-10 text-center">
             Pick a call from the list to view its transcript.
@@ -121,6 +134,15 @@ function ActiveCallPane({
   return (
     <>
       <header className="border-b border-gray-200 dark:border-gray-800 p-4">
+        {/* Back to list — mobile only. Lets users return to the thread
+            list without using the browser back button (which loses state). */}
+        <Link
+          href="/switchboard/call-logs"
+          className="lg:hidden inline-flex items-center gap-1.5 text-xs uppercase tracking-wider text-gray-500 dark:text-gray-400 hover:text-blue dark:hover:text-blue-light font-mono mb-3 transition-colors"
+        >
+          <span aria-hidden>←</span>
+          <span>All calls</span>
+        </Link>
         <div className="flex items-center justify-between gap-3">
           <div>
             <div className="text-xs uppercase tracking-wider font-mono text-blue dark:text-blue-light/80">

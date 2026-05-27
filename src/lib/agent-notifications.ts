@@ -283,3 +283,75 @@ export async function sendClaireLeadCapturedEmail(args: {
 
   await sendEmail({ subject, html, text })
 }
+
+// ============================================================================
+// USER INVITE (Switchboard access)
+// ============================================================================
+
+/**
+ * Welcome / invite email when an owner adds a user to TZ Switchboard.
+ * Tyler caught this gap on 2026-05-18: he invited Mike + Ty Stein but
+ * neither got an email, so they didn't know they had access. Pre-fix,
+ * `inviteUser()` only created a DB row.
+ */
+export async function sendUserInviteEmail(args: {
+  inviteeEmail: string
+  inviteeName?: string | null
+  role: 'owner' | 'admin' | 'office' | 'viewer'
+  invitedByName?: string | null
+  invitedByEmail: string
+}): Promise<void> {
+  const loginUrl = `${SITE_URL}/switchboard/login`
+  const niceRole = args.role.charAt(0).toUpperCase() + args.role.slice(1)
+  const inviter = args.invitedByName || args.invitedByEmail
+  const greeting = args.inviteeName ? `Hi ${args.inviteeName},` : 'Hi,'
+  const subject = `You've been added to TZ Switchboard (${niceRole} access)`
+
+  const bodyHtml = `
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:1.7;color:#1E293B;">
+      <p style="margin:0 0 14px;">${escapeHtml(greeting)}</p>
+      <p style="margin:0 0 14px;"><strong>${escapeHtml(inviter)}</strong> just gave you access to TZ Switchboard, the internal control center for TZ Electric, Plumbing, Heating, and Cooling.</p>
+      <p style="margin:0 0 14px;"><strong>How to sign in:</strong></p>
+      <ol style="margin:0 0 14px 22px;padding:0;color:#1E293B;">
+        <li style="margin-bottom:6px;">Click the <strong>Sign in to TZ Switchboard</strong> button below (or go to <a href="${loginUrl}" style="color:#1E40AF;">${loginUrl}</a>).</li>
+        <li style="margin-bottom:6px;">Click <strong>Sign in with Google</strong> on the login page.</li>
+        <li style="margin-bottom:6px;">Use your <strong>${escapeHtml(args.inviteeEmail)}</strong> Google account. No separate password — sign-in is handled by Google.</li>
+      </ol>
+      <p style="margin:0 0 14px;color:#4B5563;font-size:13px;">If "${escapeHtml(args.inviteeEmail)}" isn't a Google Workspace account yet, ask Tyler or Cesar to set one up before signing in.</p>
+      <p style="margin:0;color:#6B7280;font-size:12px;">If you weren't expecting this invite, you can ignore this email or reply to let us know.</p>
+    </div>`
+
+  const html = renderEmailLayout({
+    preheader: `${inviter} added you to TZ Switchboard as ${niceRole}.`,
+    eyebrow: 'TZ Switchboard',
+    heading: 'Welcome to TZ Switchboard',
+    intro: `${inviter} just gave you ${niceRole.toLowerCase()} access. Sign in with your Google account to get in.`,
+    stats: [
+      { label: 'Role', value: niceRole },
+      { label: 'Email', value: args.inviteeEmail },
+      { label: 'Invited by', value: inviter },
+    ],
+    bodyHtml,
+    cta: { label: 'Sign in to TZ Switchboard', href: loginUrl },
+  })
+
+  const text = [
+    `${greeting}`,
+    '',
+    `${inviter} just gave you access to TZ Switchboard.`,
+    '',
+    `Role: ${niceRole}`,
+    `Email: ${args.inviteeEmail}`,
+    `Invited by: ${inviter}`,
+    '',
+    'How to sign in:',
+    `1. Go to ${loginUrl}`,
+    '2. Click "Sign in with Google"',
+    `3. Use your ${args.inviteeEmail} Google account.`,
+    '',
+    "If you weren't expecting this invite, ignore this email.",
+  ].join('\n')
+
+  // Send only to the invitee. Don't blast the broadcast list.
+  await sendEmail({ subject, html, text, to: [args.inviteeEmail] })
+}
