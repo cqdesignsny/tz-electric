@@ -339,7 +339,7 @@ export function buildAgentTools(ctx: AgentToolContext) {
 
     dispatch_after_hours_emergency: tool({
       description:
-        "Open an after-hours emergency dispatch and start the technician escalation cascade per Tyler's 2026-05-18 SOP. Time-of-day aware: overnight (10 PM – 5 AM) sends ONE text each to the on-call tech and supervisor with no calls and no follow-ups; standard after-hours (4 PM – 10 PM, 5 AM – 7:30 AM) fires the full T+0 / T+15 / T+30 (add supervisor) / T+60 cascade. Use ONLY when (1) it is after-hours per lookup_business_hours AND (2) the issue is a genuine emergency. Never call this during business hours — use create_lead_with_estimate or flag_for_office_review instead. Never read the technician's phone number to the customer; the dispatch handles privacy via call bridge.",
+        "Open an after-hours emergency dispatch and start the technician escalation cascade per Tyler's 2026-05-18 SOP. Time-of-day aware: overnight (10 PM – 5 AM) sends ONE text each to the on-call tech and supervisor with no calls and no follow-ups; standard after-hours (4 PM – 10 PM, 5 AM – 7:30 AM) fires the full T+0 / T+15 / T+30 (add supervisor) / T+60 cascade. Use ONLY when (1) it is after-hours per lookup_business_hours, (2) the issue is a genuine emergency, AND (3) THE CUSTOMER HAS EXPLICITLY SAID YES TO THE $475 DISPATCH FEE. The fee disclosure must be framed as a conditional opt-in (\"If you'd like us to dispatch tonight, the after-hours dispatch fee is $475...\") and they must answer affirmatively (\"yes\", \"go ahead\", \"please send someone\") before you set `customer_acknowledged_fees: true`. If they say no, say it's too much, or just ask for a human, DO NOT dispatch — call flag_for_office_review with priority=high instead so the office picks it up at 7:30 AM. Narrow safety override: imminent life-safety risk (active fire, gas leak, downed live wires, medical equipment loss with no backup) lets you dispatch even without explicit yes, but still disclose the fee. Never call during business hours — use create_lead_with_estimate or flag_for_office_review instead. Never read the technician's phone number to the customer.",
       inputSchema: z.object({
         issue_description: z
           .string()
@@ -369,7 +369,7 @@ export function buildAgentTools(ctx: AgentToolContext) {
         customer_acknowledged_fees: z
           .boolean()
           .describe(
-            'Has the customer been told about and approved the after-hours emergency dispatch fee ($475 + on-site work)?',
+            'Did the customer EXPLICITLY say yes to the $475 dispatch fee after you framed it as a conditional ("If you\'d like us to dispatch tonight, the fee is $475...")? Set true only when they answered "yes", "go ahead", "send someone", or equivalent. Set false (and DO NOT call this tool — use flag_for_office_review instead) if they said "no", "that\'s too much", "I just want a human", or stayed silent on the question.',
           ),
       }),
       execute: async (input) =>
