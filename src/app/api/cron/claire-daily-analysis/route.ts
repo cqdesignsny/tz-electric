@@ -74,7 +74,7 @@ export async function GET(req: NextRequest) {
   let proposals
   let llmInputTokens = 0
   let llmOutputTokens = 0
-  let llmModel = 'anthropic/claude-sonnet-4.6'
+  let llmModel = 'anthropic/claude-opus-4.7'
   let llmError: string | null = null
   try {
     const llm = await runLLMAnalysis(data, metrics)

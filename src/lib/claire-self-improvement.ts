@@ -628,9 +628,19 @@ export async function runLLMAnalysis(
     emergencyBlock,
   })
 
+  // Anthropic's generateObject path can produce prose alongside the JSON
+  // tool-call payload. Help the SDK and Anthropic both:
+  //  - schemaName + schemaDescription become the tool name + description
+  //    Anthropic sees, so the model has clearer intent.
+  //  - experimental_repairText pulls JSON out of any surrounding prose if
+  //    the initial parse fails (e.g. ```json fences, "Here is the analysis"
+  //    preamble, etc.). One free retry before we give up.
   const result = await generateObject({
     model: gateway(model),
     schema: proposalsSchema,
+    schemaName: 'claire_daily_analysis',
+    schemaDescription:
+      "Structured daily learning report for TZ Electric's voice/chat/SMS AI agent Claire. Fields: summary (paragraph), wins (specific transcript moments), failure_patterns (N>=2 recurring issues), kb_gaps (with paste-ready additions), proposed_prompt_rules (new rules with rationale), calls_worth_listening_to, questions_for_tyler.",
     system: {
       role: 'system',
       content: ANALYZER_SYSTEM_PROMPT,
@@ -639,7 +649,21 @@ export async function runLLMAnalysis(
       },
     },
     prompt: userPrompt,
-    maxOutputTokens: 4000,
+    maxOutputTokens: 8000,
+    experimental_repairText: async ({ text }) => {
+      // Strip common preambles / code fences before re-parse.
+      const cleaned = text
+        .replace(/^[^{]*?```(?:json)?\s*/i, '')
+        .replace(/\s*```[^}]*$/i, '')
+        .trim()
+      // If we have a `{ ... }` body buried inside prose, find it.
+      const firstBrace = cleaned.indexOf('{')
+      const lastBrace = cleaned.lastIndexOf('}')
+      if (firstBrace >= 0 && lastBrace > firstBrace) {
+        return cleaned.slice(firstBrace, lastBrace + 1)
+      }
+      return cleaned
+    },
     providerOptions: {
       gateway: {
         tags: ['feature:claire-self-improvement', `env:${process.env.VERCEL_ENV || 'dev'}`],
