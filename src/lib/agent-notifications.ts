@@ -285,6 +285,200 @@ export async function sendClaireLeadCapturedEmail(args: {
 }
 
 // ============================================================================
+// CLAIRE DAILY SELF-IMPROVEMENT REPORT
+// ============================================================================
+
+import type { ClaireProposals } from './claire-self-improvement'
+
+type DailyAnalysisEmailArgs = {
+  dateLabel: string
+  metrics: {
+    voice_count: number
+    web_chat_count: number
+    sms_count: number
+    lead_form_count: number
+    total_leads: number
+    escalation_count: number
+    emergency_dispatch_count: number
+    silence_timeout_count: number
+    extras: {
+      stall_phrase_calls: number
+      repeated_phrase_calls: number
+      leads_with_hcp_errors: number
+      avg_conversation_messages: number
+    }
+  }
+  proposals: ClaireProposals
+}
+
+/**
+ * Render Claire's daily self-improvement digest. Two outputs (html, text)
+ * + subject. Sent at 2 AM ET to Tyler + Cesar.
+ *
+ * Phase 1: observation only. Tyler reads proposals + approves manually
+ * via /switchboard/knowledge-base or by replying to this email. Phase 2
+ * adds an approval UI inside the Switchboard.
+ */
+export function renderClaireDailyAnalysisEmail(args: DailyAnalysisEmailArgs): {
+  subject: string
+  html: string
+  text: string
+} {
+  const { dateLabel, metrics, proposals } = args
+  const subject = `Claire's daily learning report · ${dateLabel}`
+
+  const statsRow = [
+    { label: 'Voice', value: String(metrics.voice_count) },
+    { label: 'Web chat', value: String(metrics.web_chat_count) },
+    { label: 'Lead form', value: String(metrics.lead_form_count) },
+    { label: 'Leads', value: String(metrics.total_leads) },
+  ]
+
+  const listBlock = (
+    title: string,
+    items: string[],
+    emptyMsg = '(none worth flagging)',
+  ): string => {
+    if (items.length === 0) {
+      return `<h3 style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;color:#0F1C3F;margin:24px 0 8px;">${escapeHtml(title)}</h3>
+        <p style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#6B7280;margin:0;">${emptyMsg}</p>`
+    }
+    return `<h3 style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;color:#0F1C3F;margin:24px 0 8px;">${escapeHtml(title)}</h3>
+      <ul style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;line-height:1.6;color:#1E293B;margin:0;padding-left:20px;">
+        ${items.map((i) => `<li style="margin-bottom:8px;">${i}</li>`).join('')}
+      </ul>`
+  }
+
+  const evidenceTag = (ids: string[]): string =>
+    ids.length === 0
+      ? ''
+      : ` <span style="font-family:'SF Mono',Menlo,monospace;font-size:11px;color:#6B7280;">[${ids.map(escapeHtml).join(', ')}]</span>`
+
+  const winsHtml = proposals.wins.map(
+    (w) => `${escapeHtml(w.description)}${evidenceTag(w.evidence_conversation_ids)}`,
+  )
+
+  const failureHtml = proposals.failure_patterns.map((p) => {
+    const sevColor = p.severity === 'high' ? '#DC2626' : p.severity === 'medium' ? '#D97706' : '#6B7280'
+    return `<strong style="color:${sevColor};">[${escapeHtml(p.severity)}]</strong> ${escapeHtml(p.pattern)} <span style="color:#6B7280;">(${p.n_calls_affected} ${p.n_calls_affected === 1 ? 'call' : 'calls'})</span>${evidenceTag(p.evidence_conversation_ids)}`
+  })
+
+  const kbGapHtml = proposals.kb_gaps.map(
+    (g) => `<strong>Q:</strong> ${escapeHtml(g.question_asked)}<br/>
+      <strong>Claire said:</strong> <em>${escapeHtml(g.claire_response)}</em><br/>
+      <strong>Proposed addition:</strong> ${escapeHtml(g.proposed_addition)}${evidenceTag(g.evidence_conversation_ids)}`,
+  )
+
+  const promptRuleHtml = proposals.proposed_prompt_rules.map(
+    (r) => `<strong>Rule:</strong> ${escapeHtml(r.rule)}<br/>
+      <strong>Why:</strong> ${escapeHtml(r.rationale)}${evidenceTag(r.evidence_conversation_ids)}`,
+  )
+
+  const listenHtml = proposals.calls_worth_listening_to.map(
+    (c) =>
+      `<a href="${SITE_URL}/switchboard/call-logs" style="color:#1E40AF;font-family:'SF Mono',Menlo,monospace;font-size:12px;">${escapeHtml(c.conversation_id)}</a> &mdash; ${escapeHtml(c.why)}`,
+  )
+
+  const questionsHtml = proposals.questions_for_tyler.map(
+    (q) => `<strong>${escapeHtml(q.question)}</strong><br/><span style="color:#6B7280;">${escapeHtml(q.context)}</span>`,
+  )
+
+  const bodyHtml = `
+    <p style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:1.6;color:#1E293B;margin:0 0 16px;">
+      ${escapeHtml(proposals.summary)}
+    </p>
+    <div style="background:#F8FAFC;border:1px solid #E5E7EB;border-radius:10px;padding:14px 16px;margin:8px 0 16px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#4B5563;">
+      <strong>Other signals:</strong>
+      ${metrics.escalation_count} escalation${metrics.escalation_count === 1 ? '' : 's'},
+      ${metrics.emergency_dispatch_count} emergency dispatch${metrics.emergency_dispatch_count === 1 ? '' : 'es'},
+      ${metrics.silence_timeout_count} silence timeout${metrics.silence_timeout_count === 1 ? '' : 's'},
+      ${metrics.extras.stall_phrase_calls} call${metrics.extras.stall_phrase_calls === 1 ? '' : 's'} with stall-phrase repetition,
+      ${metrics.extras.repeated_phrase_calls} call${metrics.extras.repeated_phrase_calls === 1 ? '' : 's'} where Claire repeated herself verbatim,
+      ${metrics.extras.leads_with_hcp_errors} lead${metrics.extras.leads_with_hcp_errors === 1 ? '' : 's'} with HCP sync errors,
+      avg ${metrics.extras.avg_conversation_messages} turns / conversation.
+    </div>
+    ${listBlock('Wins', winsHtml, '(no standout wins today)')}
+    ${listBlock('Failure patterns', failureHtml)}
+    ${listBlock('KB gaps with proposed additions', kbGapHtml)}
+    ${listBlock('Proposed prompt rules (review with Cesar before applying)', promptRuleHtml)}
+    ${listBlock('Calls worth listening to', listenHtml)}
+    ${listBlock('Questions for Tyler', questionsHtml)}
+    <p style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#6B7280;margin-top:24px;">
+      This is Phase 1 (observation only). Approved KB additions land in
+      <a href="${SITE_URL}/switchboard/knowledge-base" style="color:#1E40AF;">/switchboard/knowledge-base</a>;
+      prompt-rule changes still go through Cesar.
+    </p>`
+
+  const html = renderEmailLayout({
+    preheader: `Claire's nightly self-improvement report for ${dateLabel}. ${proposals.failure_patterns.length} failure patterns, ${proposals.kb_gaps.length} KB gaps, ${proposals.proposed_prompt_rules.length} proposed prompt rules.`,
+    eyebrow: 'Claire · Daily Learning Report',
+    heading: `What Claire learned on ${dateLabel}`,
+    intro: proposals.summary,
+    stats: statsRow,
+    bodyHtml,
+    cta: { label: 'Review in Switchboard', href: `${SITE_URL}/switchboard/call-logs` },
+  })
+
+  // Plain-text fallback
+  const textLines = [
+    `Claire's daily learning report — ${dateLabel}`,
+    '',
+    proposals.summary,
+    '',
+    `Volume: ${metrics.voice_count} voice, ${metrics.web_chat_count} web chat, ${metrics.sms_count} SMS, ${metrics.lead_form_count} lead-form. ${metrics.total_leads} total leads.`,
+    `Signals: ${metrics.escalation_count} escalations, ${metrics.emergency_dispatch_count} emergency dispatches, ${metrics.silence_timeout_count} silence timeouts, ${metrics.extras.stall_phrase_calls} stall-phrase calls, ${metrics.extras.repeated_phrase_calls} self-repeat calls.`,
+    '',
+    'WINS',
+    ...(proposals.wins.length === 0
+      ? ['(none)']
+      : proposals.wins.map((w) => `- ${w.description} [${w.evidence_conversation_ids.join(', ')}]`)),
+    '',
+    'FAILURE PATTERNS',
+    ...(proposals.failure_patterns.length === 0
+      ? ['(none)']
+      : proposals.failure_patterns.map(
+          (p) => `- [${p.severity}] ${p.pattern} (${p.n_calls_affected} calls) [${p.evidence_conversation_ids.join(', ')}]`,
+        )),
+    '',
+    'KB GAPS',
+    ...(proposals.kb_gaps.length === 0
+      ? ['(none)']
+      : proposals.kb_gaps.flatMap((g) => [
+          `- Q: ${g.question_asked}`,
+          `  Claire said: ${g.claire_response}`,
+          `  Proposed: ${g.proposed_addition}`,
+          `  Evidence: ${g.evidence_conversation_ids.join(', ')}`,
+        ])),
+    '',
+    'PROPOSED PROMPT RULES',
+    ...(proposals.proposed_prompt_rules.length === 0
+      ? ['(none)']
+      : proposals.proposed_prompt_rules.flatMap((r) => [
+          `- Rule: ${r.rule}`,
+          `  Why: ${r.rationale}`,
+          `  Evidence: ${r.evidence_conversation_ids.join(', ')}`,
+        ])),
+    '',
+    'CALLS WORTH LISTENING TO',
+    ...(proposals.calls_worth_listening_to.length === 0
+      ? ['(none)']
+      : proposals.calls_worth_listening_to.map(
+          (c) => `- ${c.conversation_id}: ${c.why}`,
+        )),
+    '',
+    'QUESTIONS FOR TYLER',
+    ...(proposals.questions_for_tyler.length === 0
+      ? ['(none)']
+      : proposals.questions_for_tyler.flatMap((q) => [`- ${q.question}`, `  ${q.context}`])),
+    '',
+    `Switchboard: ${SITE_URL}/switchboard`,
+  ]
+  const text = textLines.join('\n')
+
+  return { subject, html, text }
+}
+
+// ============================================================================
 // USER INVITE (Switchboard access)
 // ============================================================================
 
