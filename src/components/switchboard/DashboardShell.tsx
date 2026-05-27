@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import Sidebar, { type SidebarUser } from './Sidebar'
 import TopBar from './TopBar'
 import { ThemeProvider } from './ThemeProvider'
+import SwitchboardClairePanel from './SwitchboardClairePanel'
 
 type Props = {
   children: React.ReactNode
@@ -74,6 +75,17 @@ function ShellContent({
 
         <main className="flex-1 min-w-0">{children}</main>
       </div>
+
+      {/* Persistent right-side Claire (admin chat) — owner + admin only.
+          Google sign-in required because KB edits need real attribution. */}
+      {sidebarUser?.source === 'google' &&
+        (sidebarUser.role === 'owner' || sidebarUser.role === 'admin') && (
+          <SwitchboardClairePanel
+            actorName={sidebarUser.name}
+            actorEmail={sidebarUser.email}
+            actorRole={sidebarUser.role}
+          />
+        )}
     </div>
   )
 }

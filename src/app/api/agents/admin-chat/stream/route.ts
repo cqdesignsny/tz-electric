@@ -63,6 +63,9 @@ function getPendingEditsMap(
 type Body = {
   messages: UIMessage[]
   conversationId: string
+  /** Optional. The Switchboard page Tyler is currently on. The panel
+   *  passes this so Claire can reference "this call" / "this page". */
+  currentPath?: string | null
 }
 
 export async function POST(req: NextRequest) {
@@ -92,7 +95,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid_json' }, { status: 400 })
   }
 
-  const { messages, conversationId } = body
+  const { messages, conversationId, currentPath } = body
   if (!conversationId || !UUID_RE.test(conversationId)) {
     return NextResponse.json({ error: 'invalid_conversation_id' }, { status: 400 })
   }
@@ -146,6 +149,7 @@ export async function POST(req: NextRequest) {
     actorEmail: actor.email,
     actorRole: adminRole,
     actorName: actor.user?.name ?? null,
+    currentPath: typeof currentPath === 'string' ? currentPath : null,
   })
 
   const tools = buildAdminTools({

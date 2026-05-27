@@ -493,6 +493,9 @@ export type BuildAdminPromptInput = {
   actorRole: 'owner' | 'admin'
   actorName: string | null
   recentReportsBlock?: string
+  /** When set, the prompt includes a "current page" block so Claire
+   *  knows which Switchboard page the user is looking at right now. */
+  currentPath?: string | null
 }
 
 /**
@@ -570,6 +573,25 @@ export async function buildAdminPrompt(input: BuildAdminPromptInput): Promise<st
       'Tone shift from customer-facing: be more candid and peer-y, less customer-service-y. You can say "that\'s a good catch", "yeah this section needs work", "honestly the wording here is a mess", etc.',
     ].join('\n'),
   )
+
+  if (input.currentPath) {
+    sections.push('# Where they are right now')
+    sections.push(
+      [
+        `${firstName} is currently looking at: \`${input.currentPath}\``,
+        '',
+        'Use this to ground your answers. If they say "this call" or "this lead" or "this page", they probably mean whatever\'s on the page they\'re on. Switchboard URL patterns:',
+        '- `/switchboard` — the home dashboard (recent activity + quick stats)',
+        '- `/switchboard/lead-pipeline` — every captured lead, Won/Lost status from HCP',
+        '- `/switchboard/call-logs` — voice call transcripts + recordings (`?id=<uuid>` for a specific call)',
+        '- `/switchboard/web-chat` — web chat conversations (`?id=<uuid>` for a specific thread)',
+        '- `/switchboard/knowledge-base` — KB sections (read-only view)',
+        '- `/switchboard/agent-training` — this admin Claire surface (chat + daily reports)',
+        '- `/switchboard/reports` — analytics dashboard (lead volume, channel mix, service mix)',
+        '- `/switchboard/users` — user management (owner-only)',
+      ].join('\n'),
+    )
+  }
 
   if (input.recentReportsBlock) {
     sections.push('# Recent self-improvement reports')

@@ -1,0 +1,528 @@
+'use client'
+/**
+ * Persistent right-side Claire panel — visible on every Switchboard
+ * page for owner + admin users. Replaces the "go to /agent-training to
+ * talk to Claire" workflow with an always-on chat that follows you
+ * around the dashboard.
+ *
+ * Desktop: vertical edge tab on the right collapses to a small handle.
+ * Click to open a ~400px slide-out. Click X to collapse.
+ *
+ * Mobile (<md): floating circular Claire button bottom-right. Tap to
+ * open a full-screen modal chat.
+ *
+ * Persistence (so the panel feels continuous across page navigation):
+ * - conversationId in sessionStorage (per-tab thread).
+ * - visible messages in localStorage keyed by conversationId (so
+ *   refresh + reload preserves the visible thread).
+ * - open/collapsed state in localStorage.
+ *
+ * Mounted inside DashboardShell so it persists across in-app navigation
+ * without unmounting. Backend is the same /api/agents/admin-chat/stream
+ * endpoint; the page Tyler is on at request time is passed via the
+ * `currentPath` field so Claire can ground "this call" / "this lead"
+ * references.
+ */
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type KeyboardEvent,
+} from 'react'
+import { usePathname } from 'next/navigation'
+import { useChat } from '@ai-sdk/react'
+import { DefaultChatTransport, isTextUIPart, type UIMessage } from 'ai'
+
+const CONVERSATION_KEY = 'tz-claire-panel-conversation-id'
+const OPEN_KEY = 'tz-claire-panel-open'
+const messagesKeyFor = (id: string) => `tz-claire-panel-messages:${id}`
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+type Props = {
+  actorName: string | null
+  actorEmail: string
+  actorRole: 'owner' | 'admin'
+}
+
+function generateConversationId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID()
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
+}
+
+function readOrCreateConversationId(): string {
+  if (typeof window === 'undefined') return ''
+  try {
+    const stored = window.sessionStorage.getItem(CONVERSATION_KEY)
+    if (stored && UUID_RE.test(stored)) return stored
+  } catch {
+    // ignore
+  }
+  const fresh = generateConversationId()
+  try {
+    window.sessionStorage.setItem(CONVERSATION_KEY, fresh)
+  } catch {
+    // ignore
+  }
+  return fresh
+}
+
+function uiMessageText(m: UIMessage): string {
+  if (!Array.isArray(m.parts)) return ''
+  return m.parts
+    .filter(isTextUIPart)
+    .map((p) => p.text)
+    .join('')
+    .trim()
+}
+
+export default function SwitchboardClairePanel({ actorName, actorEmail, actorRole }: Props) {
+  const pathname = usePathname() || '/switchboard'
+  const [conversationId, setConversationId] = useState('')
+  const [open, setOpen] = useState(false)
+  const [draft, setDraft] = useState('')
+  const composerRef = useRef<HTMLTextAreaElement | null>(null)
+  const scrollerRef = useRef<HTMLDivElement | null>(null)
+  const firstName = actorName?.split(' ')[0] || actorEmail.split('@')[0]
+
+  // Hydrate conversation id + open state on first client mount.
+  useEffect(() => {
+    setConversationId(readOrCreateConversationId())
+    try {
+      const stored = window.localStorage.getItem(OPEN_KEY)
+      if (stored === '1') setOpen(true)
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  // Persist open state.
+  useEffect(() => {
+    if (!conversationId) return
+    try {
+      window.localStorage.setItem(OPEN_KEY, open ? '1' : '0')
+    } catch {
+      // ignore
+    }
+  }, [open, conversationId])
+
+  const transport = useMemo(() => {
+    if (!conversationId) return null
+    return new DefaultChatTransport({
+      api: '/api/agents/admin-chat/stream',
+      body: () => ({
+        conversationId,
+        currentPath: pathname,
+      }),
+    })
+  }, [conversationId, pathname])
+
+  // Hydrate messages from localStorage on mount + when conversationId
+  // changes (e.g., after Start over).
+  const [initialMessages, setInitialMessages] = useState<UIMessage[] | undefined>(undefined)
+  useEffect(() => {
+    if (!conversationId) return
+    try {
+      const stored = window.localStorage.getItem(messagesKeyFor(conversationId))
+      if (stored) {
+        const parsed = JSON.parse(stored) as UIMessage[]
+        if (Array.isArray(parsed)) {
+          setInitialMessages(parsed)
+          return
+        }
+      }
+    } catch {
+      // ignore
+    }
+    setInitialMessages([])
+  }, [conversationId])
+
+  const { messages, sendMessage, status, error, setMessages } = useChat({
+    transport: transport ?? undefined,
+    id: conversationId,
+    messages: initialMessages,
+  })
+
+  // Persist visible messages on every change.
+  useEffect(() => {
+    if (!conversationId) return
+    if (initialMessages === undefined) return // hydration pending
+    try {
+      window.localStorage.setItem(messagesKeyFor(conversationId), JSON.stringify(messages))
+    } catch {
+      // localStorage quota or disabled — non-fatal.
+    }
+  }, [messages, conversationId, initialMessages])
+
+  const isStreaming = status === 'submitted' || status === 'streaming'
+
+  // Auto-scroll on new messages (don't yank if user scrolled up).
+  const lastScrollTopRef = useRef(0)
+  const userScrolledUpRef = useRef(false)
+  useEffect(() => {
+    const el = scrollerRef.current
+    if (!el) return
+    const onScroll = () => {
+      const dy = el.scrollTop - lastScrollTopRef.current
+      lastScrollTopRef.current = el.scrollTop
+      if (dy < 0) userScrolledUpRef.current = true
+      const nearBottom = el.scrollHeight - (el.scrollTop + el.clientHeight) < 80
+      if (nearBottom) userScrolledUpRef.current = false
+    }
+    el.addEventListener('scroll', onScroll)
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [open])
+  useLayoutEffect(() => {
+    if (!open) return
+    const el = scrollerRef.current
+    if (!el) return
+    if (userScrolledUpRef.current) return
+    el.scrollTop = el.scrollHeight
+  }, [messages, status, open])
+
+  // Focus composer when opening (desktop only — mobile keyboard pop is jarring).
+  useEffect(() => {
+    if (!open) return
+    if (window.matchMedia('(min-width: 768px)').matches) {
+      const t = setTimeout(() => composerRef.current?.focus(), 100)
+      return () => clearTimeout(t)
+    }
+  }, [open])
+
+  const startOver = useCallback(() => {
+    const fresh = generateConversationId()
+    try {
+      window.sessionStorage.setItem(CONVERSATION_KEY, fresh)
+      // Clear the OLD conversation's stored messages so it doesn't
+      // hang around in localStorage forever.
+      if (conversationId) {
+        window.localStorage.removeItem(messagesKeyFor(conversationId))
+      }
+    } catch {
+      // ignore
+    }
+    setConversationId(fresh)
+    setInitialMessages([])
+    setMessages([])
+    setDraft('')
+  }, [conversationId, setMessages])
+
+  const submit = useCallback(
+    (text: string) => {
+      const trimmed = text.trim()
+      if (!trimmed) return
+      if (!conversationId) return
+      sendMessage({ text: trimmed })
+      setDraft('')
+    },
+    [conversationId, sendMessage],
+  )
+
+  function onSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (isStreaming) return
+    submit(draft)
+  }
+
+  function onKeyDown(e: KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      submit(draft)
+    }
+  }
+
+  // Don't render anything until we have a conversation id (hydration
+  // race avoidance — prevents server/client mismatch flicker).
+  if (!conversationId) return null
+
+  return (
+    <>
+      {/* Collapsed handle (desktop) — vertical edge tab */}
+      {!open && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Open Claire chat"
+          className="hidden md:flex fixed right-0 top-1/2 -translate-y-1/2 z-40 items-center gap-1.5 bg-blue dark:bg-blue-light text-white dark:text-navy px-2 py-3 rounded-l-lg shadow-lg hover:bg-blue-dark dark:hover:bg-blue transition-colors group"
+          style={{ writingMode: 'vertical-rl' }}
+        >
+          <span className="text-xs font-mono uppercase tracking-wider rotate-180">
+            Ask Claire
+          </span>
+        </button>
+      )}
+
+      {/* Collapsed bubble (mobile) — floating bottom-right */}
+      {!open && (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="Open Claire chat"
+          className="md:hidden fixed bottom-4 right-4 z-40 w-14 h-14 rounded-full bg-blue dark:bg-blue-light text-white dark:text-navy shadow-2xl flex items-center justify-center hover:scale-105 transition-transform"
+        >
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+        </button>
+      )}
+
+      {/* Open panel */}
+      {open && (
+        <>
+          {/* Mobile backdrop */}
+          <div
+            className="md:hidden fixed inset-0 z-40 bg-black/50 dark:bg-black/70 backdrop-blur-sm"
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
+
+          <div
+            className="fixed z-50 bg-white dark:bg-[#0A1128] shadow-2xl border-l border-gray-200 dark:border-navy-light/40 flex flex-col
+                       inset-0 md:inset-auto md:right-0 md:top-16 md:bottom-0 md:w-[400px] lg:w-[420px]"
+          >
+            <header className="border-b border-gray-200 dark:border-navy-light/40 px-4 py-3 flex items-center justify-between gap-3 flex-shrink-0">
+              <div className="min-w-0">
+                <div className="text-xs uppercase tracking-wider font-mono text-blue dark:text-blue-light/80">
+                  Claire · admin · Opus 4.7
+                </div>
+                <h2 className="text-sm font-bold text-navy dark:text-white mt-0.5 truncate">
+                  Hey {firstName}
+                </h2>
+              </div>
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={startOver}
+                  className="text-[10px] font-mono uppercase tracking-wider px-2 py-1 rounded-md bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                  title="Start over (new conversation)"
+                >
+                  New
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close Claire chat"
+                  className="w-8 h-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors flex items-center justify-center"
+                >
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden
+                  >
+                    <line x1="18" y1="6" x2="6" y2="18" />
+                    <line x1="6" y1="6" x2="18" y2="18" />
+                  </svg>
+                </button>
+              </div>
+            </header>
+
+            <div className="px-4 py-2 text-[10px] font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-navy-light/30 flex-shrink-0 truncate">
+              Page: {pathname}
+            </div>
+
+            <div
+              ref={scrollerRef}
+              className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5"
+            >
+              {messages.length === 0 && (
+                <div className="text-center pt-6 pb-3 px-2">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
+                    I follow you around the Switchboard. Ask me anything about
+                    the page you&apos;re on, the knowledge base, recent calls, or my
+                    daily reports.
+                  </p>
+                  <div className="flex flex-col gap-1.5 max-w-full">
+                    <PanelChip
+                      label="What's on this page?"
+                      onSubmit={submit}
+                      prompt={`I'm on ${pathname}. What can you tell me about this page or the data on it?`}
+                    />
+                    <PanelChip
+                      label="Yesterday's report"
+                      onSubmit={submit}
+                      prompt="Show me yesterday's daily learning report. Summarize the key failure patterns and proposed prompt rules."
+                    />
+                    <PanelChip
+                      label="KB gaps this week"
+                      onSubmit={submit}
+                      prompt="Look at the daily reports from the last 7 days. What KB gaps came up most often and what would you propose adding?"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {messages.map((m) => (
+                <PanelMessage key={m.id} message={m} />
+              ))}
+
+              {isStreaming && (
+                <div className="flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400 font-mono uppercase tracking-wider">
+                  <span className="w-1.5 h-1.5 rounded-full bg-blue dark:bg-blue-light animate-pulse" />
+                  Claire is thinking...
+                </div>
+              )}
+
+              {error && (
+                <div className="rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 p-3 text-[11px] text-red-800 dark:text-red-300">
+                  <div className="font-bold mb-1">Something went wrong</div>
+                  <code className="font-mono">{error.message}</code>
+                </div>
+              )}
+            </div>
+
+            <form
+              onSubmit={onSubmit}
+              className="border-t border-gray-200 dark:border-navy-light/40 p-3 bg-gray-50 dark:bg-[#0A1128] flex-shrink-0"
+            >
+              <div className="flex items-end gap-2">
+                <textarea
+                  ref={composerRef}
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={onKeyDown}
+                  placeholder="Ask Claire..."
+                  rows={1}
+                  disabled={isStreaming}
+                  className="flex-1 resize-none rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue dark:focus:ring-blue-light disabled:opacity-50"
+                  style={{ minHeight: '38px', maxHeight: '160px', fontSize: 'max(16px, 0.95rem)' }}
+                />
+                <button
+                  type="submit"
+                  disabled={!draft.trim() || isStreaming}
+                  className="px-3 py-2 rounded-lg bg-blue dark:bg-blue-light text-white dark:text-navy text-sm font-semibold hover:bg-blue-dark dark:hover:bg-blue transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  Send
+                </button>
+              </div>
+              <div className="mt-1.5 text-[9px] uppercase tracking-wider font-mono text-gray-400 dark:text-gray-500 flex items-center justify-between">
+                <span>Enter to send · Shift+Enter newline</span>
+                <span>{actorRole}</span>
+              </div>
+            </form>
+          </div>
+        </>
+      )}
+    </>
+  )
+}
+
+function PanelChip({
+  label,
+  prompt,
+  onSubmit,
+}: {
+  label: string
+  prompt: string
+  onSubmit: (text: string) => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSubmit(prompt)}
+      className="text-left text-xs px-3 py-2 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 text-gray-700 dark:text-gray-300 hover:bg-blue/5 dark:hover:bg-blue-light/10 hover:border-blue/30 dark:hover:border-blue-light/30 transition-colors"
+    >
+      {label}
+    </button>
+  )
+}
+
+function PanelMessage({ message }: { message: UIMessage }) {
+  const isUser = message.role === 'user'
+  const parts = Array.isArray(message.parts) ? message.parts : []
+
+  if (isUser) {
+    const text = uiMessageText(message)
+    return (
+      <div className="flex justify-end">
+        <div className="max-w-[85%] rounded-2xl px-3 py-2 text-xs leading-relaxed bg-navy text-white dark:bg-blue-dark">
+          <div className="whitespace-pre-wrap break-words">{text}</div>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex justify-start">
+      <div className="max-w-[92%] space-y-1.5 w-full">
+        {parts.map((p, i) => {
+          if (isTextUIPart(p)) {
+            const text = p.text || ''
+            if (!text.trim()) return null
+            return (
+              <div
+                key={`text-${i}`}
+                className="rounded-2xl px-3 py-2 text-xs leading-relaxed bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100"
+              >
+                <div className="whitespace-pre-wrap break-words">{text}</div>
+              </div>
+            )
+          }
+          const partType: string = (p as { type?: string }).type || ''
+          if (partType.startsWith('tool-')) {
+            const toolName = partType.replace(/^tool-/, '')
+            const tp = p as {
+              type: string
+              state?: string
+              input?: unknown
+              output?: unknown
+              errorText?: string
+            }
+            const stateLabel =
+              tp.state === 'output-available' || tp.state === 'output-streaming'
+                ? 'done'
+                : tp.state === 'input-streaming' || tp.state === 'input-available'
+                  ? 'running'
+                  : tp.state || ''
+            return (
+              <details
+                key={`tool-${i}`}
+                className="rounded-md border border-amber-200 dark:border-amber-900/50 bg-amber-50/60 dark:bg-amber-950/20 px-2 py-1.5 text-[10px]"
+              >
+                <summary className="cursor-pointer font-mono uppercase tracking-wider text-amber-800 dark:text-amber-300">
+                  Tool · {toolName}{' '}
+                  <span className="opacity-60">{stateLabel ? `(${stateLabel})` : ''}</span>
+                </summary>
+                {tp.output !== undefined && (
+                  <pre className="mt-1.5 whitespace-pre-wrap break-words text-amber-900 dark:text-amber-200 text-[10px] max-h-48 overflow-y-auto">
+                    {typeof tp.output === 'string'
+                      ? tp.output
+                      : JSON.stringify(tp.output, null, 2)}
+                  </pre>
+                )}
+                {tp.errorText && (
+                  <div className="mt-1 text-red-700 dark:text-red-400">{tp.errorText}</div>
+                )}
+              </details>
+            )
+          }
+          return null
+        })}
+      </div>
+    </div>
+  )
+}
