@@ -64,8 +64,18 @@ export function buildVapiFunctionDefinitions(ctx: AgentToolContext): VapiFunctio
 export type VapiToolCall = {
   /** Vapi's id for this individual tool call within the call. Echo it back. */
   id: string
-  name: string
-  /** Vapi passes either `arguments` (object) or `parameters` (object). Accept both. */
+  /**
+   * Vapi sends tool calls in OpenAI's nested function-tool format:
+   *   { id, type: 'function', function: { name, arguments: string } }
+   * `arguments` is a JSON-stringified object, not a parsed object.
+   */
+  function?: {
+    name?: string
+    arguments?: string | Record<string, unknown>
+  }
+  /** Legacy / fallback top-level shape. Vapi never seems to send this, but
+   * accept it so we don't regress if their payload shape changes again. */
+  name?: string
   arguments?: Record<string, unknown>
   parameters?: Record<string, unknown>
 }
@@ -84,32 +94,85 @@ export type ExecuteVapiToolCallResult = {
   error?: string
 }
 
+/**
+ * Extract the function name and parsed arguments from a Vapi tool-call
+ * payload. Handles both Vapi's actual nested format (`function.name`,
+ * `function.arguments` as a JSON string) and the legacy top-level shape
+ * as a fallback.
+ *
+ * Pre-2026-05-27 this codebase only read `call.name` and `call.arguments`,
+ * which meant every voice tool call across every live call returned
+ * "Unknown tool: undefined" silently. Fixed by unwrapping `function.*`
+ * here and at the persistence site in voice/server/route.ts.
+ */
+export function extractVapiCall(call: VapiToolCall): {
+  name: string | null
+  args: Record<string, unknown>
+} {
+  const name = call.function?.name ?? call.name ?? null
+
+  let args: Record<string, unknown> = {}
+  const rawFnArgs = call.function?.arguments
+  if (typeof rawFnArgs === 'string') {
+    try {
+      const parsed = JSON.parse(rawFnArgs)
+      if (parsed && typeof parsed === 'object') {
+        args = parsed as Record<string, unknown>
+      }
+    } catch {
+      // Bad JSON. Leave args empty so Zod surfaces a clear validation error.
+      args = {}
+    }
+  } else if (rawFnArgs && typeof rawFnArgs === 'object') {
+    args = rawFnArgs as Record<string, unknown>
+  } else if (call.arguments && typeof call.arguments === 'object') {
+    args = call.arguments
+  } else if (call.parameters && typeof call.parameters === 'object') {
+    args = call.parameters
+  }
+
+  return { name, args }
+}
+
 export async function executeVapiToolCall(
   input: ExecuteVapiToolCallInput,
 ): Promise<ExecuteVapiToolCallResult> {
   const { ctx, call } = input
-  const tools = asLooseTools(ctx)
-  const tool = tools[call.name]
-  if (!tool || typeof tool.execute !== 'function') {
+  const { name, args } = extractVapiCall(call)
+
+  if (!name) {
     return {
       toolCallId: call.id,
-      name: call.name,
-      result: JSON.stringify({ ok: false, error: `Unknown tool: ${call.name}` }),
-      error: `Unknown tool: ${call.name}`,
+      name: 'unknown',
+      result: JSON.stringify({
+        ok: false,
+        error: 'Vapi tool call missing function.name. Cannot route.',
+      }),
+      error: 'Missing function.name in Vapi tool-call payload',
     }
   }
 
-  const rawArgs = call.arguments ?? call.parameters ?? {}
-  let parsedArgs: unknown = rawArgs
+  const tools = asLooseTools(ctx)
+  const tool = tools[name]
+  if (!tool || typeof tool.execute !== 'function') {
+    return {
+      toolCallId: call.id,
+      name,
+      result: JSON.stringify({ ok: false, error: `Unknown tool: ${name}` }),
+      error: `Unknown tool: ${name}`,
+    }
+  }
+
+  let parsedArgs: unknown = args
   if (tool.inputSchema) {
-    const parsed = tool.inputSchema.safeParse(rawArgs)
+    const parsed = tool.inputSchema.safeParse(args)
     if (!parsed.success) {
       const issues = parsed.error.issues
         .map((i) => `${i.path.join('.') || '(root)'}: ${i.message}`)
         .join('; ')
       return {
         toolCallId: call.id,
-        name: call.name,
+        name,
         result: JSON.stringify({ ok: false, error: `Invalid arguments: ${issues}` }),
         error: `Invalid arguments: ${issues}`,
       }
@@ -127,15 +190,15 @@ export async function executeVapiToolCall(
     })
     return {
       toolCallId: call.id,
-      name: call.name,
+      name,
       result: typeof result === 'string' ? result : JSON.stringify(result ?? null),
     }
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
-    console.error(`[vapi-tools] ${call.name} threw:`, e)
+    console.error(`[vapi-tools] ${name} threw:`, e)
     return {
       toolCallId: call.id,
-      name: call.name,
+      name,
       result: JSON.stringify({ ok: false, error: `Tool failed: ${message}` }),
       error: message,
     }

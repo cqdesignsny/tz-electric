@@ -40,6 +40,7 @@ import { buildSystemPrompt } from '@/lib/agent-prompt'
 import {
   buildVapiFunctionDefinitions,
   executeVapiToolCall,
+  extractVapiCall,
   type VapiToolCall,
 } from '@/lib/vapi-tools'
 import { verifyVapiRequest } from '@/lib/vapi-signature'
@@ -262,12 +263,19 @@ async function handleToolCalls(message: VapiServerMessage) {
   const results: Array<{ toolCallId: string; name: string; result: string }> = []
 
   for (const call of calls) {
+    // Vapi wraps the tool name + args inside `call.function`. Reading
+    // `call.name` / `call.arguments` directly persists NULL and ships
+    // "Unknown tool: undefined" back to the model — the bug that made
+    // every voice tool call a silent no-op from launch through 2026-05-27.
+    // extractVapiCall unwraps both shapes safely.
+    const { name: extractedName, args: extractedArgs } = extractVapiCall(call)
+
     // Persist the tool_use turn so the Switchboard sees the call live.
     await appendMessage({
       conversationId: conv.id,
       role: 'tool_use',
-      toolName: call.name,
-      toolInput: (call.arguments ?? call.parameters ?? {}) as Record<string, unknown>,
+      toolName: extractedName,
+      toolInput: extractedArgs,
       toolUseId: call.id,
       externalId: call.id,
     })
