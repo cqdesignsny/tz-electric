@@ -41,8 +41,12 @@ export type DispatchResult =
 /**
  * Decide which after-hours window we're in based on local NY time.
  * Mirrors lookupBusinessHoursImpl logic for consistency.
+ *
+ * Exported so escalate_emergency in agent-tools.ts can auto-redirect to
+ * the dispatch cascade when called after-hours (safety net so a tool-
+ * choice mismatch never strands an emergency caller).
  */
-function classifyWindow(at: Date = new Date()): 'business_hours' | 'standard_after_hours' | 'overnight' {
+export function classifyWindow(at: Date = new Date()): 'business_hours' | 'standard_after_hours' | 'overnight' {
   const day = at.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'America/New_York' })
   const parts = at.toLocaleString('en-US', {
     timeZone: 'America/New_York',

@@ -34,7 +34,7 @@ import {
   sendEmergencyEscalationEmail,
   sendOfficeFlagEmail,
 } from './agent-notifications'
-import { dispatchAfterHoursEmergencyImpl } from './after-hours-dispatch'
+import { classifyWindow, dispatchAfterHoursEmergencyImpl } from './after-hours-dispatch'
 
 export type AgentChannelLabel = 'sms' | 'voice' | 'web_chat'
 
@@ -249,7 +249,7 @@ export function buildAgentTools(ctx: AgentToolContext) {
 
     escalate_emergency: tool({
       description:
-        "Page Tyler and the on-call team immediately. Use ONLY for genuine emergencies: active leak causing damage, no heat below 32°F, smoke/sparks/burning smell, electrical hazard with shock risk, gas smell, sewage backup with health risk, medical-equipment dependency loss. Always include the customer's phone.",
+        "Page the office for a genuine emergency. Use ONLY for active leak causing damage, no heat below 32°F, smoke/sparks/burning smell, electrical hazard with shock risk, gas smell, sewage backup with health risk, medical-equipment dependency loss. Always include the customer's phone. PREFER calling lookup_business_hours first and routing to dispatch_after_hours_emergency when the office is closed — but if you call this tool after-hours by mistake, it will still safely auto-trigger the dispatch cascade as a fallback (defense-in-depth, added 2026-05-27 PM).",
       inputSchema: z.object({
         reason: z.string(),
         customer_phone: z.string(),
@@ -262,9 +262,7 @@ export function buildAgentTools(ctx: AgentToolContext) {
           `[agent-tools] EMERGENCY ESCALATION: ${reason} | ${customer_name || ''} | ${customer_phone} | ${address || ''}`,
         )
 
-        // Fire an immediate office email. SMS paging will layer on top
-        // once Twilio A2P 10DLC clears (configure DIGEST_PAGER_NUMBER
-        // and add a Twilio messages.create call here).
+        // Always send the office email — that's the business-hours path.
         try {
           const sql = db()
           type ConvRow = {
@@ -289,11 +287,52 @@ export function buildAgentTools(ctx: AgentToolContext) {
           console.error('[agent-tools] escalate_emergency email failed (non-fatal):', e)
         }
 
+        // SAFETY NET (added 2026-05-27 PM): If this is fired outside
+        // business hours, the office isn't watching email — we need the
+        // actual on-call Twilio cascade. Auto-trigger dispatchAfter-
+        // HoursEmergencyImpl so the on-call tech gets paged + the T+15/
+        // T+30/T+60/T+65 ladder kicks off regardless of which emergency
+        // tool Claire picked. Customer-acknowledged-fees is forced true
+        // here because a life-safety emergency overrides the fee gate —
+        // the tech sorts pricing on site. Documented choice.
+        const window = classifyWindow()
+        let afterHoursDispatch: Awaited<ReturnType<typeof dispatchAfterHoursEmergencyImpl>> | null = null
+        if (window !== 'business_hours') {
+          try {
+            afterHoursDispatch = await dispatchAfterHoursEmergencyImpl(
+              {
+                issueDescription: reason,
+                customerPhone: customer_phone,
+                customerName: customer_name ?? null,
+                customerAddress: address ?? null,
+                safetyFlags: [],
+                customerAcknowledgedFees: true, // safety net: emergency bypasses fee gate
+              },
+              ctx,
+            )
+            console.log(
+              `[agent-tools] escalate_emergency after-hours safety net fired dispatch: ${JSON.stringify(afterHoursDispatch)}`,
+            )
+          } catch (e) {
+            console.error(
+              '[agent-tools] escalate_emergency after-hours auto-dispatch failed (non-fatal — email still fired):',
+              e,
+            )
+          }
+        }
+
+        const baseMessage =
+          'The office has been alerted and will reach out as fast as possible. Keep your phone close, someone will call you back within minutes.'
+
         return {
           escalated: true,
           reason,
+          window,
+          after_hours_dispatch: afterHoursDispatch ?? null,
           message:
-            'The office has been alerted and will reach out as fast as possible. Keep your phone close, someone will call you back within minutes.',
+            afterHoursDispatch && 'ok' in afterHoursDispatch && afterHoursDispatch.ok
+              ? `${baseMessage} I've also paged our on-call team directly so they get this on their phone right now.`
+              : baseMessage,
         }
       },
     }),
