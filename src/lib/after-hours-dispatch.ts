@@ -64,31 +64,97 @@ export function classifyWindow(at: Date = new Date()): 'business_hours' | 'stand
   return isOvernight ? 'overnight' : 'standard_after_hours'
 }
 
-function buildTechMessage(input: DispatchInput, dispatchId: string): string {
-  const lines = [
-    'TZ Emergency Dispatch',
-    `Customer: ${input.customerName || 'Unknown name'}`,
-    `Phone: ${input.customerPhone}`,
-  ]
+/**
+ * Per-attempt, per-role SMS body. Tyler 2026-05-27 6:39 PM: the tech +
+ * supervisor need to hear which attempt this is, what the customer
+ * situation is, and (for the supervisor) that the tech hasn't
+ * responded.
+ *
+ * @param attemptNo  0 = T+0 (first), 1 = T+15, 2 = T+30, 3 = T+60.
+ * @param role       'tech' = on-call tech, 'supervisor' = escalation chain.
+ */
+function buildTechMessage(
+  input: DispatchInput,
+  dispatchId: string,
+  attemptNo: number,
+  role: 'tech' | 'supervisor',
+): string {
+  const header = headerForAttempt(attemptNo, role)
+  const lines: string[] = [header]
+  lines.push('')
+  lines.push(`Customer: ${input.customerName || 'Unknown name'}`)
+  lines.push(`Phone: ${input.customerPhone}`)
   if (input.customerAddress) lines.push(`Address: ${input.customerAddress}`)
   lines.push(`Issue: ${input.issueDescription}`)
   if (input.safetyFlags.length > 0) {
     lines.push(`Flags: ${input.safetyFlags.join(', ')}`)
   }
   lines.push(`Ref: ${dispatchId.slice(0, 8)}`)
+  if (role === 'tech') {
+    lines.push('Reply YES to confirm receipt and stop further alerts.')
+  } else {
+    lines.push("Tech hasn't acknowledged. Please reach out or call the customer directly.")
+  }
   return lines.join('\n')
 }
 
-function buildTechVoiceMessage(input: DispatchInput): string {
-  const name = input.customerName ? `from ${input.customerName}` : ''
-  const where = input.customerAddress ? `at ${input.customerAddress}` : ''
+function headerForAttempt(attemptNo: number, role: 'tech' | 'supervisor'): string {
+  if (role === 'supervisor') {
+    if (attemptNo === 0) return 'TZ EMERGENCY (supervisor) — overnight dispatch'
+    if (attemptNo <= 2) return 'TZ EMERGENCY — SUPERVISOR ESCALATION (30 min, no tech response)'
+    return 'TZ EMERGENCY — FINAL SUPERVISOR ESCALATION (60 min, no tech response)'
+  }
+  // tech
+  if (attemptNo === 0) return 'TZ EMERGENCY — First dispatch'
+  if (attemptNo === 1) return 'TZ EMERGENCY — Second alert (15 min, no response)'
+  if (attemptNo === 2) return 'TZ EMERGENCY — Third alert (30 min, supervisor notified)'
+  return 'TZ EMERGENCY — Final alert (60 min, customer callback next)'
+}
+
+/**
+ * Per-attempt, per-role voice script. Designed to be left on a
+ * voicemail (the placeCall path enables MachineDetection=DetectMessageEnd
+ * so this whole script lands on the recording even if the tech doesn't
+ * pick up live).
+ */
+function buildTechVoiceMessage(
+  input: DispatchInput,
+  attemptNo: number,
+  role: 'tech' | 'supervisor',
+): string {
+  const name = input.customerName ? input.customerName : 'a customer'
+  const where = input.customerAddress ? ` at ${input.customerAddress}` : ''
   const phoneSpoken = input.customerPhone.replace(/\D/g, '').split('').join(' ')
-  return [
-    `TZ Electric emergency dispatch ${name} ${where}.`,
-    `Issue: ${input.issueDescription}.`,
+  const opener = voiceOpenerForAttempt(attemptNo, role)
+  const lines: string[] = [
+    `${opener} This is TZ Electric.`,
+    `Emergency dispatch from ${name}${where}.`,
+    `Issue reported: ${input.issueDescription}.`,
     `Please call the customer back at ${phoneSpoken}.`,
-    'Check your text messages for the full details.',
-  ].join(' ')
+  ]
+  if (role === 'supervisor') {
+    lines.push("The on-call tech hasn't responded. Please reach out or take this call.")
+  } else if (attemptNo === 0) {
+    lines.push('Check your text messages for the full details.')
+    lines.push('Reply YES to your text to confirm receipt and stop further alerts.')
+  } else if (attemptNo < 3) {
+    lines.push('Please respond as soon as possible to confirm you are on this.')
+  } else {
+    lines.push('This is the final attempt. The customer is being called back next.')
+  }
+  return lines.join(' ')
+}
+
+function voiceOpenerForAttempt(attemptNo: number, role: 'tech' | 'supervisor'): string {
+  if (role === 'supervisor') {
+    if (attemptNo === 0) return 'Overnight supervisor alert.'
+    if (attemptNo <= 2) return 'Supervisor escalation, the tech has not responded in 30 minutes.'
+    return 'Final supervisor escalation, the tech has not responded in 60 minutes.'
+  }
+  if (attemptNo === 0) return 'First emergency dispatch.'
+  if (attemptNo === 1) return 'Second attempt, 15 minutes since the first call, no response yet.'
+  if (attemptNo === 2) return 'Third attempt, 30 minutes since the first call, supervisor has been notified.'
+  return 'Final attempt, 60 minutes since the first call.'
 }
 
 async function recordAttempt(opts: {
@@ -177,14 +243,15 @@ export async function dispatchAfterHoursEmergencyImpl(
   `) as unknown as { id: string }[]
   const dispatchId = dispatchRows[0].id
 
-  const techMessage = buildTechMessage(input, dispatchId)
-  const techVoice = buildTechVoiceMessage(input)
   let attemptsFired = 0
 
   if (timeWindow === 'overnight') {
     // One text to tech. One text to supervisor. Done.
     if (onCallTech) {
-      const r = await sendSms({ to: onCallTech.phone, body: techMessage })
+      const r = await sendSms({
+        to: onCallTech.phone,
+        body: buildTechMessage(input, dispatchId, 0, 'tech'),
+      })
       await recordAttempt({
         dispatchId,
         attemptNo: 0,
@@ -197,7 +264,10 @@ export async function dispatchAfterHoursEmergencyImpl(
       if (r.ok) attemptsFired++
     }
     if (primarySupervisor) {
-      const r = await sendSms({ to: primarySupervisor.phone, body: techMessage })
+      const r = await sendSms({
+        to: primarySupervisor.phone,
+        body: buildTechMessage(input, dispatchId, 0, 'supervisor'),
+      })
       await recordAttempt({
         dispatchId,
         attemptNo: 0,
@@ -212,7 +282,10 @@ export async function dispatchAfterHoursEmergencyImpl(
   } else {
     // Standard cascade T+0: text + call on-call tech.
     if (onCallTech) {
-      const smsRes = await sendSms({ to: onCallTech.phone, body: techMessage })
+      const smsRes = await sendSms({
+        to: onCallTech.phone,
+        body: buildTechMessage(input, dispatchId, 0, 'tech'),
+      })
       await recordAttempt({
         dispatchId,
         attemptNo: 0,
@@ -226,7 +299,7 @@ export async function dispatchAfterHoursEmergencyImpl(
 
       const callRes = await placeCall({
         to: onCallTech.phone,
-        message: techVoice,
+        message: buildTechVoiceMessage(input, 0, 'tech'),
       })
       await recordAttempt({
         dispatchId,
@@ -319,9 +392,6 @@ export async function runEscalationTick(): Promise<{
         safetyFlags: d.safety_flags ?? [],
         customerAcknowledgedFees: true, // already validated at open time
       }
-      const techMessage = buildTechMessage(dispatchInput, d.id)
-      const techVoice = buildTechVoiceMessage(dispatchInput)
-
       const onCallTech = await getOnCall('tech', now)
       const supervisors = await getSupervisorChain()
       const supervisor = supervisors[0] ?? null
@@ -336,8 +406,8 @@ export async function runEscalationTick(): Promise<{
             attemptNo,
             target: onCallTech,
             role: 'tech',
-            smsBody: techMessage,
-            voiceMessage: techVoice,
+            smsBody: buildTechMessage(dispatchInput, d.id, attemptNo, 'tech'),
+            voiceMessage: buildTechVoiceMessage(dispatchInput, attemptNo, 'tech'),
           })
         }
         await sql`
@@ -355,8 +425,8 @@ export async function runEscalationTick(): Promise<{
             attemptNo,
             target: onCallTech,
             role: 'tech',
-            smsBody: techMessage,
-            voiceMessage: techVoice,
+            smsBody: buildTechMessage(dispatchInput, d.id, attemptNo, 'tech'),
+            voiceMessage: buildTechVoiceMessage(dispatchInput, attemptNo, 'tech'),
           })
         }
         if (supervisor) {
@@ -365,8 +435,8 @@ export async function runEscalationTick(): Promise<{
             attemptNo,
             target: supervisor,
             role: 'supervisor',
-            smsBody: techMessage,
-            voiceMessage: techVoice,
+            smsBody: buildTechMessage(dispatchInput, d.id, attemptNo, 'supervisor'),
+            voiceMessage: buildTechVoiceMessage(dispatchInput, attemptNo, 'supervisor'),
           })
         }
         await sql`
@@ -384,8 +454,8 @@ export async function runEscalationTick(): Promise<{
             attemptNo,
             target: onCallTech,
             role: 'tech',
-            smsBody: techMessage,
-            voiceMessage: techVoice,
+            smsBody: buildTechMessage(dispatchInput, d.id, attemptNo, 'tech'),
+            voiceMessage: buildTechVoiceMessage(dispatchInput, attemptNo, 'tech'),
           })
         }
         if (supervisor) {
@@ -394,8 +464,8 @@ export async function runEscalationTick(): Promise<{
             attemptNo,
             target: supervisor,
             role: 'supervisor',
-            smsBody: techMessage,
-            voiceMessage: techVoice,
+            smsBody: buildTechMessage(dispatchInput, d.id, attemptNo, 'supervisor'),
+            voiceMessage: buildTechVoiceMessage(dispatchInput, attemptNo, 'supervisor'),
           })
         }
         // Set the customer callback to fire 5 minutes after final tech attempt

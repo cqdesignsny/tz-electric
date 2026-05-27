@@ -95,12 +95,26 @@ export async function placeCall(input: PlaceCallInput): Promise<TwilioOutboundRe
     params.set('Url', input.twimlUrl)
   } else {
     // Inline TwiML for a single-spoken-message ringer.
-    // Voice "Polly.Joanna-Neural" is a clean Amazon Polly voice;
-    // hangs up after the message + brief pause.
+    // Voice "Polly.Joanna-Neural" is a clean Amazon Polly voice.
+    // <Pause length="2"/> at the start gives Twilio's machine-detection
+    // a buffer AND gives a live human a moment to put the phone to
+    // their ear before the message starts. <Pause length="3"/> at the
+    // end keeps Twilio from hanging up too aggressively so the tail of
+    // the voicemail recording captures cleanly.
     const safe = input.message.replace(/[<>&"]/g, '')
-    const twiml = `<Response><Say voice="Polly.Joanna-Neural">${safe}</Say><Pause length="2"/></Response>`
+    const twiml = `<Response><Pause length="2"/><Say voice="Polly.Joanna-Neural">${safe}</Say><Pause length="3"/></Response>`
     params.set('Twiml', twiml)
   }
+
+  // Machine-detection settings so the voicemail-leaving works:
+  // DetectMessageEnd waits for the answering-machine greeting to
+  // finish before executing TwiML, so the full TTS lands on Jimmy's
+  // voicemail instead of getting cut off after one word. Per Tyler
+  // 2026-05-27 6:39 PM ("she's not leaving a voicemail or anything").
+  // MachineDetectionTimeout=5 keeps live-answer latency short — worst
+  // case Jimmy hears 5s of silence if Twilio still hasn't decided.
+  params.set('MachineDetection', 'DetectMessageEnd')
+  params.set('MachineDetectionTimeout', '5')
 
   try {
     const res = await fetch(url, {
