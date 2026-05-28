@@ -63,7 +63,7 @@ export default function CallLogsClient(props: CallLogsClientProps) {
             </button>
           ))}
         </div>
-        <ul className="max-h-[80vh] lg:max-h-[70vh] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
+        <ul className="max-h-[calc(100dvh-260px)] lg:max-h-[70vh] overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
           {filtered.length === 0 && (
             <li className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
               No calls yet.
@@ -105,9 +105,15 @@ export default function CallLogsClient(props: CallLogsClientProps) {
         </ul>
       </aside>
 
-      {/* Active conversation pane — hidden on mobile when no call selected */}
+      {/* Active conversation pane — hidden on mobile when no call selected.
+          Height is viewport-bounded (dvh on mobile to handle iOS URL bar)
+          so the inner flex-1 transcript actually gets a height to scroll
+          within. Without this the section grows with content and the
+          internal overflow-y-auto never engages — Tyler caught this on
+          mobile 2026-05-27 PM (couldn't scroll past the first viewport
+          of transcript). */}
       <section
-        className={`rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden flex-col min-h-[60vh] ${
+        className={`rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden flex-col h-[calc(100dvh-220px)] min-h-[360px] lg:h-[calc(100vh-260px)] lg:min-h-[500px] ${
           !activeId ? 'hidden lg:flex' : 'flex'
         }`}
       >
