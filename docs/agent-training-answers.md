@@ -478,7 +478,7 @@ Not in the regular weekly rotation; escalate directly.
 
 ### Office Staff Directory (SMS-routed callbacks)
 
-When a caller asks for a specific staff member by name, Claire uses `notify_team_member` to text that person's cell directly with the caller's name and callback number. This is in addition to the group office email — direct cell SMS gets the right person looking at it within seconds.
+When a caller asks for a specific staff member by name, Claire uses `notify_team_member` to route the message to the office for that person, with the caller's name and callback number. The office email always fires. A direct text to the staff member's cell also fires once SMS is enabled (`TWILIO_SMS_ENABLED=true` after A2P 10DLC registration clears) — until then SMS is carrier-blocked and the office email is the live channel. Claire tells callers she "passed the message to the office," never that she texted the person.
 
 Update this table whenever someone joins the office, changes their cell, or leaves. The match is by first name (case-insensitive) — full names work too. Aliases on the left of the slash also match (e.g. "Ty" → Ty Stein).
 

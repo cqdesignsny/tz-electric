@@ -655,3 +655,165 @@ export async function sendTeamMemberPagedEmail(args: {
 
   await sendEmail({ subject, html, text })
 }
+
+// ============================================================================
+// PLAN SIGNUP (Stripe payment → office)
+// ============================================================================
+
+/**
+ * Office notification when a customer buys a maintenance/service plan on the
+ * website (Stripe checkout.session.completed). Terry caught this gap
+ * 2026-05-28: a Bronze generator plan was purchased and the office got no
+ * notification — only Tyler got Stripe's own receipt. sendInternalNotification
+ * in housecall-pro.ts was a console.log stub. This fires the real email to the
+ * service inbox + office so they know who signed up and can assign the plan
+ * in HCP.
+ */
+export async function sendPlanSignupEmail(args: {
+  firstName: string
+  lastName: string
+  phone: string
+  address: string
+  planName: string
+  billingCycle: 'Monthly' | 'Yearly'
+  amount: number
+  perLabel: string
+  hcpCustomerId: string
+  isExisting: boolean
+}): Promise<void> {
+  const fullName = `${args.firstName} ${args.lastName}`.trim()
+  const subject = `[TZ Plan Signup] ${args.planName} — ${fullName}`
+  const priceLine = `${args.billingCycle} · $${args.amount}${args.perLabel}`
+
+  const stats = [
+    { label: 'Plan', value: args.planName },
+    { label: 'Billing', value: priceLine },
+    { label: 'Customer', value: args.isExisting ? 'Existing' : 'New' },
+  ]
+
+  const bodyHtml = `
+    <div style="background:#DCFCE7;border-left:4px solid #16A34A;border-radius:8px;padding:16px 18px;margin-bottom:18px;">
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:#166534;font-weight:700;margin-bottom:6px;">Paid plan signup</div>
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;color:#166534;line-height:1.5;">
+        ${escapeHtml(fullName)} just paid for the ${escapeHtml(args.planName)} on the website.
+      </div>
+    </div>
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:1.7;color:#1E293B;">
+      <strong>Customer:</strong> ${escapeHtml(fullName)}${args.isExisting ? ' (existing)' : ' (new — created in HCP)'}<br />
+      <strong>Phone:</strong> <a href="tel:${escapeHtml(args.phone)}" style="color:#1E40AF;text-decoration:none;font-weight:600;">${escapeHtml(args.phone)}</a><br />
+      ${args.address ? `<strong>Address:</strong> ${escapeHtml(args.address)}<br />` : ''}
+      <strong>Plan:</strong> ${escapeHtml(args.planName)}<br />
+      <strong>Billing:</strong> ${escapeHtml(priceLine)}<br />
+      <strong>HCP Customer ID:</strong> ${escapeHtml(args.hcpCustomerId)}
+    </div>
+    <div style="background:#FEF3C7;border-left:4px solid #D97706;border-radius:8px;padding:14px 16px;margin-top:18px;">
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;color:#78350F;line-height:1.5;">
+        <strong>Action required:</strong> assign the service plan to this customer in Housecall Pro.
+      </div>
+    </div>`
+
+  const html = renderEmailLayout({
+    preheader: `${fullName} bought the ${args.planName} — ${priceLine}.`,
+    eyebrow: 'TZ Plan Signup',
+    heading: `New plan signup: ${args.planName}`,
+    intro: `${fullName} paid for the ${args.planName} on the website. Assign the plan in HCP.`,
+    stats,
+    bodyHtml,
+    cta: { label: 'Assign plan in Housecall Pro', href: 'https://pro.housecallpro.com/app/service_agreements' },
+  })
+
+  const text = [
+    `[TZ Plan Signup] ${args.planName}`,
+    '',
+    `Customer: ${fullName}${args.isExisting ? ' (existing)' : ' (new)'}`,
+    `Phone: ${args.phone}`,
+    args.address ? `Address: ${args.address}` : '',
+    `Plan: ${args.planName}`,
+    `Billing: ${priceLine}`,
+    `HCP Customer ID: ${args.hcpCustomerId}`,
+    '',
+    'ACTION REQUIRED: assign the service plan to this customer in Housecall Pro.',
+    'https://pro.housecallpro.com/app/service_agreements',
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  await sendEmail({ subject, html, text })
+}
+
+// ============================================================================
+// AFTER-HOURS DISPATCH (office backup record)
+// ============================================================================
+
+/**
+ * Office email fired on every after-hours emergency dispatch. Added
+ * 2026-05-28: the dispatch flow only texted + called the on-call tech, with
+ * NO office record. With outbound SMS carrier-blocked until A2P 10DLC clears,
+ * if the tech misses the voice call nobody at the office knows a dispatch even
+ * happened. This guarantees a working-channel (email) record every time, and
+ * flags whether the tech SMS leg is currently live.
+ */
+export async function sendAfterHoursDispatchEmail(args: {
+  customerName: string | null
+  customerPhone: string
+  customerAddress: string | null
+  issueDescription: string
+  timeWindow: 'standard_after_hours' | 'overnight'
+  onCallTechName: string | null
+  onCallTechMatched: boolean
+  smsEnabled: boolean
+}): Promise<void> {
+  const windowLabel = args.timeWindow === 'overnight' ? 'Overnight' : 'After-hours'
+  const tech = args.onCallTechName || 'on-call (unassigned)'
+  const subject = `[TZ AFTER-HOURS DISPATCH] ${args.customerName || 'Customer'} — ${args.issueDescription.slice(0, 60)}`
+
+  const smsNote = args.smsEnabled
+    ? ''
+    : `<div style="background:#FEF3C7;border-left:4px solid #D97706;border-radius:8px;padding:12px 14px;margin-top:14px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:12px;color:#78350F;line-height:1.5;">
+        Heads up: tech SMS alerts are currently OFF (A2P 10DLC registration pending), so ${escapeHtml(tech.split(' ')[0])} got voice calls only, not texts. Confirm by phone if this is urgent.
+      </div>`
+
+  const bodyHtml = `
+    <div style="background:#FEE2E2;border-left:4px solid #DC2626;border-radius:8px;padding:16px 18px;margin-bottom:18px;">
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:13px;letter-spacing:0.16em;text-transform:uppercase;color:#991B1B;font-weight:700;margin-bottom:6px;">${windowLabel} dispatch opened</div>
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;color:#7F1D1D;line-height:1.5;">
+        Claire opened an emergency dispatch and paged ${escapeHtml(tech)}${args.onCallTechMatched ? '' : ' (no on-call match — supervisor chain only)'}.
+      </div>
+    </div>
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;line-height:1.7;color:#1E293B;">
+      <strong>Customer:</strong> ${escapeHtml(args.customerName || '(no name captured)')}<br />
+      <strong>Phone:</strong> <a href="tel:${escapeHtml(args.customerPhone)}" style="color:#DC2626;font-weight:700;text-decoration:none;">${escapeHtml(args.customerPhone)}</a><br />
+      ${args.customerAddress ? `<strong>Address:</strong> ${escapeHtml(args.customerAddress)}<br />` : ''}
+      <strong>Issue:</strong> ${escapeHtml(args.issueDescription)}<br />
+      <strong>On-call paged:</strong> ${escapeHtml(tech)}<br />
+      <strong>Window:</strong> ${escapeHtml(windowLabel)}
+    </div>
+    ${smsNote}`
+
+  const html = renderEmailLayout({
+    preheader: `${windowLabel} dispatch for ${args.customerName || 'a customer'} — ${args.customerPhone}.`,
+    eyebrow: `${windowLabel} dispatch`,
+    heading: 'After-hours emergency dispatch opened',
+    intro: `Claire paged ${tech} for ${args.customerName || 'a customer'} (${args.customerPhone}). Office record below.`,
+    bodyHtml,
+    cta: { label: `Call ${args.customerPhone}`, href: `tel:${args.customerPhone}` },
+  })
+
+  const text = [
+    `[TZ AFTER-HOURS DISPATCH] ${windowLabel}`,
+    '',
+    `Customer: ${args.customerName || '(no name)'}`,
+    `Phone: ${args.customerPhone}`,
+    args.customerAddress ? `Address: ${args.customerAddress}` : '',
+    `Issue: ${args.issueDescription}`,
+    `On-call paged: ${tech}`,
+    `Window: ${windowLabel}`,
+    args.smsEnabled ? '' : 'NOTE: tech SMS alerts OFF (A2P pending) — tech got voice calls only.',
+    '',
+    `Switchboard: ${SITE_URL}/switchboard/call-logs`,
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  await sendEmail({ subject, html, text })
+}

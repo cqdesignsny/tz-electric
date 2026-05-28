@@ -325,14 +325,17 @@ export function buildAgentTools(ctx: AgentToolContext) {
           console.error('[agent-tools] notify_team_member email failed (non-fatal):', e)
         }
 
+        // IMPORTANT (2026-05-28): do NOT tell the caller "I texted them."
+        // Outbound SMS is carrier-blocked until A2P 10DLC clears (error
+        // 30034), so a "sent a text" promise would be false — Terry caught
+        // Claire claiming this. The office email ALWAYS fires (Resend), so
+        // that's the honest promise. Wording stays accurate whether SMS is
+        // on or off.
+        const firstName = matchedStaffName?.split(' ')[0] || target_name
         const customerMessage =
-          smsResult === 'sent'
-            ? `Got it. I've sent ${matchedStaffName?.split(' ')[0] || target_name} a text with your name and callback so they can reach back out as soon as they're free. The office also has the message.`
-            : smsResult === 'no-phone'
-              ? `Got it. I've passed the message to the office so ${matchedStaffName?.split(' ')[0] || target_name} can reach back out as soon as they're free.`
-              : smsResult === 'no-match'
-                ? `Got it. I'm not sure I have a direct line for "${target_name}" — I've passed the message to the office and someone will reach back out as soon as possible.`
-                : `Got it. I've passed the message to the office and someone will reach back out as soon as possible.`
+          smsResult === 'no-match'
+            ? `Got it. I've passed your message to the office and someone will reach back out as soon as possible.`
+            : `Got it. I've passed your message to the office so they can get it to ${firstName}, and someone will reach back out as soon as possible.`
 
         return {
           ok: true,

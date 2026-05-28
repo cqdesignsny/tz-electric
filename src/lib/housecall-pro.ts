@@ -1,3 +1,5 @@
+import { sendPlanSignupEmail } from './agent-notifications'
+
 const HCP_BASE = 'https://api.housecallpro.com'
 
 function getApiKey(): string {
@@ -744,25 +746,34 @@ export async function sendInternalNotification(
   customerId: string,
   isExisting: boolean
 ): Promise<void> {
-  const subject = `New Plan Signup: ${planInfo.templateName} - ${customerData.firstName} ${customerData.lastName}`
-  const body = [
-    `A new plan signup was received via the website.`,
-    ``,
-    `Customer: ${customerData.firstName} ${customerData.lastName}`,
-    `Phone: ${customerData.phone}`,
-    `Address: ${customerData.street}, ${customerData.city}, ${customerData.state} ${customerData.zip}`,
-    `HCP Customer ID: ${customerId}`,
-    `Existing Customer: ${isExisting ? 'Yes' : 'No (new customer created)'}`,
-    ``,
-    `Plan: ${planInfo.templateName}`,
-    `Billing: ${planInfo.billingCycle} - $${planInfo.amount}${planInfo.frequency === 'monthly' || planInfo.frequency === '3year' ? '/mo' : '/yr'}`,
-    ``,
-    `ACTION REQUIRED: Please assign the service plan to this customer in Housecall Pro.`,
-    `https://pro.housecallpro.com/app/service_agreements`,
-  ].join('\n')
+  const perLabel =
+    planInfo.frequency === 'monthly' || planInfo.frequency === '3year' ? '/mo' : '/yr'
+  const address = [
+    customerData.street,
+    [customerData.city, customerData.state].filter(Boolean).join(', '),
+    customerData.zip,
+  ]
+    .filter((s) => s && s.trim())
+    .join(' ')
+    .trim()
 
-  // Send via a simple fetch to our own API route that handles email
-  // For now, log it — email sending will be added when an email service is configured
-  console.log('[NOTIFICATION]', subject)
-  console.log(body)
+  // Fire the real office email via Resend. Was a console.log stub until
+  // 2026-05-28 (Terry caught a Bronze gen plan signup that the office never
+  // got notified about — only Tyler got Stripe's own receipt).
+  try {
+    await sendPlanSignupEmail({
+      firstName: customerData.firstName,
+      lastName: customerData.lastName,
+      phone: customerData.phone,
+      address,
+      planName: planInfo.templateName,
+      billingCycle: planInfo.billingCycle,
+      amount: planInfo.amount,
+      perLabel,
+      hcpCustomerId: customerId,
+      isExisting,
+    })
+  } catch (e) {
+    console.error('[housecall-pro] sendPlanSignupEmail failed (payment was still collected):', e)
+  }
 }

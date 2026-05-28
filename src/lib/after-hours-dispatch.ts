@@ -15,7 +15,14 @@
 
 import { db } from './db'
 import { getOnCall, getSupervisorChain, type OnCallPerson } from './on-call'
-import { sendSms, placeCall, normalizePhoneE164, type TwilioOutboundResult } from './twilio-outbound'
+import {
+  sendSms,
+  placeCall,
+  normalizePhoneE164,
+  isSmsOutboundEnabled,
+  type TwilioOutboundResult,
+} from './twilio-outbound'
+import { sendAfterHoursDispatchEmail } from './agent-notifications'
 import type { AgentToolContext } from './agent-tools'
 
 type DispatchInput = {
@@ -312,6 +319,26 @@ export async function dispatchAfterHoursEmergencyImpl(
       })
       if (callRes.ok) attemptsFired++
     }
+  }
+
+  // Office backup email — always fires on a working channel (Resend) so the
+  // office has a record even if the tech misses the voice call and the SMS
+  // leg is carrier-blocked (A2P pending). Added 2026-05-28 after Tyler's
+  // "Jimmy didn't get anything" report; the real gap was no office email +
+  // dead SMS, not a broken cascade.
+  try {
+    await sendAfterHoursDispatchEmail({
+      customerName: input.customerName,
+      customerPhone: input.customerPhone,
+      customerAddress: input.customerAddress,
+      issueDescription: input.issueDescription,
+      timeWindow,
+      onCallTechName: onCallTech?.personName ?? primarySupervisor?.personName ?? null,
+      onCallTechMatched: Boolean(onCallTech),
+      smsEnabled: isSmsOutboundEnabled(),
+    })
+  } catch (e) {
+    console.error('[after-hours-dispatch] office backup email failed (non-fatal):', e)
   }
 
   // Build the customer-facing confirmation message Claire reads back.

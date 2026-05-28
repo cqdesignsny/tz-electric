@@ -38,6 +38,22 @@ function basicAuth(sid: string, token: string): string {
   return 'Basic ' + Buffer.from(`${sid}:${token}`).toString('base64')
 }
 
+/**
+ * Outbound SMS master switch. Until the Twilio number clears A2P 10DLC
+ * registration, every outbound SMS is silently rejected by carriers with
+ * error 30034 ("message from unregistered number"). Verified 2026-05-28:
+ * all 8 recent outbound texts (after-hours dispatch + notify_team_member)
+ * came back `undelivered / 30034`. Firing them anyway wastes attempts and
+ * records a misleading "sent" status.
+ *
+ * Default OFF. The moment A2P is approved in Twilio, set
+ * `TWILIO_SMS_ENABLED=true` on Vercel and every SMS path (dispatch +
+ * team-member paging) starts delivering with no code change.
+ */
+export function isSmsOutboundEnabled(): boolean {
+  return process.env.TWILIO_SMS_ENABLED === 'true'
+}
+
 /** E.164-ish normalize. Accepts (518) 678-1230, 5186781230, +15186781230. */
 export function normalizePhoneE164(raw: string): string {
   const digits = raw.replace(/[^\d+]/g, '')
@@ -48,6 +64,13 @@ export function normalizePhoneE164(raw: string): string {
 }
 
 export async function sendSms(input: SendSmsInput): Promise<TwilioOutboundResult> {
+  if (!isSmsOutboundEnabled()) {
+    // A2P 10DLC not registered yet — carriers reject with 30034. Short-circuit
+    // so callers get an honest "not delivered" result instead of a misleading
+    // Twilio-accepted SID that silently fails downstream.
+    return { ok: false, error: 'SMS outbound disabled pending A2P 10DLC registration (set TWILIO_SMS_ENABLED=true once approved)' }
+  }
+
   const creds = getCreds()
   if (!creds) {
     return { ok: false, error: 'TWILIO_* env vars missing' }
