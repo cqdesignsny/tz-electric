@@ -2,7 +2,118 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-05-28 early hours, session 24 (rolling night session, home laptop). 19 production commits between session 23 close and this checkpoint. Headline: **Claire is now operational on both sides of the platform** — customer-facing voice + web chat + SMS (the original mission), AND admin-side as a chat that lives on every Switchboard page (the "Claire as TZ AI" architecture going from doc to product). Tyler had a real session and shipped 15 KB edits conversationally in 70 minutes through the new admin chat. Claire's first nightly self-improvement report fired and surfaced a real systemic issue (8 silence-pattern voice calls) that Tyler flagged for investigation.
+**Last verified:** 2026-05-28 afternoon/evening, **session 25** (SSD desktop). See the **"⭐ DENNIS — START HERE"** section immediately below for the current handoff (what shipped today + your prioritized task list for the morning of 2026-05-29). The session 24 summary and all prior history are preserved unchanged underneath it.
+
+---
+
+## ⭐ DENNIS — START HERE (session 25 → 26 handoff, morning of 2026-05-29)
+
+Read this whole section before touching anything. You have full access **as Tyler** on Twilio and Housecall Pro, and access to the Vercel `tz-electric` project via Cesar. Everything below is ordered by priority.
+
+### Context in 60 seconds
+
+Today (session 25) was production-issue triage from Tyler + Terry's Slack plus a Vapi cost review. The single biggest discovery: **every outbound SMS from the TZ number is being carrier-rejected** because the A2P 10DLC *campaign* failed review. That silently broke (a) after-hours tech dispatch texts and (b) Claire's new "text a specific staffer" paging. Voice calls are unaffected (not A2P-gated). We shipped code fixes that make the system honest + lean on email/voice until SMS is unblocked. **Your #1 job is finishing the A2P resubmission so SMS goes live.**
+
+### What shipped today (already live in production)
+
+| Commit / change | What |
+|---|---|
+| `a52bae0` | **HOTFIX:** removed Vapi `endCallPhrases`. "thanks for calling" was substring-matching Claire's own opener and auto-hanging up every call ~14s in. Dropped 20+ calls before catch. Do NOT re-add endCallPhrases without a word-boundary matcher. |
+| `d304f43` | **"Agent" intent fix + `notify_team_member` tool + staff directory.** Claire now pivots on first "agent/person/human" to take a message (3-turn cap), and routes named-staffer requests. New `src/lib/staff-directory.ts` parses an editable KB table (§3). |
+| `24c9399` | **Three Slack-flagged fixes:** (1) Stripe plan-signup office email (was a `console.log` stub); (2) SMS over-promise fix + `TWILIO_SMS_ENABLED` master gate; (3) after-hours dispatch now sends an office backup email. |
+| Vapi API PATCH | Disabled Vapi post-call `analysisPlan` (summary + successEval + structuredData) — was ~20% of voice spend, duplicative of our own nightly Opus analyzer. |
+| DB | **Terry → owner** (she was stuck `office`; now has Admin Claire). **Mike's invite resent.** |
+
+Voice cost baseline (last 14 days, from Vapi): **$7.88 / 79 calls / ~$0.11 per minute.** Breakdown: Vapi platform fee 46%, Claude Haiku LLM 24%, post-call analysis 20% (now disabled), Deepgram STT 9%, 11labs $0 on Vapi (BYOK, billed separately ~$8-13). Anthropic prompt caching is NOT available through Vapi (their `AnthropicModel.messages` is bare `OpenAIMessage`, no `cache_control` passthrough) — would require a custom-LLM-URL proxy, deprioritized. Cesar turned on Vapi auto-reload so the wallet never zeroes out again.
+
+### YOUR TASK LIST (priority order)
+
+#### 1. Finish the A2P 10DLC resubmission — THE unblocker (all SMS dead until this clears)
+
+**Current real status** (I pulled it from the Twilio API today):
+- ✅ Business profile "TZ Electric Voice" — twilio-approved
+- ✅ Brand `BN40fcd3821a2c839ea0b2fdae00cb195b` — APPROVED / VERIFIED
+- ❌ **Campaign — FAILED** (submitted 2026-05-21). Rejection errors:
+  - **30896** — opt-in/consent info insufficient (field: MESSAGE_FLOW)
+  - **30882** — Terms & Conditions URL issue (field: TERMS_AND_CONDITIONS_URL)
+- The number **+15186786153** is attached to messaging service **`MGd889a7dbf8976d2b4363f47433741902`** ("Low Volume Mixed A2P Messaging Service"). Keep using that service.
+
+**Why it's now fixable:** the website is already fully compliant. Verified live (HTTP 200) today: `/terms-condition` has a full "SMS / Text Messaging Program Terms" section (program name, opt-in methods, frequency, data rates, HELP, STOP, supported carriers, AND the critical "no mobile info shared with third parties" clause), `/privacy-policy` mirrors it, and the `/quote` form has a compliant consent checkbox. The 2026-05-21 submission predated that content. So the resubmission should pass.
+
+**Steps (Twilio Console, signed in as Tyler):**
+1. **Messaging → Regulatory Compliance → A2P 10DLC.** Find the campaign under brand "TZ Electric" showing **Failed**.
+2. Open it → look for **"Edit and resubmit"** / **"Resubmit."** If locked, **create a new campaign** on the **"Low Volume Mixed A2P Messaging Service"** (the one with the number attached — do NOT use the empty "TZ Electric" service `MG5610c56778b12ff99a6a1052be734c8e`).
+3. Use case: **Low Volume Mixed** (unchanged).
+4. **Opt-in / message-flow description** — paste:
+   > Customers opt in by submitting the service-request form at https://tzelectricinc.com/quote and checking the default-unchecked SMS consent box, which reads: "By checking this box, I agree to receive SMS text messages from TZ Electric, including messages from our smart assistant Claire, about my service request, appointment confirmations, technician dispatch, and follow-ups. Message frequency varies. Message and data rates may apply. Reply STOP to unsubscribe, HELP for help. No mobile information will be shared with third parties for marketing." Consent is also collected verbally when a customer calls our office, and when a customer initiates a text to our number. Full SMS program terms: https://tzelectricinc.com/terms-condition
+5. **Terms & Conditions URL:** `https://tzelectricinc.com/terms-condition`
+6. **Privacy Policy URL:** `https://tzelectricinc.com/privacy-policy`
+7. Leave the existing sample messages (they weren't the problem). Submit.
+8. Low-volume campaigns usually clear in minutes-to-hours. **When it shows Registered/Approved, set `TWILIO_SMS_ENABLED=true` on the Vercel `tz-electric` project env and redeploy (or just set it — `sendSms` reads it at runtime).** That instantly re-enables after-hours dispatch texts + `notify_team_member` texts with no code change.
+9. Verify: send a test (e.g. trigger a `notify_team_member` page or use the Twilio console) and confirm Messages API status = `delivered`, not `undelivered / 30034`.
+
+**How to re-check status anytime** (from `tz-site/`, env in SSD `.env.local`):
+```bash
+export $(grep -E '^TWILIO_(ACCOUNT_SID|AUTH_TOKEN)=' .env.local | xargs)
+curl -s -u "$TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN" \
+  "https://messaging.twilio.com/v1/Services/MGd889a7dbf8976d2b4363f47433741902/Compliance/Usa2p" | python3 -m json.tool
+```
+
+#### 2. Disable Housecall Pro "Sparky" auto-responder
+
+**Problem:** when a website lead lands in HCP's "API Leads" channel, HCP's built-in **Sparky AI** auto-texts the customer "Hello [Name]! This is TZ Electric Inc reaching out about your API Leads request. How can we help you?" — double-messaging on top of Claire's intake. This is NOT our code (confirmed via Tyler's screenshot 2026-05-28). Can't be fixed from our codebase — it's an HCP setting.
+
+**Steps (Housecall Pro, signed in as Tyler):**
+1. Settings (gear) → look for **"Sparky AI" / "AI Team" / "AI CSR" / "AI Receptionist"**, or under **Conversations / Messaging → Automations**.
+2. Turn OFF auto-response to new leads, specifically for the **API Leads** / **Online Booking** channels.
+3. Also check **Settings → Lead Sources / Integrations → API Leads** for a per-channel auto-reply toggle.
+4. If you can't find it, HCP chat support: ask "How do I stop Sparky AI from automatically texting customers on inbound API leads?" — known setting, varies by account tier.
+5. Verify: next API lead should NOT trigger the "reaching out about your API Leads request" text.
+
+#### 3. Build HCP customer name-recognition sync
+
+**Goal (Cesar's chosen approach):** recognize returning customers by inbound phone so **call logs show names instead of just phone numbers**, and Claire skips re-collecting info she already has. **Decision: do NOT have Claire greet by name** (avoids creepiness + wrong-name-on-shared-line). Attach the HCP customer silently.
+
+**Build spec:**
+1. **Migration** (next number after 012): `tz_hcp_customers` table — `hcp_customer_id` (unique), `first_name`, `last_name`, `mobile_phone` (normalized 10-digit, indexed), `email`, `street/city/state/zip`, `last_synced_at`.
+2. **Nightly cron** `/api/cron/hcp-customer-sync` — paginate HCP `GET /customers` (see `src/lib/housecall-pro.ts` for the auth + fetch pattern), upsert each into `tz_hcp_customers` keyed on `hcp_customer_id`, normalize phone with the same logic as `normalizePhoneE164`. Gate behind `CRON_SECRET`. Add to `vercel.json` cron schedule (~3 AM ET, after the 2 AM analyzer).
+3. **Call-time lookup** — in `handleAssistantRequest` (`src/app/api/agents/voice/server/route.ts`) and the web/SMS entry points, look up the normalized caller phone in `tz_hcp_customers`. On hit: set `conversation.customer_name` + `hcp_customer_id` on the row silently (do not alter Claire's opener). Keep latency low — it's a single indexed Neon query, fine within Vapi's 7.5s assistant-request deadline.
+4. Call logs already render `customer_name` from the conversation row — once populated, returning callers show by name automatically. No call-logs UI change needed.
+5. Note: `findExistingCustomer` (by phone/email/name) already exists in `housecall-pro.ts` but hits HCP live — use the Neon table for call-time speed, reserve the live lookup for lead creation.
+
+#### 4. Dispatch visibility page + Twilio StatusCallback (now higher value given the SMS blackout)
+
+**Why:** Tyler thought after-hours dispatch was broken because he had no view into it. It DOES fire (voice works), but `tz_dispatch_attempts.status` records "sent" (Twilio-accepted) even when the carrier later rejects (undelivered/30034) — there's no delivery feedback wired.
+1. Add `StatusCallback` URL to `sendSms` + `placeCall` in `src/lib/twilio-outbound.ts` pointing at a new `/api/webhooks/twilio-delivery` route.
+2. That route updates `tz_dispatch_attempts.delivered_at` + `error_code` by matching the Twilio SID (`MessageSid`/`CallSid`).
+3. New `/switchboard/after-hours` page: one card per dispatch (`tz_emergency_dispatches`) with its attempt ladder (T+0/T+15/T+30/T+60) showing channel + real delivery status. Owner/admin gated.
+
+#### 5. User management UI: edit name + remove/disable
+
+Tyler can't fix Mike's lowercase name or remove anyone. `src/components/switchboard/UsersClient.tsx` already has `ROLE_OPTIONS` including `disabled`. Add: inline edit of `name`, and a remove/disable action (prefer soft-disable via `disabled_at` over hard delete to preserve audit/attribution). Owner-only.
+
+#### 6. Smaller open items (knock out as time allows)
+
+- **"Customer said no → Claire re-asked the same question."** Tyler's Joey call (917-808-9404, 2026-05-28 ~1:51pm). Distinct from the agent-intent fix. Add a prompt rule: when a caller says "no" to a confirmation, acknowledge and move on — never re-ask the same question in different words (ties into the existing "Accept I Don't Know" rule in `agent-prompt.ts`).
+- **Opener A/B test.** Session 24's analyzer flagged 8 calls where the caller heard the opener and hung up. Test a shorter/more human opener.
+- **Calendar read** — Tyler asked (2026-05-28 6:41am): Claire answering "what time is my appointment today?" Needs an HCP scheduled-jobs-by-customer read + a new read-only tool. Privacy rule already in KB §4 (only share upcoming appt, not history).
+- **Central Hudson direct-routing layering** — Tyler asked (6:44am): he already set parameters around the 452-2000 / 452-2010 utility numbers so Claire skips qualifying. He wants utility callers routed straight to a staffer. Overlaps with `notify_team_member` — once SMS is live this is mostly a prompt rule.
+- **`CRON_SECRET` lockdown** (carried from session 24) — analyzer + new sync crons should require it. Cesar/Dennis set the env var.
+- **13× `create_lead_with_estimate` loop** on conv `0717f9c8` (session 24) — investigate possible duplicate HCP records from a tool retry loop.
+
+### Key facts / gotchas Dennis needs
+
+- **Env / secrets:** the SSD `.env.local` at `/Volumes/CQ-PRO-4TB/CQ Marketing/TZ-Electric/TZ-Site-2026/tz-site/.env.local` has the full set (DATABASE_URL, Twilio, Vapi, Resend, HCP, Stripe). `vercel env pull` is INCOMPLETE because the CLI links to the old `cq-marketings-projects` shell — use the SSD file.
+- **SMS is gated by `TWILIO_SMS_ENABLED`** (default off). `sendSms` short-circuits when off. Flip to `true` on Vercel the moment A2P clears. Nothing else changes.
+- **Vapi assistant ID:** `6aa271db-9bec-446a-9f47-9949b5020d5a`. Dynamic server-URL pattern — `/api/agents/voice/server` returns the full inline config (system prompt, tools, voice) per call. WRITE ops via `curl` to `api.vapi.ai` with `VAPI_PRIVATE_KEY` (CLI write paths panic without `vapi login`).
+- **DB query pattern:** from `tz-site/`, write a throwaway `scripts/_tmp-*.mjs` (uses `dotenv` + `@neondatabase/serverless`), run with `node`, delete after. For importing `.ts` libs use `npx tsx`. (Examples are all over today's session.)
+- **Deploy:** commit on the SSD → post-commit hook pushes to GitHub + syncs Dropbox → Vercel auto-deploys `main`. Verify with `npx vercel ls --prod`. Per Cesar's standing rule: don't run local dev to verify, push to Vercel and test there.
+- **Voice cost re-check:** Vapi only retains 14 days of call history. To pull cost: `GET https://api.vapi.ai/call?limit=100&createdAtGt=<14d ago ISO>` then sum `costBreakdown`. (A permanent cost dashboard was scoped but NOT built — it was erroneously marked done earlier; it remains open if Tyler wants ongoing visibility.)
+- **Writing style for any customer-facing copy or KB edits:** no em dashes, no emojis, no AI filler. Claire identifies as a "smart assistant," never "AI." Business hours 7:30 AM–4:00 PM. Estimates are FREE by default.
+
+---
+
+### What shipped tonight (session 23 → 24, in order) — customer-facing voice + web chat + SMS (the original mission), AND admin-side as a chat that lives on every Switchboard page (the "Claire as TZ AI" architecture going from doc to product). Tyler had a real session and shipped 15 KB edits conversationally in 70 minutes through the new admin chat. Claire's first nightly self-improvement report fired and surfaced a real systemic issue (8 silence-pattern voice calls) that Tyler flagged for investigation.
 
 ### What shipped tonight (session 23 → 24, in order)
 
@@ -34,8 +145,10 @@ This is the rolling handoff doc. Last verified state, what's done, what's next, 
 1. **`CRON_SECRET` on Vercel** — analyzer endpoint is currently open (anyone can hit it, triggers an LLM call + email). Cost is bounded ($0.40/day) but should be locked down. Set a 32-64 char random string on Vercel for the `tz-electric` project's `CRON_SECRET` env var. Vercel Cron passes it as `Authorization: Bearer ...` automatically; external calls without the header get 401. **Cesar action, no code change needed.**
 2. **13x `create_lead_with_estimate` loop on conv `0717f9c8`** — Tyler's test call 2026-05-27 17:16 fired the lead-creation tool 13 consecutive times in one conversation. Likely created duplicate HCP records. Needs: pull `tz_agent_messages` for that conversation to see the tool_use sequence, check `tz_leads` + HCP for the duplicates, understand what triggered the retry loop (probably model-side, possibly a tool-result loop after the parser fix that morning).
 3. **Tyler's silence-pattern question (from his admin chat session)** — Claire flagged 8 calls in her first daily report. The fix isn't infrastructure (one-way audio), it's the opener (callers hearing "smart assistant" and hanging up). Worth A/B testing a shorter or more human-sounding opener.
-4. **Promote Terry to owner** — her role is still "office" in `tz_users` because her row predates the `OWNER_EMAILS` allowlist. `upsertUserOnSignIn` deliberately doesn't overwrite roles. Tyler can promote her from `/switchboard/users`.
-5. **Switchboard team rollout** — Mike + Ty Stein got catch-up invite emails 2026-05-27 (Resend ids `31b39e50-...` and `582c17b3-...`) but haven't signed in yet. Cesar's list of additional names + roles still pending.
+4. ~~**Promote Terry to owner**~~ — ✅ DONE session 25 (DB update, verified `role=owner`).
+5. **Switchboard team rollout** — Ty Stein signed in 2026-05-28. Mike still hasn't (invite resent session 25; likely blocked because `mike@tzelectricinc.com` isn't a Google Workspace identity yet — needs the account created). Cesar's list of additional names + roles still pending.
+
+> NOTE (session 25): the authoritative current open list is the **"⭐ DENNIS — START HERE"** section at the top of this doc. The items below are the session-24 snapshot, kept for history.
 
 ### Architecture notes locked this session
 
