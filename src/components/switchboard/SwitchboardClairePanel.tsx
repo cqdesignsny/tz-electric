@@ -22,9 +22,13 @@
  *
  * Mounted inside DashboardShell so it survives in-app navigation
  * without unmounting (React state stays alive between page renders).
- * Backend is /api/agents/admin-chat/stream; current pathname goes into
- * the request body so Claire can ground "this call" / "this lead" /
- * "this page" references.
+ * Backend is /api/agents/admin-chat/stream. Claire does NOT receive
+ * the user's current Switchboard URL — three rounds of "tell her what
+ * page the user is on" all backfired (hallucinated other pages,
+ * mirrored stale assistant turns when the user navigated mid-thread).
+ * Per Cesar 2026-05-27 ~9:30 PM, she now answers generically about
+ * her capabilities and asks the user to name specific records when
+ * they reference "this X". Cleaner contract.
  */
 import {
   useCallback,
@@ -36,7 +40,6 @@ import {
   type FormEvent,
   type KeyboardEvent,
 } from 'react'
-import { usePathname } from 'next/navigation'
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, isTextUIPart, type UIMessage } from 'ai'
 
@@ -88,7 +91,6 @@ function uiMessageText(m: UIMessage): string {
 }
 
 export default function SwitchboardClairePanel({ actorName, actorEmail, actorRole }: Props) {
-  const pathname = usePathname() || '/switchboard'
   const [conversationId, setConversationId] = useState('')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [draft, setDraft] = useState('')
@@ -103,12 +105,9 @@ export default function SwitchboardClairePanel({ actorName, actorEmail, actorRol
     if (!conversationId) return null
     return new DefaultChatTransport({
       api: '/api/agents/admin-chat/stream',
-      body: () => ({
-        conversationId,
-        currentPath: pathname,
-      }),
+      body: () => ({ conversationId }),
     })
-  }, [conversationId, pathname])
+  }, [conversationId])
 
   // Hydrate visible messages from localStorage.
   const [initialMessages, setInitialMessages] = useState<UIMessage[] | undefined>(undefined)
@@ -194,7 +193,6 @@ export default function SwitchboardClairePanel({ actorName, actorEmail, actorRol
         <ChatBody
           firstName={firstName}
           actorRole={actorRole}
-          pathname={pathname}
           messages={messages}
           isStreaming={isStreaming}
           error={error?.message ?? null}
@@ -242,7 +240,6 @@ export default function SwitchboardClairePanel({ actorName, actorEmail, actorRol
             <ChatBody
               firstName={firstName}
               actorRole={actorRole}
-              pathname={pathname}
               messages={messages}
               isStreaming={isStreaming}
               error={error?.message ?? null}
@@ -267,7 +264,6 @@ export default function SwitchboardClairePanel({ actorName, actorEmail, actorRol
 type ChatBodyProps = {
   firstName: string
   actorRole: 'owner' | 'admin'
-  pathname: string
   messages: UIMessage[]
   isStreaming: boolean
   error: string | null
@@ -283,7 +279,6 @@ function ChatBody(props: ChatBodyProps) {
   const {
     firstName,
     actorRole,
-    pathname,
     messages,
     isStreaming,
     error,
@@ -388,23 +383,19 @@ function ChatBody(props: ChatBodyProps) {
         </div>
       </header>
 
-      <div className="px-4 py-2 text-[10px] font-mono uppercase tracking-wider text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-navy-light/30 flex-shrink-0 truncate">
-        Page: {pathname}
-      </div>
-
       <div ref={scrollerRef} className="flex-1 overflow-y-auto px-3 py-3 space-y-2.5">
         {messages.length === 0 && (
           <div className="text-center pt-6 pb-3 px-2">
             <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed mb-4">
-              I follow you around the Switchboard. Ask me anything about the
-              page you&apos;re on, the knowledge base, recent calls, or my daily
-              reports.
+              I can help across the whole Switchboard. Ask me about the
+              knowledge base, my daily learning reports, recent calls and
+              chats, or anything else you want to work on.
             </p>
             <div className="flex flex-col gap-1.5 max-w-full">
               <PanelChip
-                label="What&apos;s on this page?"
+                label="What can you do?"
                 onSubmit={submit}
-                prompt={`I'm on ${pathname}. What can you tell me about this page or the data on it?`}
+                prompt="What can you do for me? Give me the list."
               />
               <PanelChip
                 label="Yesterday&apos;s report"

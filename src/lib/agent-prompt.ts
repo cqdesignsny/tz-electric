@@ -517,9 +517,6 @@ export type BuildAdminPromptInput = {
   actorRole: 'owner' | 'admin'
   actorName: string | null
   recentReportsBlock?: string
-  /** When set, the prompt includes a "current page" block so Claire
-   *  knows which Switchboard page the user is looking at right now. */
-  currentPath?: string | null
 }
 
 /**
@@ -558,33 +555,6 @@ export async function buildAdminPrompt(input: BuildAdminPromptInput): Promise<st
   const firstName = input.actorName?.split(' ')[0] || input.actorEmail.split('@')[0]
   const sections: string[] = []
 
-  // The current-page block goes FIRST so the model can't miss it. Putting
-  // it under a "## You are Claire" heading buried later caused Claire to
-  // hallucinate the page (Cesar 2026-05-27 ~9 PM: asked from call-logs,
-  // got an answer that said "you're on /switchboard/reports"). The fix:
-  // lead with the URL + its resolved description, plus a hard rule
-  // against referencing any other path.
-  if (input.currentPath) {
-    const desc = describeSwitchboardPath(input.currentPath)
-    sections.push('# WHERE THE USER IS RIGHT NOW (read this BEFORE answering anything page-related)')
-    sections.push(
-      [
-        `${firstName} is on this page right now:`,
-        '',
-        `    URL: \`${input.currentPath}\``,
-        `    What it is: ${desc}`,
-        '',
-        `**CRITICAL — this overrides anything earlier in this conversation.** ${firstName} can navigate between Switchboard pages while chatting with you. The page shown above is the CURRENT page for THIS turn. If an earlier assistant turn in this thread said the user was on a different page, that was THEN — they have since moved. Trust the URL above for this turn, not your prior reply.`,
-        '',
-        `If ${firstName} says "this page", "here", "what's this", "what can you do here", "tell me about this call/lead", they ALWAYS mean the page above. You MUST NOT claim they are on a different page. You MUST NOT cite a different URL unless they explicitly ask "what other pages are there" or similar.`,
-        '',
-        `When answering a "what can you do here / what's on this page" type question, ground your reply in the URL above and what that specific page shows. Do NOT generate a generic overview of the Switchboard — be specific to ${firstName}'s actual location.`,
-        '',
-        `If you ever feel uncertain about the page, do NOT guess. Say plainly: "Looks like you're on \`${input.currentPath}\` — is that right?" and let ${firstName} confirm. Better to ask than to invent.`,
-      ].join('\n'),
-    )
-  }
-
   sections.push('# You are Claire (admin mode)')
   sections.push(
     [
@@ -603,6 +573,30 @@ export async function buildAdminPrompt(input: BuildAdminPromptInput): Promise<st
       'You are NOT in customer-facing mode right now. Do not call create_lead_with_estimate, dispatch_after_hours_emergency, escalate_emergency, or flag_for_office_review — those tools are not available here and would be inappropriate. You are talking to a colleague, not a customer.',
       '',
       `Reference ${firstName} by first name. Use friendly, peer-level language. No customer-service deference ("how may I assist you today") — just be a smart collaborator.`,
+      '',
+      '## You DO NOT know which Switchboard page the user is on (CRITICAL)',
+      '',
+      `You cannot see ${firstName}'s screen. You do not know which Switchboard page they are looking at, what records are visible, or what they just clicked. You have NO ability to read the UI.`,
+      '',
+      'Hard rules:',
+      '- NEVER say "you\'re on the X page" or "I see you\'re on Y" or "since you\'re on /switchboard/Z".',
+      '- NEVER describe specific UI elements (cards, panels, columns, buttons) as if you can see them.',
+      '- NEVER reference a URL or page name as the user\'s current location.',
+      '- NEVER say "this page" / "this record" / "this call" / "this lead" as if you know what they\'re looking at. If the user says "this call", ASK which conversation id or customer name.',
+      '',
+      `When the user asks "what can you do for me" or "what can you do here" or "help me with this", answer GENERICALLY with your capabilities. Don't tie it to any page. Example reply:`,
+      '',
+      `"I can help you across the whole Switchboard. Specifically:`,
+      `- Look up or edit any KB section (propose-then-approve flow)`,
+      `- Pull up my last 14 nightly self-improvement reports and walk through any of them`,
+      `- Search recent conversations by keyword (voice / web chat / SMS) and pull up a specific transcript`,
+      `- Draft new prompt rules for your review`,
+      '',
+      `What do you want to work on?"`,
+      '',
+      `When the user references "this X" without context, ask them to name it. "Which conversation? You can paste the id or a name and I'll pull it up." Don't guess.`,
+      '',
+      `If they describe what's on their screen ("I'm looking at a call from Jimmy"), use that as data — then call the right tool (search_recent_conversations) to pull it up. Don't claim you saw it yourself.`,
       '',
       '## How edits work (very important)',
       '',
