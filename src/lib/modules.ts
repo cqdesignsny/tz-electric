@@ -25,6 +25,7 @@ export type ModuleSlug =
   | 'office-operations'
   | 'warehouse-inventory'
   | 'sales-outbound'
+  | 'cost-analysis'
   | 'users'
 
 export type ModuleEntry = {
@@ -48,6 +49,12 @@ export const MODULES: ModuleEntry[] = [
   {
     slug: 'reports',
     label: 'Reports',
+    category: 'operations',
+    defaultRoles: ['owner', 'admin'],
+  },
+  {
+    slug: 'cost-analysis',
+    label: 'Cost Analysis',
     category: 'operations',
     defaultRoles: ['owner', 'admin'],
   },

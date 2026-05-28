@@ -37,6 +37,7 @@ import {
   findOrStartConversation,
 } from '@/lib/agent-conversations'
 import { buildSystemPrompt } from '@/lib/agent-prompt'
+import { db } from '@/lib/db'
 import {
   buildVapiFunctionDefinitions,
   executeVapiToolCall,
@@ -93,6 +94,28 @@ type VapiArtifact = {
   messages?: VapiArtifactMessage[]
 }
 
+type VapiCostBreakdown = {
+  transport?: number
+  stt?: number
+  llm?: number
+  tts?: number
+  vapi?: number
+  total?: number
+  chat?: number
+  llmPromptTokens?: number
+  llmCompletionTokens?: number
+  llmCachedPromptTokens?: number
+  ttsCharacters?: number
+  knowledgeBaseCost?: number
+  voicemailDetectionCost?: number
+  analysisCostBreakdown?: {
+    summary?: number
+    structuredData?: number
+    structuredOutput?: number
+    successEvaluation?: number
+  }
+}
+
 type VapiServerMessage = {
   type:
     | 'assistant-request'
@@ -111,6 +134,19 @@ type VapiServerMessage = {
   artifact?: VapiArtifact
   toolCallList?: VapiToolCall[]
   toolWithToolCallList?: Array<{ name?: string; toolCall?: VapiToolCall }>
+  /** Top-line USD cost for the call. Vapi puts it on the message AND on call. */
+  cost?: number
+  /** Per-component cost + token telemetry. */
+  costBreakdown?: VapiCostBreakdown
+  /** ISO timestamps for the audio leg, if Vapi includes them at message level. */
+  startedAt?: string
+  endedAt?: string
+  /** Assistant config snapshot (model + voice + transcriber actually used). */
+  assistant?: {
+    model?: { provider?: string; model?: string }
+    voice?: { provider?: string; voiceId?: string }
+    transcriber?: { provider?: string; model?: string }
+  }
 }
 
 type VapiServerPayload = { message: VapiServerMessage }
@@ -380,6 +416,90 @@ async function handleEndOfCallReport(message: VapiServerMessage) {
       ? `voice_ended:${message.endedReason || 'normal'}|recording:${recordingUrl}`
       : `voice_ended:${message.endedReason || 'normal'}`,
   )
+
+  // Persist cost telemetry so we have a permanent record beyond Vapi's
+  // 14-day retention. Non-fatal — a stuck cost write must not break the
+  // conversation close path.
+  try {
+    await persistCallCost({
+      callId,
+      conversationId: conv.id,
+      customerPhone: normalizePhone(message.call?.customer?.number ?? null),
+      message,
+    })
+  } catch (e) {
+    console.error('[voice/server] persistCallCost failed (non-fatal):', e)
+  }
+}
+
+async function persistCallCost(args: {
+  callId: string
+  conversationId: string
+  customerPhone: string | null
+  message: VapiServerMessage
+}) {
+  const m = args.message
+  const cost = m.cost ?? 0
+  const bd = m.costBreakdown ?? {}
+  const a = bd.analysisCostBreakdown ?? {}
+  const analysisTotal =
+    (a.summary ?? 0) + (a.structuredData ?? 0) + (a.structuredOutput ?? 0) + (a.successEvaluation ?? 0)
+
+  // Vapi sometimes nests timestamps under call; prefer message-level then
+  // fall back. duration in seconds for downstream charting.
+  const startedAt = m.startedAt ?? null
+  const endedAt = m.endedAt ?? null
+  let durationSeconds: number | null = null
+  if (startedAt && endedAt) {
+    durationSeconds = Math.max(
+      0,
+      Math.round((new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000),
+    )
+  }
+
+  const sql = db()
+  await sql`
+    INSERT INTO tz_voice_call_costs (
+      vapi_call_id, conversation_id, customer_phone,
+      started_at, ended_at, duration_seconds, ended_reason,
+      total_cost,
+      vapi_cost, llm_cost, stt_cost, tts_cost, analysis_cost,
+      transport_cost, knowledge_base_cost,
+      llm_prompt_tokens, llm_cached_prompt_tokens, llm_completion_tokens,
+      tts_characters,
+      model_provider, model_name,
+      transcriber_provider, transcriber_model,
+      voice_provider, voice_id,
+      raw_cost_breakdown
+    ) VALUES (
+      ${args.callId}, ${args.conversationId}, ${args.customerPhone},
+      ${startedAt}, ${endedAt}, ${durationSeconds}, ${m.endedReason ?? null},
+      ${cost},
+      ${bd.vapi ?? 0}, ${bd.llm ?? 0}, ${bd.stt ?? 0}, ${bd.tts ?? 0}, ${analysisTotal},
+      ${bd.transport ?? 0}, ${bd.knowledgeBaseCost ?? 0},
+      ${bd.llmPromptTokens ?? 0}, ${bd.llmCachedPromptTokens ?? 0}, ${bd.llmCompletionTokens ?? 0},
+      ${bd.ttsCharacters ?? 0},
+      ${m.assistant?.model?.provider ?? null}, ${m.assistant?.model?.model ?? null},
+      ${m.assistant?.transcriber?.provider ?? null}, ${m.assistant?.transcriber?.model ?? null},
+      ${m.assistant?.voice?.provider ?? null}, ${m.assistant?.voice?.voiceId ?? null},
+      ${JSON.stringify(bd)}::jsonb
+    )
+    ON CONFLICT (vapi_call_id) DO UPDATE SET
+      total_cost          = EXCLUDED.total_cost,
+      vapi_cost           = EXCLUDED.vapi_cost,
+      llm_cost            = EXCLUDED.llm_cost,
+      stt_cost            = EXCLUDED.stt_cost,
+      tts_cost            = EXCLUDED.tts_cost,
+      analysis_cost       = EXCLUDED.analysis_cost,
+      transport_cost      = EXCLUDED.transport_cost,
+      knowledge_base_cost = EXCLUDED.knowledge_base_cost,
+      llm_prompt_tokens          = EXCLUDED.llm_prompt_tokens,
+      llm_cached_prompt_tokens   = EXCLUDED.llm_cached_prompt_tokens,
+      llm_completion_tokens      = EXCLUDED.llm_completion_tokens,
+      tts_characters             = EXCLUDED.tts_characters,
+      raw_cost_breakdown         = EXCLUDED.raw_cost_breakdown,
+      updated_at                 = NOW()
+  `
 }
 
 // ---------------------------------------------------------------------------

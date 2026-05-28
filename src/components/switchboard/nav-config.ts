@@ -82,6 +82,22 @@ export const NAV_SECTIONS: NavSection[] = [
         needs: [],
       },
       {
+        label: 'Cost Analysis',
+        slug: 'cost-analysis',
+        status: 'live',
+        tagline: 'What Vapi + Claire + 11labs actually cost, and where.',
+        overview:
+          "Per-call cost breakdown for every voice call, plus daily burn, projected monthly spend, and the top expensive calls. Reads from tz_voice_call_costs (populated from Vapi's end-of-call-report) so the record survives Vapi's 14-day retention window. Owner + admin only.",
+        willDo: [
+          'Total spend, projected monthly, cost per call, cost per minute',
+          'Breakdown by component: Vapi platform fee, LLM, STT, post-call analysis',
+          'Daily burn trend',
+          'Top 10 most expensive calls with deep links to call logs',
+          '11labs TTS character count + estimated cost on Creator vs Pro plan',
+        ],
+        needs: [],
+      },
+      {
         label: 'Employee Training',
         slug: 'employee-training',
         status: 'planned',

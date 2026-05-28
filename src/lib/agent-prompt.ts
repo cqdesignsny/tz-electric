@@ -255,9 +255,27 @@ const TAKEOVER_NOTICE = [
   'A human office staff member has taken over this conversation. You must NOT generate any reply. Return an empty response. The office is responding directly. You will resume only when takeover is released.',
 ].join('\n')
 
+// Slug paths in the KB that are internal-only and DON'T need to be in the
+// customer-facing agent system prompt. Trimming these shaves ~1k tokens
+// off every model turn (cost win since Vapi/Anthropic re-charges the full
+// prompt every turn — Anthropic prompt caching isn't available through
+// Vapi's current schema, so prompt size = per-turn cost).
+//
+// Match by `slugifyHeading` output from agent-knowledge-base.ts. Adding
+// to this list is safe; removing requires confirming the section isn't
+// referenced as customer-facing.
+const AGENT_PROMPT_EXCLUDED_SECTION_PATHS: ReadonlySet<string> = new Set([
+  '10.5/_intro', // "Open Questions for Tyler" — internal punch list.
+  '11/_intro', // "Lead Routing into Housecall Pro" — server-side architecture, not customer-facing.
+])
+
 async function readKnowledgeBase(): Promise<string> {
   const kb = await loadMergedKnowledgeBase()
-  return renderMergedKbToMarkdown(kb)
+  const filtered = {
+    ...kb,
+    sections: kb.sections.filter((s) => !AGENT_PROMPT_EXCLUDED_SECTION_PATHS.has(s.path)),
+  }
+  return renderMergedKbToMarkdown(filtered)
 }
 
 export async function buildSystemPrompt(input: BuildSystemPromptInput): Promise<string> {
