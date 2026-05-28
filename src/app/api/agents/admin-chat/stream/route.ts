@@ -22,7 +22,7 @@ import {
 } from 'ai'
 
 import { appendMessage } from '@/lib/agent-conversations'
-import { buildAdminPrompt } from '@/lib/agent-prompt'
+import { buildAdminPrompt, describeSwitchboardPath } from '@/lib/agent-prompt'
 import { buildAdminTools } from '@/lib/admin-tools'
 import { requireGoogleUser } from '@/lib/current-user'
 import { canEditKnowledgeBase } from '@/lib/users'
@@ -163,6 +163,39 @@ export async function POST(req: NextRequest) {
   })
 
   const modelMessages = await convertToModelMessages(messages)
+
+  // Inject the current Switchboard page into the LATEST user message
+  // text so the most recent turn in conversation history carries the
+  // most recent page context. Without this, Claire mirrors what she
+  // said in an earlier turn ("you're on call logs") even after the
+  // user has navigated to a different page. The system prompt also
+  // has the current page (with anti-stale-history language), but
+  // conversation history is more load-bearing for Anthropic models —
+  // grounding the latest user turn directly is the reliable fix.
+  // Cesar 2026-05-27 ~9:15 PM.
+  if (typeof currentPath === 'string' && currentPath) {
+    const pageDesc = describeSwitchboardPath(currentPath)
+    const contextLine = `[Page context for this turn: I am on \`${currentPath}\` — ${pageDesc}. If you said earlier I was somewhere else, I have since navigated. Ground your reply in this URL.]`
+    for (let i = modelMessages.length - 1; i >= 0; i--) {
+      const m = modelMessages[i]
+      if (m.role !== 'user') continue
+      if (typeof m.content === 'string') {
+        m.content = `${contextLine}\n\n${m.content}`
+      } else if (Array.isArray(m.content)) {
+        const idx = m.content.findIndex((p) => p.type === 'text')
+        if (idx >= 0) {
+          const part = m.content[idx]
+          if (part.type === 'text') {
+            m.content[idx] = { ...part, text: `${contextLine}\n\n${part.text}` }
+          }
+        } else {
+          m.content.unshift({ type: 'text', text: contextLine })
+        }
+      }
+      break
+    }
+  }
+
   const env = process.env.VERCEL_ENV || 'dev'
 
   const result = streamText({
