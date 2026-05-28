@@ -38,3 +38,7 @@ next-env.d.ts
 # claude code (project-local settings can carry api keys; keep them off git)
 .claude/settings.local.json
 .claude/.env*
+
+# graphify runtime state (generated locally, not committed)
+# Persisted snapshots of the analysis live in docs/kb-analysis/ instead.
+.graphify/
