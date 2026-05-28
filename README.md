@@ -66,37 +66,52 @@ src/
 │   │   ├── login/                 # Public login form (no chrome)
 │   │   │   ├── page.tsx
 │   │   │   └── LoginForm.tsx
-│   │   └── (dashboard)/           # Auth-gated dashboard with sidebar
+│   │   └── (dashboard)/           # Auth-gated dashboard with sidebar + persistent right-side Claire panel
 │   │       ├── layout.tsx         # Theme init script + DashboardShell
 │   │       ├── page.tsx           # Dashboard home (Things to do + module cards)
-│   │       ├── agent-training/    # Agent training questionnaire
-│   │       │   ├── page.tsx
-│   │       │   ├── QuestionnaireForm.tsx
-│   │       │   └── questions.ts
-│   │       └── <11 info pages>/   # lead-pipeline, reports, employee-training,
-│   │                              # knowledge-base, call-logs, sms-conversations,
-│   │                              # web-chat, email-assistant, office-operations,
-│   │                              # warehouse-inventory, sales-outbound
+│   │       ├── agent-training/    # "Talk to Claire" — admin chat + daily-reports browser (live)
+│   │       │   └── page.tsx       # Server-rendered last-14 reports + AdminClaireChat client component
+│   │       ├── call-logs/         # Voice call transcripts + recordings (master-detail, mobile-friendly)
+│   │       ├── web-chat/          # Claire web chat conversations (takeover + reply)
+│   │       ├── knowledge-base/    # Editable KB viewer (overrides win; audit + history per section)
+│   │       ├── lead-pipeline/     # All captured leads + HCP Won/Lost status sync
+│   │       ├── reports/           # Analytics dashboard (lead volume, channel mix, conversation health)
+│   │       ├── users/             # Owner-only user management (invite + promote/demote + disable)
+│   │       └── <module pages>/    # sms-conversations, employee-training, email-assistant,
+│   │                              # office-operations, warehouse-inventory, sales-outbound
 │   └── api/
-│       ├── agent-training/submit/ # Branded HTML email via Resend
 │       ├── agents/
+│       │   ├── admin-chat/stream/ # POST: admin Claire streaming (Opus 4.7, owner+admin only)
 │       │   ├── web-chat/
 │       │   │   ├── stream/        # POST: streaming chat endpoint (AI Gateway, prompt cached, abuse-guarded)
 │       │   │   └── conversations/ # POST: takeover / release / close / office_reply
+│       │   ├── voice/server/      # POST: Vapi single dispatch (assistant-request, tool-calls, end-of-call-report)
 │       │   └── sms/
-│       │       ├── webhook/       # Twilio inbound (scaffolded, awaiting model wire-up)
+│       │       ├── webhook/       # Twilio inbound (scaffolded, awaiting A2P 10DLC clearance)
 │       │       └── conversations/ # Office actions on SMS threads
+│       ├── cron/
+│       │   ├── daily-digest/             # 12 UTC: lead + conversation summary email
+│       │   ├── dispatch-escalation/      # */5 min: walks open after-hours dispatches, escalates per SOP
+│       │   └── claire-daily-analysis/    # 6 UTC: nightly self-improvement learning report (Opus 4.7)
 │       ├── leads/submit/          # Form + agent shared lead-routing pipeline (HCP customer + estimate + Job Inbox + tz_leads)
-│       └── switchboard/auth/      # /login + /logout cookie session
+│       ├── switchboard/
+│       │   ├── users/invite/      # Owner-only invite endpoint (sends Resend welcome email)
+│       │   ├── users/<actions>/   # Promote / demote / disable / permissions
+│       │   ├── knowledge-base/override/  # KB override write (audit-logged, history-tracked)
+│       │   └── auth/              # /login + /logout cookie session
 ├── components/
 │   ├── ui/                        # Button, Badge, Card, SectionHeader, StarRating, TrustIndexWidget
 │   ├── layout/                    # Header (sticky, dropdowns), Footer (4-col + Admin link, slim CTA)
 │   ├── analytics/                 # PublicAnalytics (GTM + GA4 + Google Ads + Meta Pixel + Hotjar) — used by (public)/ and claire/
 │   ├── chat/                      # ClaireChat, ChatThemeProvider, ChatThemeToggle (used on /claire)
-│   ├── switchboard/               # DashboardShell, Sidebar, TopBar, ThemeProvider, ThemeToggle,
+│   ├── switchboard/               # DashboardShell (3-col layout, mounts SwitchboardClairePanel),
+│   │                              # Sidebar, TopBar, ThemeProvider, ThemeToggle,
 │   │                              # ModuleInfoPage, nav-config, SmsConversationsClient,
-│   │                              # WebChatConversationsClient, LeadPipelineClient, RecentLeadsCard,
-│   │                              # KnowledgeBaseNav
+│   │                              # WebChatConversationsClient, CallLogsClient (mobile master-detail),
+│   │                              # LeadPipelineClient, RecentLeadsCard, KnowledgeBaseNav,
+│   │                              # AdminClaireChat (full-page chat at /agent-training),
+│   │                              # DailyReportsBrowser (collapsible cards),
+│   │                              # SwitchboardClairePanel (always-open right column on lg+ / bubble on <lg)
 │   ├── sections/                  # HeroSection, TrustBar, ServicesGrid, WhyChooseUs,
 │   │                              # ReviewsSection, ServiceAreaSection, CTASection,
 │   │                              # ServicePageTemplate, CertificationSlider
@@ -142,15 +157,19 @@ src/
 
 The TZ Switchboard at `/switchboard` is the operational backend for TZ Electric. Auth-gated via single-password admin login. HMAC-signed cookie session, 30-day TTL. Public footer has a discreet "Admin" link in the bottom bar.
 
+**Persistent right-side Claire panel (LIVE 2026-05-27, owner + admin only):** every Switchboard page renders a permanent right column on lg+ (1024px+) with Claire (Opus 4.7) always open. Layout is true 3-column: left nav (256px) + main content (flex-1) + Claire (320/380/420px scaled to screen). Mobile (<lg) gets a floating bubble + full-screen modal. Mounted inside `DashboardShell` so it survives in-app navigation; conversation messages persist via localStorage. Backend is `/api/agents/admin-chat/stream`. Page-context awareness was tried in three rounds and removed (see HANDOFF session 24) — Claire answers generically about capabilities and asks "which one?" when the user references "this X". Cleaner than promising context she can't reliably read.
+
 **Live modules:**
-- **Agent Training** (`/switchboard/agent-training`), multi-step discovery questionnaire (~70 questions across 9 sections) that feeds the AI agent knowledge base. Auto-saves to localStorage. Submit posts to `/api/agent-training/submit`, which sends a branded HTML email. **Tyler submitted on 2026-04-26.** His answers (plus follow-up gap answers) live at [`docs/agent-training-answers.md`](docs/agent-training-answers.md), the canonical knowledge base the SMS, voice, and web chat agents load as their system prompt context.
+- **Talk to Claire** (`/switchboard/agent-training`) **— LIVE 2026-05-27.** Rebuilt from the old discovery questionnaire into a chat interface where Tyler / Terry / Cesar can read + edit the KB conversationally. Top of the page shows the last 14 nightly self-improvement reports as expandable cards. Below: full-page admin chat with Claire (Opus 4.7). KB edits go through a propose-then-approve flow (`propose_kb_edit` shows the diff, user says yes, `apply_kb_edit` writes to `tz_kb_overrides`). Owner + admin only. Original questionnaire was submitted by Tyler 2026-04-26; the canonical KB content lives at [`docs/agent-training-answers.md`](docs/agent-training-answers.md). A graphify structure analysis snapshot lives at [`docs/kb-analysis/`](docs/kb-analysis/) — 127 nodes, 10 communities, 5 named multi-section flows.
 - **Knowledge Base** (`/switchboard/knowledge-base`), structured browseable view of the agent training answers doc with sticky section nav, scroll-spy, and full markdown styling. Owners + admins see Edit / Revert per section. Tyler-authored overrides land in `tz_kb_overrides` (Neon) and **always win on render and in agent prompts**, even if CQ later updates the base markdown. `tz_kb_override_history` keeps every revision; `tz_audit_log` stamps every edit.
 - **Lead Pipeline** (`/switchboard/lead-pipeline`), reads from `tz_leads` (Neon). Filters (search, service, channel, status). Two-way HCP Won/Lost sync. Channel chip + paid/organic/referral/direct stat cards. Deep-link to HCP estimate.
 - **Web Chat** (`/switchboard/web-chat`) **— LIVE 2026-05-01.** Office-side viewer for `/claire` conversations. Thread list with visitor name + phone + attribution channel + "Lead captured" badge. Active thread shows full transcript including collapsible tool-call rows, first-touch attribution strip with lead deep-link, takeover/release/close, office reply composer. Channel-agnostic actions API at `/api/agents/web-chat/conversations`.
 - **Call Logs** (`/switchboard/call-logs`) **— LIVE 2026-05-13.** Read-only viewer for Voice Claire (`+15186786153`) inbound calls. Two-pane layout, status filter pills, inline audio playback of the Vapi recording, two-sided transcript (customer + Claire) with collapsible tool-call rows, Vapi call-id debug pill, deep link to any lead Claire booked.
 - **SMS Conversations** (`/switchboard/sms-conversations`), live SMS thread viewer with takeover. Same shape as Web Chat. Twilio number + webhooks wired; awaits A2P 10DLC carrier review (1-2 weeks) before real-customer SMS delivers reliably.
 - **Reports** (`/switchboard/reports`) **— LIVE 2026-05-08.** Lead volume by day stacked by channel, channel breakdown with pipeline value, service mix, Claire conversation health, "Conversations to review" with reason badges. CSV export. Daily digest email at 8 AM ET to ownership via Vercel Cron + Resend.
-- **Users** (`/switchboard/users`), owner-only. Invite, role grant / revoke, disable, login_count + last sign-in tracking, per-user module access overrides.
+- **Users** (`/switchboard/users`), owner-only. Invite, role grant / revoke, disable, login_count + last sign-in tracking, per-user module access overrides. Invite emails now fire via Resend on every new user-add (2026-05-27 fix; old invites only created a DB row).
+
+**Claire's nightly self-improvement loop (LIVE 2026-05-27):** every day at 2 AM ET (6 UTC), `/api/cron/claire-daily-analysis` pulls all prior-day voice + web chat + SMS + lead-form activity, runs a structured Opus 4.7 pass (Zod schema via `generateObject`) over the transcripts, produces proposals (wins, failure patterns with severity + N affected, KB gaps with paste-ready additions, proposed prompt rules with rationale, calls worth listening to, questions for the team), persists everything to the new `tz_claire_daily_analysis` table (migration 011), and emails Tyler + Cesar a daily learning report. Phase 1 is observation only — Tyler approves changes via the Talk to Claire chat. Cost: ~$0.50/day. Cron-secret-gated via `CRON_SECRET` env var; manual-fire backfills any past day via `?date=YYYY-MM-DD`.
 
 **Coming Soon and Planned modules:** every sidebar item is clickable and opens a dedicated info page describing what we'll build there. Shared `ModuleInfoPage` template reads from `nav-config.ts`:
 - Employee Training (Trainual)
