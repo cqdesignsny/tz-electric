@@ -531,10 +531,55 @@ export type BuildAdminPromptInput = {
  * 2026-05-18 architecture). Different mission: she's a teammate now,
  * not a customer-facing booking agent.
  */
+/**
+ * Map a Switchboard URL to a one-line description so the model has the
+ * resolved meaning right next to the literal path. Reduces hallucination
+ * because Claire can't drift to a different page from a cheat-sheet —
+ * the description is bound to the actual URL the user is on.
+ */
+function describeSwitchboardPath(rawPath: string): string {
+  const path = rawPath.split('?')[0].replace(/\/$/, '') || '/switchboard'
+  if (path === '/switchboard') return 'the Switchboard home dashboard (overview, recent activity, quick stats)'
+  if (path === '/switchboard/lead-pipeline') return 'the Lead Pipeline (every captured lead, Won/Lost status from HCP)'
+  if (path === '/switchboard/call-logs') return 'the Call Logs viewer (voice call transcripts + recordings + tool calls)'
+  if (path === '/switchboard/web-chat') return 'the Web Chat viewer (Claire web chat conversations)'
+  if (path === '/switchboard/sms-conversations') return 'the SMS Conversations viewer'
+  if (path === '/switchboard/knowledge-base') return 'the Knowledge Base viewer (read-only KB sections, with override history)'
+  if (path === '/switchboard/agent-training') return 'this admin Claire surface itself (chat + daily self-improvement reports)'
+  if (path === '/switchboard/reports') return 'the Reports analytics dashboard (lead volume, channel mix, service mix, Claire conversation health)'
+  if (path === '/switchboard/users') return 'User management (owner only — invite, promote, disable users)'
+  if (path === '/switchboard/login') return 'the Switchboard login page'
+  if (path.startsWith('/switchboard')) return `a Switchboard page (${path})`
+  return `a non-Switchboard page (${path})`
+}
+
 export async function buildAdminPrompt(input: BuildAdminPromptInput): Promise<string> {
   const kb = await readKnowledgeBase()
   const firstName = input.actorName?.split(' ')[0] || input.actorEmail.split('@')[0]
   const sections: string[] = []
+
+  // The current-page block goes FIRST so the model can't miss it. Putting
+  // it under a "## You are Claire" heading buried later caused Claire to
+  // hallucinate the page (Cesar 2026-05-27 ~9 PM: asked from call-logs,
+  // got an answer that said "you're on /switchboard/reports"). The fix:
+  // lead with the URL + its resolved description, plus a hard rule
+  // against referencing any other path.
+  if (input.currentPath) {
+    const desc = describeSwitchboardPath(input.currentPath)
+    sections.push('# WHERE THE USER IS RIGHT NOW (read this BEFORE answering anything page-related)')
+    sections.push(
+      [
+        `${firstName} is on this page right now:`,
+        '',
+        `    URL: \`${input.currentPath}\``,
+        `    What it is: ${desc}`,
+        '',
+        `CRITICAL: if ${firstName} says "this page", "here", "what's this", "what can you do here", "tell me about this call/lead", they ALWAYS mean the page above. You MUST NOT claim they are on a different page. You MUST NOT cite a different URL unless they explicitly ask "what other pages are there" or similar.`,
+        '',
+        `When answering a "what can you do here / what's on this page" type question, ground your reply in the URL above and what that specific page shows. Do NOT generate a generic overview of the Switchboard — be specific to ${firstName}'s actual location.`,
+      ].join('\n'),
+    )
+  }
 
   sections.push('# You are Claire (admin mode)')
   sections.push(
@@ -598,25 +643,6 @@ export async function buildAdminPrompt(input: BuildAdminPromptInput): Promise<st
     ].join('\n'),
   )
 
-  if (input.currentPath) {
-    sections.push('# Where they are right now')
-    sections.push(
-      [
-        `${firstName} is currently looking at: \`${input.currentPath}\``,
-        '',
-        'Use this to ground your answers. If they say "this call" or "this lead" or "this page", they probably mean whatever\'s on the page they\'re on. Switchboard URL patterns:',
-        '- `/switchboard` — the home dashboard (recent activity + quick stats)',
-        '- `/switchboard/lead-pipeline` — every captured lead, Won/Lost status from HCP',
-        '- `/switchboard/call-logs` — voice call transcripts + recordings (`?id=<uuid>` for a specific call)',
-        '- `/switchboard/web-chat` — web chat conversations (`?id=<uuid>` for a specific thread)',
-        '- `/switchboard/knowledge-base` — KB sections (read-only view)',
-        '- `/switchboard/agent-training` — this admin Claire surface (chat + daily reports)',
-        '- `/switchboard/reports` — analytics dashboard (lead volume, channel mix, service mix)',
-        '- `/switchboard/users` — user management (owner-only)',
-      ].join('\n'),
-    )
-  }
-
   if (input.recentReportsBlock) {
     sections.push('# Recent self-improvement reports')
     sections.push(input.recentReportsBlock)
@@ -627,6 +653,27 @@ export async function buildAdminPrompt(input: BuildAdminPromptInput): Promise<st
     'This is the same KB customer-facing Claire uses on every call. When you propose edits, you are editing this. Any change here changes how she answers customer questions.',
   )
   sections.push(kb)
+
+  // Reference: full Switchboard map. Kept SEPARATE from the "where they
+  // are right now" block at the top so Claire doesn't grab a path from
+  // this list and present it as the user's current location. Only refer
+  // to entries here if the user explicitly asks about other pages.
+  sections.push('# Reference: Switchboard route map (for navigation questions ONLY)')
+  sections.push(
+    [
+      'These are the available Switchboard pages. Do NOT cite any of these as the current page — the user\'s actual location is in the "WHERE THE USER IS RIGHT NOW" block at the top of this prompt. Use this reference only if the user asks where to go for something specific.',
+      '',
+      '- `/switchboard` — home dashboard (recent activity, quick stats)',
+      '- `/switchboard/lead-pipeline` — captured leads + Won/Lost status from HCP',
+      '- `/switchboard/call-logs` — voice call transcripts + recordings (`?id=<uuid>` for one call)',
+      '- `/switchboard/web-chat` — web chat conversations (`?id=<uuid>` for one thread)',
+      '- `/switchboard/sms-conversations` — SMS conversations (once A2P clears)',
+      '- `/switchboard/knowledge-base` — read-only KB viewer with override history',
+      '- `/switchboard/agent-training` — this admin Claire surface (chat + daily reports)',
+      '- `/switchboard/reports` — analytics dashboard (lead volume, channel mix, service mix, Claire health)',
+      '- `/switchboard/users` — user management (owner only)',
+    ].join('\n'),
+  )
 
   return sections.join('\n\n')
 }
