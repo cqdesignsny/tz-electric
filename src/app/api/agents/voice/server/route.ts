@@ -211,29 +211,26 @@ async function handleAssistantRequest(message: VapiServerMessage) {
         messages: [{ role: 'system', content: systemPrompt }],
         tools,
       },
-      // End-of-call guardrails — fix for the 2026-05-27 PM glitch where
-      // Claire kept saying "one moment" ~25x and never hung up. Three
-      // layers of belt-and-suspenders:
+      // End-of-call guardrails. Layered so any single failure can't
+      // strand Claire in a loop:
       //   1. endCallFunctionEnabled lets the model call an `endCall`
       //      tool explicitly when its closing sentence has been said.
-      //   2. endCallPhrases auto-hangs up when Claire's spoken output
-      //      contains any of these polite sign-offs.
-      //   3. silenceTimeoutSeconds hangs up if neither side speaks for
+      //   2. silenceTimeoutSeconds hangs up if neither side speaks for
       //      30 seconds (catches stalled loops and forgotten-to-hangup
       //      callers).
+      //   3. maxDurationSeconds is a hard cap.
+      //
+      // NOTE: endCallPhrases was intentionally removed 2026-05-28. Vapi
+      // matches it as a case-insensitive substring against the bot's
+      // spoken output, and our opener contains "thanks for calling
+      // TZ Electric, ..." — which silently auto-hung up every call
+      // right after the greeting. Don't reintroduce it without a
+      // word-boundary or context-aware matcher. The silence + max
+      // duration guards + the model's own endCall tool are enough.
+      //
       // backchannelingEnabled disabled so Claire doesn't blurt "uh huh"
       // during a voicemail recording (per the voicemail intent rule).
       endCallFunctionEnabled: true,
-      endCallPhrases: [
-        'have a good one',
-        'have a great day',
-        'have a great rest of your day',
-        'take care',
-        'goodbye',
-        'bye',
-        'thanks for calling',
-        'you can hang up whenever you',
-      ],
       silenceTimeoutSeconds: 30,
       maxDurationSeconds: 900, // 15 min hard cap (matches the prompt rule)
       backchannelingEnabled: false,
