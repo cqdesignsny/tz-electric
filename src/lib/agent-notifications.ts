@@ -549,3 +549,109 @@ export async function sendUserInviteEmail(args: {
   // Send only to the invitee. Don't blast the broadcast list.
   await sendEmail({ subject, html, text, to: [args.inviteeEmail] })
 }
+
+// ============================================================================
+// NOTIFY TEAM MEMBER (Claire SMS-routed callback)
+// ============================================================================
+
+/**
+ * Mirror of sendOfficeFlagEmail for the notify_team_member tool. Same group
+ * inbox so the office still has a paper trail, but the subject + body call
+ * out which staff member was paged by SMS, what their match status was, and
+ * whether the SMS itself landed.
+ */
+export async function sendTeamMemberPagedEmail(args: {
+  conversationId: string
+  channel: 'sms' | 'voice' | 'web_chat'
+  targetName: string
+  matchedStaffName: string | null
+  smsResult: 'sent' | 'no-phone' | 'send-failed' | 'no-match'
+  smsError: string | null
+  callerName: string | null
+  callerPhone: string | null
+  briefMessage: string
+  attributionChannel: string | null
+}): Promise<void> {
+  const channelLabel =
+    args.channel === 'web_chat' ? 'Web chat' : args.channel === 'sms' ? 'SMS' : 'Voice'
+  const target = args.matchedStaffName || args.targetName
+
+  const headlineBanner =
+    args.smsResult === 'sent'
+      ? {
+          bg: '#DCFCE7',
+          border: '#16A34A',
+          title: 'SMS sent',
+          color: '#166534',
+          msg: `Texted ${target} directly. Office paper trail below.`,
+        }
+      : args.smsResult === 'no-match'
+        ? {
+            bg: '#FEF3C7',
+            border: '#D97706',
+            title: `No match for "${args.targetName}"`,
+            color: '#78350F',
+            msg: `Claire could not find this name in the Office Staff Directory. Group email only — no SMS sent.`,
+          }
+        : args.smsResult === 'no-phone'
+          ? {
+              bg: '#FEF3C7',
+              border: '#D97706',
+              title: `${target} has no phone on file`,
+              color: '#78350F',
+              msg: `Add a cell number in the Office Staff Directory KB section to enable SMS routing.`,
+            }
+          : {
+              bg: '#FEE2E2',
+              border: '#DC2626',
+              title: 'SMS send failed',
+              color: '#991B1B',
+              msg: `Twilio rejected the send: ${args.smsError || 'unknown'}. Group email is the only signal.`,
+            }
+
+  const callerLine =
+    [args.callerName, args.callerPhone].filter(Boolean).join(' · ') || '(no caller contact captured)'
+
+  const subject = `[TZ Claire] ${target} paged via ${channelLabel}: ${args.briefMessage.slice(0, 70)}`
+
+  const bodyHtml = `
+    <div style="background:${headlineBanner.bg};border-left:4px solid ${headlineBanner.border};border-radius:8px;padding:16px 18px;margin-bottom:18px;">
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:${headlineBanner.color};font-weight:700;margin-bottom:6px;">${escapeHtml(headlineBanner.title)}</div>
+      <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;color:${headlineBanner.color};line-height:1.5;">
+        ${escapeHtml(headlineBanner.msg)}
+      </div>
+    </div>
+    <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:1.7;color:#1E293B;">
+      <strong>Caller asked for:</strong> ${escapeHtml(args.targetName)}${args.matchedStaffName && args.matchedStaffName.toLowerCase() !== args.targetName.toLowerCase() ? ` <span style="color:#6B7280;">(matched to ${escapeHtml(args.matchedStaffName)})</span>` : ''}<br />
+      <strong>Caller:</strong> ${escapeHtml(callerLine)}<br />
+      <strong>Channel:</strong> ${escapeHtml(channelLabel)}${args.attributionChannel ? ` · ${escapeHtml(args.attributionChannel)}` : ''}<br />
+      <strong>Message:</strong> ${escapeHtml(args.briefMessage)}
+    </div>`
+
+  const html = renderEmailLayout({
+    preheader: `${target} paged via ${channelLabel} (${headlineBanner.title}). Caller: ${callerLine}.`,
+    eyebrow: `Office page — ${channelLabel}`,
+    heading: `${target} was paged`,
+    intro: `Claire took a callback request for ${target} on ${channelLabel}. SMS status: ${headlineBanner.title}.`,
+    bodyHtml,
+    cta: { label: 'Open conversation in Switchboard', href: `${SITE_URL}/switchboard/call-logs` },
+  })
+
+  const text = [
+    `[TZ Claire] ${target} paged via ${channelLabel}`,
+    '',
+    `SMS status: ${headlineBanner.title}`,
+    args.smsError ? `Error: ${args.smsError}` : '',
+    '',
+    `Caller asked for: ${args.targetName}${args.matchedStaffName ? ' (matched to ' + args.matchedStaffName + ')' : ''}`,
+    `Caller: ${callerLine}`,
+    `Channel: ${channelLabel}${args.attributionChannel ? ' · ' + args.attributionChannel : ''}`,
+    `Message: ${args.briefMessage}`,
+    '',
+    `Open: ${SITE_URL}/switchboard/call-logs`,
+  ]
+    .filter(Boolean)
+    .join('\n')
+
+  await sendEmail({ subject, html, text })
+}

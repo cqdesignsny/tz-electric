@@ -33,8 +33,11 @@ import {
   sendClaireLeadCapturedEmail,
   sendEmergencyEscalationEmail,
   sendOfficeFlagEmail,
+  sendTeamMemberPagedEmail,
 } from './agent-notifications'
 import { classifyWindow, dispatchAfterHoursEmergencyImpl } from './after-hours-dispatch'
+import { lookupStaffMember } from './staff-directory'
+import { sendSms } from './twilio-outbound'
 
 export type AgentChannelLabel = 'sms' | 'voice' | 'web_chat'
 
@@ -243,6 +246,100 @@ export function buildAgentTools(ctx: AgentToolContext) {
           reason,
           priority,
           message: 'Office has been notified and will review this conversation.',
+        }
+      },
+    }),
+
+    notify_team_member: tool({
+      description:
+        'Page a SPECIFIC office staff member (Tyler / Ty / Terry / Molly / Sam / Mike / April etc.) directly via SMS to their cell, in addition to the normal office group email. Use ONLY when the caller has named a specific person they want to reach (returning a call, asking for someone specifically). The brief_message is a one-liner the staff member reads on their phone — include caller name, callback number, and what they want. If the caller did not name a specific person, use flag_for_office_review instead (this tool is for routed pages, not generic flags). If the named person is not in the staff directory or has no phone on file, this tool still fires the group office email and tells you what happened so you can decide what to say to the caller.',
+      inputSchema: z.object({
+        target_name: z
+          .string()
+          .describe(
+            "Staff member's first name as the caller said it. Full name also works. Examples: 'Ty', 'Tyler', 'Terry', 'Molly', 'Mike', 'April'.",
+          ),
+        caller_name: z
+          .string()
+          .describe("Caller's first name. Full name if you have it."),
+        caller_phone: z
+          .string()
+          .describe("Caller's callback phone, 10-digit US, any format."),
+        brief_message: z
+          .string()
+          .describe(
+            "One sentence the staff member reads on their phone. Include the caller's name, what they want, and the callback number. Example: 'Fran called returning your call about house access for today's job. Callback: 516-318-5276.'",
+          ),
+      }),
+      execute: async ({ target_name, caller_name, caller_phone, brief_message }) => {
+        const lookup = await lookupStaffMember(target_name)
+        let smsResult: 'sent' | 'no-phone' | 'send-failed' | 'no-match' = 'no-match'
+        let smsError: string | null = null
+        let matchedStaffName: string | null = null
+
+        if (lookup.matched) {
+          matchedStaffName = lookup.member.name
+          if (!lookup.member.phone) {
+            smsResult = 'no-phone'
+          } else {
+            const smsBody = `TZ Switchboard — ${brief_message}\n\nCaller: ${caller_name}\nCallback: ${caller_phone}\n\n(Sent by Claire on behalf of the caller. Reply or call back directly.)`
+            const sent = await sendSms({ to: lookup.member.phone, body: smsBody })
+            if (sent.ok) {
+              smsResult = 'sent'
+            } else {
+              smsResult = 'send-failed'
+              smsError = sent.error
+            }
+          }
+        }
+
+        // Always flag the conversation so it surfaces in /switchboard.
+        await escalateConversation(
+          ctx.conversationId,
+          `paged: ${target_name} (${smsResult})`,
+        )
+
+        // Always send the office group email — paper trail + fallback when
+        // the named person can't be reached.
+        try {
+          const sql = db()
+          type ConvRow = { attribution_channel: string | null }
+          const [conv] = (await sql`
+            SELECT attribution_channel
+            FROM tz_agent_conversations
+            WHERE id = ${ctx.conversationId}
+          `) as unknown as ConvRow[]
+          await sendTeamMemberPagedEmail({
+            conversationId: ctx.conversationId,
+            channel: ctx.channel,
+            targetName: target_name,
+            matchedStaffName,
+            smsResult,
+            smsError,
+            callerName: caller_name || null,
+            callerPhone: caller_phone || null,
+            briefMessage: brief_message,
+            attributionChannel: conv?.attribution_channel ?? null,
+          })
+        } catch (e) {
+          console.error('[agent-tools] notify_team_member email failed (non-fatal):', e)
+        }
+
+        const customerMessage =
+          smsResult === 'sent'
+            ? `Got it. I've sent ${matchedStaffName?.split(' ')[0] || target_name} a text with your name and callback so they can reach back out as soon as they're free. The office also has the message.`
+            : smsResult === 'no-phone'
+              ? `Got it. I've passed the message to the office so ${matchedStaffName?.split(' ')[0] || target_name} can reach back out as soon as they're free.`
+              : smsResult === 'no-match'
+                ? `Got it. I'm not sure I have a direct line for "${target_name}" — I've passed the message to the office and someone will reach back out as soon as possible.`
+                : `Got it. I've passed the message to the office and someone will reach back out as soon as possible.`
+
+        return {
+          ok: true,
+          sms_result: smsResult,
+          sms_error: smsError,
+          matched_staff_name: matchedStaffName,
+          message: customerMessage,
         }
       },
     }),

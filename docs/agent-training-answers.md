@@ -476,6 +476,29 @@ Not in the regular weekly rotation; escalate directly.
 - **Ty Stein** (On-Call Supervisor) — 845-334-1410
 - **Tyler Zitz** (Owner Escalation) — 845-549-9560
 
+### Office Staff Directory (SMS-routed callbacks)
+
+When a caller asks for a specific staff member by name, Claire uses `notify_team_member` to text that person's cell directly with the caller's name and callback number. This is in addition to the group office email — direct cell SMS gets the right person looking at it within seconds.
+
+Update this table whenever someone joins the office, changes their cell, or leaves. The match is by first name (case-insensitive) — full names work too. Aliases on the left of the slash also match (e.g. "Ty" → Ty Stein).
+
+| Name / Aliases | Cell | Role | Notes |
+|---|---|---|---|
+| Tyler / Tyler Zitz | 845-549-9560 | Owner | Final escalation. Don't ping unless caller explicitly asks for Tyler. |
+| Ty / Ty Stein | 845-334-1410 | On-Call Supervisor | Operations + scheduling. |
+| Sam / Sam Tigges | 845-242-0928 | Supervisor / Tech | On-call rotation + supervisor escalation chain. |
+| Terry / Terry Evanson | TBD | Office | Client care lead. Phone pending — Tyler to add. |
+| Molly | TBD | Office | Estimates coordinator. Phone pending — Tyler to add. |
+| Mike | TBD | Office | Phone pending — Tyler to add. |
+| April | TBD | Office | Client care. Phone pending — Tyler to add. |
+
+**Matching rules:**
+- Match by exact first name first. Then full name. Then first initial + last name. Case-insensitive in all cases.
+- If no match, `notify_team_member` falls back to `flag_for_office_review` (group email only) and tells Claire which name was unmatched so she can confirm with the caller.
+- Entries with "TBD" in the Cell column SKIP the SMS step (no number to text) and fall back to office email only.
+
+**Do not read a staff cell back to the caller.** SMS is private routing, the same way the on-call tech's number is private. If a caller insists on knowing a direct number, give them the office line at (518) 678-1230.
+
 ---
 
 ## 4. Existing vs New Customer Behavior
