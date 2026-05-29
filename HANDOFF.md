@@ -2,7 +2,39 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-05-29 morning, **session 26** (Dennis). See the **"✅ SESSION 26 UPDATE"** block at the top of the DENNIS section immediately below for what got done this session; the original session-25 task list and all prior history are preserved unchanged underneath it.
+**Last verified:** 2026-05-29 **end of day**, **session 26** (Dennis + Cesar). Session 26 is COMPLETE — see **"⭐ NEXT SESSION — START HERE"** directly below for the current state + prioritized open items. The detailed session-26 work log is in the **"✅ SESSION 26 UPDATE"** block further down; the original session-25 task list and all prior history are preserved underneath that.
+
+---
+
+## ⭐ NEXT SESSION — START HERE (picking up after session 26, 2026-05-29 EOD)
+
+Whoever picks this up (Cesar or Dennis): session 26 shipped a large batch, all verified in prod and pushed (HEAD `99ec4a3`). Repo is fully synced (local = origin). Start here.
+
+### Do these first (in order)
+1. **Re-check A2P, then flip SMS if approved.** At session-26 EOD it was still `campaign_status: IN_PROGRESS` (no errors) — carrier review hadn't finished. Re-check (command in "Key facts" below). **If it shows `REGISTERED`/`APPROVED`:** set `TWILIO_SMS_ENABLED=true` on the Vercel `tz-electric` Production env (CLI: `printf 'true' | npx vercel env add TWILIO_SMS_ENABLED production`, then redeploy — or via dashboard), then send a test page (`notify_team_member` or Twilio console) and confirm Messages status = `delivered`, not `undelivered/30034`. That instantly re-enables dispatch texts + staffer paging + inbound SMS Claire. **If it bounced:** pull the errors and fix+resubmit (can be done via the Twilio API — see session-26 A2P notes).
+2. **Place ONE test call to validate the session-26 voice changes** (all need a live call to confirm): barge-in (cough mid-sentence → she keeps going; say a word → she stops), `lookup_my_appointment` (from a recognized customer's number ask "what time is my appointment?"), proper-noun spelling (say "Saugerties"), accept-"no" (answer "no" → she moves on), opener A/B (note which greeting), Central Hudson routing (call from 845-452-2000/2010 or say "I'm from Central Hudson" → skips qualification). If barge-in feels off, tune `stopSpeakingPlan.numWords` (1→2) in the voice route, or revert that one commit.
+
+### Needs Tyler (blocked on his input — ask him)
+- **#4 Claire call transfer** — need the **exact extra HCP voicemail number** before building. Once we have it (and/or SMS is live), build in-call transfer + finish the 7d "route utility calls to a named staffer" follow-on (also needs Tyler to name which staffer).
+- **3 open questions** (from the 5/28 report): (a) use `notify_team_member` to text a named staffer on EVERY callback or only when urgent? (b) how much detail to capture on document/COI requests? (c) does TZ install customer-supplied EV chargers or source them? — answers unblock the **permit/COI KB entry** + small EV/notify prompt tweaks.
+
+### New this session for the team to start using
+- **Follow-Ups / Callbacks hub** is LIVE at `/switchboard/follow-ups` (owner/admin/office) — the live board of who Claire flagged for a callback, with a "Log outcome" action (booked/declined/no-answer/etc.) and a "Recently handled" audit section. Pairs with the new 6 PM **end-of-day recap email**.
+
+### What shipped session 26 (all live + verified, full details below)
+#3 HCP name sync (+ web/SMS), #5 dispatch visibility + Twilio delivery tracking, #6 user mgmt (name edit + disable), **EOD recap email**, **Follow-Ups hub** (+ outcomes), Nick-call voice fix, CRON_SECRET lockdown, 7a (accept "no"), 7b (opener A/B), 7c (appointment tool), 7d (Central Hudson routing), 7f (retry-cap), proper-noun spelling, barge-in tuning. Of the original 7 tasks: **#1–#3, #5, #6 done; #4 blocked; #7 fully worked.**
+
+### Key facts / gotchas (unchanged from session 25 unless noted)
+- **Env/secrets:** SSD `.env.local` has the full set; `CRON_SECRET` was added there + on Vercel session 26. Vercel CLI is authed as `cqdesignsny` with access to the **TZ Electric** team (not "CQ Marketing's projects" — the old empty shell). Project: `tz-electric` (`prj_wtBcaXPS6KOeXJniJroHRYnxiDtm`, team `team_rgs4fNAHW2dNT1fCPsjf5aVg`).
+- **A2P re-check command** (from `tz-site/`):
+  ```bash
+  export $(grep -E '^TWILIO_(ACCOUNT_SID|AUTH_TOKEN)=' .env.local | xargs)
+  curl -s -u "$TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN" \
+    "https://messaging.twilio.com/v1/Services/MGd889a7dbf8976d2b4363f47433741902/Compliance/Usa2p" | python3 -m json.tool
+  ```
+- **Deploy:** commit on `main` → post-commit hook pushes to GitHub → Vercel auto-deploys. Verify by hitting the prod URL (e.g., a page returns 307 to login = clean build). Don't run local dev to verify.
+- **Prompt changes are Cesar's domain** — several shipped session 26 at Dennis's direction; Cesar should review the `agent-prompt.ts` diffs.
+- **CRON_SECRET is set** — manual cron triggers now need `Authorization: Bearer <CRON_SECRET>` (value in `.env.local`).
 
 ---
 

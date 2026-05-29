@@ -325,6 +325,8 @@ The persona for all customer-facing agents is **Claire** (warm / neighborly / pr
 
 ## What's next (in build order)
 
+> **Current priorities live in `HANDOFF.md` → "⭐ NEXT SESSION — START HERE"** (updated 2026-05-29 EOD, session 26). In short: (1) re-check A2P and flip `TWILIO_SMS_ENABLED` if approved; (2) one test call to validate the session-26 voice changes; (3) Tyler-dependent items — #4 transfer (needs the HCP voicemail number), the permit/COI KB entry, and 3 open policy questions. The numbered list below is the older session-22 backlog, kept for reference.
+
 Voice Claire is now fully live end-to-end as of session 22 (2026-05-27) — HCP Phone Pro routing flipped, Vapi tool-call parser bug fixed (every tool call since launch had been failing silently), brevity/voicemail/intake/transfer prompt rules added, after-hours emergency routing safety net deployed. Next priorities:
 
 1. **Verify session-22 hotfixes on Tyler's next test call.** Three things to confirm once the deploy lands: (a) `dispatch_after_hours_emergency` actually fires after-hours and pages Jimmy Neville (this week's on-call) — verify via `tz_emergency_dispatches` row and `/switchboard/call-logs` tool-call rows; (b) Claire's replies are noticeably shorter (brevity rule), not reciting hours/office number unprompted; (c) voicemail intent works end-to-end (caller says "leave a message" → Claire invites + stays silent + `flag_for_office_review` afterward).
