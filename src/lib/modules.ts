@@ -26,6 +26,7 @@ export type ModuleSlug =
   | 'warehouse-inventory'
   | 'sales-outbound'
   | 'cost-analysis'
+  | 'after-hours'
   | 'users'
 
 export type ModuleEntry = {
@@ -63,6 +64,12 @@ export const MODULES: ModuleEntry[] = [
     label: 'Employee Training',
     category: 'operations',
     defaultRoles: ['owner', 'admin', 'office', 'viewer'],
+  },
+  {
+    slug: 'after-hours',
+    label: 'After-Hours Dispatch',
+    category: 'operations',
+    defaultRoles: ['owner', 'admin'],
   },
   // AI Agents
   {

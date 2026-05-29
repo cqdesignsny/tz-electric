@@ -98,6 +98,21 @@ export const NAV_SECTIONS: NavSection[] = [
         needs: [],
       },
       {
+        label: 'After-Hours Dispatch',
+        slug: 'after-hours',
+        status: 'live',
+        tagline: 'Every after-hours emergency, who we paged, and whether it got through.',
+        overview:
+          "When a customer reports an emergency after hours, Claire runs the dispatch cascade — texting and calling the on-call tech, escalating to the supervisor, and calling the customer back if no one responds. This page shows each emergency and its full attempt ladder with the REAL delivery status of every text and call (delivered, failed, error code), so the office can confirm the tech was actually reached instead of assuming. Owner + admin only.",
+        willDo: [
+          'One card per after-hours emergency with customer, issue, and status',
+          'Full attempt ladder: T+0 / T+15 / T+30 (supervisor) / T+60 (customer callback)',
+          'Real per-attempt delivery status from Twilio (delivered / failed + error code)',
+          'Surfaces SMS carrier rejections (e.g. 30034) that used to be invisible',
+        ],
+        needs: [],
+      },
+      {
         label: 'Employee Training',
         slug: 'employee-training',
         status: 'planned',

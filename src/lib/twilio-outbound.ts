@@ -39,6 +39,18 @@ function basicAuth(sid: string, token: string): string {
 }
 
 /**
+ * Public URL Twilio POSTs delivery/call status updates to. Lets us record the
+ * REAL final status (delivered / undelivered / failed + error code) of each
+ * dispatch text/call instead of only the initial "Twilio accepted" status.
+ * Handled by /api/webhooks/twilio-delivery. Additive: setting StatusCallback
+ * does not change send behavior, it just asks Twilio to report back.
+ */
+export function statusCallbackUrl(): string {
+  const base = process.env.NEXT_PUBLIC_BASE_URL || 'https://tzelectricinc.com'
+  return `${base.replace(/\/$/, '')}/api/webhooks/twilio-delivery`
+}
+
+/**
  * Outbound SMS master switch. Until the Twilio number clears A2P 10DLC
  * registration, every outbound SMS is silently rejected by carriers with
  * error 30034 ("message from unregistered number"). Verified 2026-05-28:
@@ -81,6 +93,9 @@ export async function sendSms(input: SendSmsInput): Promise<TwilioOutboundResult
     To: normalizePhoneE164(input.to),
     From: creds.from,
     Body: input.body,
+    // Ask Twilio to POST delivery status (delivered / undelivered / failed +
+    // ErrorCode) back so we can record real delivery, not just "accepted".
+    StatusCallback: statusCallbackUrl(),
   })
 
   try {
@@ -112,6 +127,10 @@ export async function placeCall(input: PlaceCallInput): Promise<TwilioOutboundRe
   const params = new URLSearchParams({
     To: normalizePhoneE164(input.to),
     From: creds.from,
+    // Report the final call outcome (completed / no-answer / busy / failed)
+    // back to our webhook so the dispatch ladder shows real delivery.
+    StatusCallback: statusCallbackUrl(),
+    StatusCallbackEvent: 'completed',
   })
 
   if (input.twimlUrl) {
