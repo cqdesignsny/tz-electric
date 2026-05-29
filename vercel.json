@@ -16,6 +16,10 @@
     {
       "path": "/api/cron/hcp-customer-sync",
       "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/end-of-day-flags",
+      "schedule": "30 21 * * *"
     }
   ]
 }

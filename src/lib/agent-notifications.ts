@@ -12,9 +12,9 @@
  */
 import { renderEmailLayout } from './email-templates'
 
-const SITE_URL = 'https://tzelectricinc.com'
+export const SITE_URL = 'https://tzelectricinc.com'
 
-function escapeHtml(input: string): string {
+export function escapeHtml(input: string): string {
   return input
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -43,7 +43,7 @@ function getResendConfig() {
   return { apiKey, from, replyTo }
 }
 
-async function sendEmail(args: {
+export async function sendEmail(args: {
   subject: string
   html: string
   text: string
