@@ -151,6 +151,50 @@ export async function setUserRole(
   return rows[0]
 }
 
+/**
+ * Update a user's display name. Owner-only. Used to fix names that came in
+ * wrong/lowercased from the OAuth profile (e.g. "mike" -> "Mike Smith").
+ * Does not touch role or access. Audit-logged.
+ */
+export async function setUserName(
+  email: string,
+  name: string,
+  actor: { email: string; role: UserRole },
+): Promise<TzUser> {
+  if (actor.role !== 'owner') {
+    throw new Error('Only owners can edit user names')
+  }
+  const target = email.toLowerCase()
+  const clean = name.trim().slice(0, 80)
+  if (!clean) {
+    throw new Error('Name cannot be empty')
+  }
+
+  const sql = db()
+  const rows = (await sql`
+    UPDATE tz_users
+    SET name = ${clean},
+        updated_at = NOW()
+    WHERE email = ${target}
+    RETURNING *
+  `) as TzUser[]
+  if (rows.length === 0) throw new Error(`No user with email ${target}`)
+
+  await sql`
+    INSERT INTO tz_audit_log (actor_email, actor_role, action, target_type, target_id, metadata)
+    VALUES (
+      ${actor.email.toLowerCase()},
+      ${actor.role},
+      ${'user.name_changed'},
+      ${'user'},
+      ${target},
+      ${JSON.stringify({ new_name: clean })}::jsonb
+    )
+  `
+
+  return rows[0]
+}
+
 export async function inviteUser(
   email: string,
   role: UserRole,

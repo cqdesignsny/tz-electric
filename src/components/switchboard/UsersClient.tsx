@@ -56,6 +56,16 @@ export default function UsersClient({ users, actorEmail }: Props) {
     )
   }
 
+  function renameUser(email: string, name: string) {
+    call(() =>
+      fetch('/api/switchboard/users/name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name }),
+      }),
+    )
+  }
+
   function invite(e: React.FormEvent) {
     e.preventDefault()
     const email = inviteEmail.trim().toLowerCase()
@@ -147,6 +157,7 @@ export default function UsersClient({ users, actorEmail }: Props) {
                   }
                   onRoleChange={(role) => changeRole(u.email, role)}
                   onSavePermissions={(perms) => setPermissions(u.email, perms)}
+                  onRename={(name) => renameUser(u.email, name)}
                 />
               )
             })}
@@ -169,6 +180,7 @@ function UserRow({
   onToggleExpand,
   onRoleChange,
   onSavePermissions,
+  onRename,
 }: {
   user: TzUser
   isSelf: boolean
@@ -177,20 +189,81 @@ function UserRow({
   onToggleExpand: () => void
   onRoleChange: (role: UserRole) => void
   onSavePermissions: (perms: Record<string, boolean>) => void
+  onRename: (name: string) => void
 }) {
   const isOwnerLocked = user.role === 'owner'
+  const isDisabled = Boolean(user.disabled_at) || user.role === 'disabled'
+  const [editingName, setEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState(user.name || '')
+
+  function saveName() {
+    const next = nameDraft.trim()
+    if (next && next !== (user.name || '')) onRename(next)
+    setEditingName(false)
+  }
+
   return (
     <>
       <tr>
         <td className="px-4 py-3">
-          <div className="font-semibold text-navy dark:text-white">
-            {user.name || user.email.split('@')[0]}
-            {isSelf && (
-              <span className="ml-2 text-[10px] uppercase tracking-wider text-blue dark:text-blue-light/80">
-                You
-              </span>
-            )}
-          </div>
+          {editingName ? (
+            <div className="flex items-center gap-1.5">
+              <input
+                autoFocus
+                value={nameDraft}
+                onChange={(e) => setNameDraft(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') saveName()
+                  if (e.key === 'Escape') {
+                    setNameDraft(user.name || '')
+                    setEditingName(false)
+                  }
+                }}
+                maxLength={80}
+                disabled={isPending}
+                className="rounded-lg border border-gray-300 dark:border-navy-light/60 bg-white dark:bg-[#0A1128] px-2 py-1 text-sm text-navy dark:text-white focus:border-blue focus:outline-none focus:ring-2 focus:ring-blue/30 disabled:opacity-60"
+              />
+              <button
+                type="button"
+                onClick={saveName}
+                disabled={isPending}
+                className="text-xs font-bold text-blue dark:text-blue-light hover:underline disabled:opacity-50"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setNameDraft(user.name || '')
+                  setEditingName(false)
+                }}
+                className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="font-semibold text-navy dark:text-white flex items-center gap-1.5 group">
+              {user.name || <span className="italic text-gray-400">{user.email.split('@')[0]}</span>}
+              {isSelf && (
+                <span className="text-[10px] uppercase tracking-wider text-blue dark:text-blue-light/80">
+                  You
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setNameDraft(user.name || '')
+                  setEditingName(true)
+                }}
+                disabled={isPending}
+                title="Edit name"
+                className="text-[11px] text-gray-400 hover:text-blue dark:hover:text-blue-light opacity-60 hover:opacity-100 disabled:opacity-30"
+              >
+                ✎
+              </button>
+            </div>
+          )}
           <div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             {user.email}
           </div>
@@ -256,14 +329,43 @@ function UserRow({
               Full access
             </span>
           ) : (
-            <button
-              type="button"
-              onClick={onToggleExpand}
-              disabled={isPending}
-              className="text-xs font-semibold rounded-full border border-gray-300 dark:border-navy-light/60 px-3 py-1 text-navy dark:text-white hover:border-blue hover:text-blue disabled:opacity-50"
-            >
-              {isExpanded ? 'Close' : 'Customize access'}
-            </button>
+            <div className="flex items-center justify-end gap-2">
+              <button
+                type="button"
+                onClick={onToggleExpand}
+                disabled={isPending}
+                className="text-xs font-semibold rounded-full border border-gray-300 dark:border-navy-light/60 px-3 py-1 text-navy dark:text-white hover:border-blue hover:text-blue disabled:opacity-50"
+              >
+                {isExpanded ? 'Close' : 'Customize access'}
+              </button>
+              {isDisabled ? (
+                <button
+                  type="button"
+                  onClick={() => onRoleChange('office')}
+                  disabled={isPending}
+                  className="text-xs font-semibold rounded-full border border-emerald-300 dark:border-emerald-700/60 px-3 py-1 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 disabled:opacity-50"
+                  title="Re-enable this user (restores access as 'office'; adjust role after if needed)"
+                >
+                  Re-enable
+                </button>
+              ) : (
+                !isSelf && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (confirm(`Disable ${user.name || user.email}? They lose Switchboard access immediately. You can re-enable them anytime.`)) {
+                        onRoleChange('disabled')
+                      }
+                    }}
+                    disabled={isPending}
+                    className="text-xs font-semibold rounded-full border border-red-300 dark:border-red-800/60 px-3 py-1 text-red-700 dark:text-red-300 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-50"
+                    title="Soft-disable: blocks access but preserves the account + history"
+                  >
+                    Disable
+                  </button>
+                )
+              )}
+            </div>
           )}
         </td>
       </tr>
