@@ -61,8 +61,22 @@ const VOICE_ID = process.env.VAPI_VOICE_ID || 'jBpfuIE2acCO8z3wKNLl' // Jenny on
 const MODEL_PROVIDER = process.env.VAPI_MODEL_PROVIDER || 'anthropic'
 const MODEL_NAME = process.env.VAPI_MODEL_NAME || 'claude-3-5-sonnet-20241022'
 
-const OPENER =
+// Opener A/B test (added 2026-05-29). Session-24 analyzer flagged ~8 calls
+// where the caller heard the opener and hung up. We serve one of two openers
+// at random per call to test whether a shorter greeting reduces early
+// hang-ups. Both keep the required "smart assistant" disclosure (persona rule).
+// Measurement is free: the chosen opener is captured verbatim as the first
+// assistant message in each transcript, so the nightly analyzer / a simple
+// query can compare hang-up rates by opener text — no extra schema needed.
+// To end the test, set both constants to the winner.
+const OPENER_A =
   'Hi, thanks for calling TZ Electric, Plumbing, Heating, and Cooling. This is Claire, your smart assistant. How can I help you today?'
+const OPENER_B =
+  'Hi, thanks for calling TZ Electric. This is Claire, your smart assistant — what can I do for you?'
+
+function pickOpener(): string {
+  return Math.random() < 0.5 ? OPENER_A : OPENER_B
+}
 
 type VapiCall = {
   id: string
@@ -258,7 +272,7 @@ async function handleAssistantRequest(message: VapiServerMessage) {
 
   return NextResponse.json({
     assistant: {
-      firstMessage: OPENER,
+      firstMessage: pickOpener(),
       voice: { provider: VOICE_PROVIDER, voiceId: VOICE_ID },
       model: {
         provider: MODEL_PROVIDER,
