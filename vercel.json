@@ -19,7 +19,7 @@
     },
     {
       "path": "/api/cron/end-of-day-flags",
-      "schedule": "30 21 * * *"
+      "schedule": "0 22,23 * * *"
     }
   ]
 }
