@@ -49,6 +49,21 @@ export const NAV_SECTIONS: NavSection[] = [
         needs: [],
       },
       {
+        label: 'Follow-Ups',
+        slug: 'follow-ups',
+        status: 'live',
+        tagline: 'Everyone Claire flagged for a callback, in one place.',
+        overview:
+          "The live, always-on version of the end-of-day recap email. Every callback Claire flagged (a message for a specific staffer, or a general office flag) shows here, grouped by who it's for, until someone marks it handled. Anyone with access can open it any time and see who still needs a call back without digging through email. Owner, admin, and office.",
+        willDo: [
+          'Open callbacks grouped by the person they were flagged for, plus a general office bucket',
+          'Customer name, click-to-call number, Claire\'s note, time, and a deep link to the conversation',
+          'One-click "Mark done" to clear an item as it gets handled (and reopen if needed)',
+          'Pairs with the 6 PM recap email — the email nudges, this board is the live list',
+        ],
+        needs: [],
+      },
+      {
         label: 'Lead Pipeline',
         slug: 'lead-pipeline',
         status: 'live',

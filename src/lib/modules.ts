@@ -27,6 +27,7 @@ export type ModuleSlug =
   | 'sales-outbound'
   | 'cost-analysis'
   | 'after-hours'
+  | 'follow-ups'
   | 'users'
 
 export type ModuleEntry = {
@@ -46,6 +47,12 @@ export const MODULES: ModuleEntry[] = [
     label: 'Lead Pipeline',
     category: 'operations',
     defaultRoles: ['owner', 'admin', 'office', 'viewer'],
+  },
+  {
+    slug: 'follow-ups',
+    label: 'Follow-Ups',
+    category: 'operations',
+    defaultRoles: ['owner', 'admin', 'office'],
   },
   {
     slug: 'reports',
