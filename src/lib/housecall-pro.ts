@@ -727,6 +727,64 @@ export async function getLead(leadId: string): Promise<HCPLead | null> {
   }
 }
 
+export type UpcomingJob = {
+  jobId: string
+  scheduledStart: string // ISO
+  scheduledEnd: string | null
+  arrivalWindowMinutes: number | null
+  description: string | null
+}
+
+/**
+ * Read-only: return a customer's SOONEST upcoming scheduled job, or null.
+ * Used by the `lookup_my_appointment` tool so Claire can answer "what time is
+ * my appointment?" — privacy rule (KB §4): upcoming only, never history.
+ * Filters server-side by customer_id (verified working), then keeps only
+ * future, non-canceled/non-completed scheduled jobs and takes the soonest.
+ */
+export async function getUpcomingJobForCustomer(hcpCustomerId: string): Promise<UpcomingJob | null> {
+  try {
+    const data = await hcpFetch(`/jobs?customer_id=${encodeURIComponent(hcpCustomerId)}&page=1&page_size=100`)
+    const jobs: Array<{
+      id: string
+      description?: string | null
+      work_status?: string | null
+      canceled_at?: string | null
+      deleted_at?: string | null
+      schedule?: { scheduled_start?: string | null; scheduled_end?: string | null; arrival_window?: number | null } | null
+    }> = data.jobs || []
+
+    const now = Date.now()
+    const upcoming = jobs
+      .filter((j) => {
+        const start = j.schedule?.scheduled_start
+        if (!start) return false
+        if (new Date(start).getTime() < now) return false
+        if (j.canceled_at || j.deleted_at) return false
+        const ws = (j.work_status || '').toLowerCase()
+        if (['canceled', 'cancelled', 'completed', 'complete', 'pro canceled'].includes(ws)) return false
+        return true
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.schedule!.scheduled_start!).getTime() - new Date(b.schedule!.scheduled_start!).getTime(),
+      )
+
+    const j = upcoming[0]
+    if (!j) return null
+    return {
+      jobId: j.id,
+      scheduledStart: j.schedule!.scheduled_start!,
+      scheduledEnd: j.schedule?.scheduled_end ?? null,
+      arrivalWindowMinutes: j.schedule?.arrival_window ?? null,
+      description: j.description ?? null,
+    }
+  } catch (e) {
+    console.error('[hcp] getUpcomingJobForCustomer failed:', e)
+    return null
+  }
+}
+
 export async function tagExistingCustomer(customerId: string, planInfo: PlanInfo): Promise<void> {
   const tag = `${planInfo.planName}-${planInfo.billingCycle}`
   const note = `ONLINE SIGNUP: ${planInfo.templateName} (${planInfo.billingCycle}, $${planInfo.amount}${planInfo.frequency === 'monthly' || planInfo.frequency === '3year' ? '/mo' : '/yr'}). Paid via Stripe on ${new Date().toISOString().split('T')[0]}. Needs manual plan assignment in HCP.`

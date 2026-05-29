@@ -26,8 +26,10 @@ import {
   createEstimateForLead,
   createInboxLeadForEstimate,
   findExistingCustomer,
+  getUpcomingJobForCustomer,
   type HCPCustomer,
 } from './housecall-pro'
+import { normalizeMobile10 } from './hcp-customers'
 import { attachHcpEstimate, attachHcpLeadId, insertLead } from './leads-store'
 import {
   sendClaireLeadCapturedEmail,
@@ -197,6 +199,13 @@ export function buildAgentTools(ctx: AgentToolContext) {
         "Return TZ Electric's current business hours and whether the office is open right now. Use to decide between business-hours and after-hours dispatch routing.",
       inputSchema: z.object({}),
       execute: async () => lookupBusinessHoursImpl(),
+    }),
+
+    lookup_my_appointment: tool({
+      description:
+        "Look up the CALLER'S OWN next upcoming appointment when they ask something like \"what time is my appointment?\" or \"when are you coming out?\". Identifies the caller by the phone number they are calling from — takes no arguments. Privacy: returns ONLY the soonest upcoming appointment (never past visits, never anyone else's). If the number is not recognized or matches more than one customer, it returns found=false with a reason; in that case do NOT guess — take a message via flag_for_office_review instead.",
+      inputSchema: z.object({}),
+      execute: async () => lookupMyAppointmentImpl(ctx),
     }),
 
     flag_for_office_review: tool({
@@ -783,6 +792,82 @@ function buildAgentEstimateNotes(
     lines.push(`Heard via: ${input.referral_source}`)
   }
   return lines.join('\n')
+}
+
+/**
+ * Read-only appointment lookup for the caller. Identifies them by the phone on
+ * the conversation (their inbound caller ID), requires an UNAMBIGUOUS single
+ * match in the synced HCP customer mirror (tz_hcp_customers), and returns only
+ * the SOONEST upcoming job. Declines (found=false) on no-number, no-match, or
+ * multiple-matches so Claire never discloses the wrong person's schedule or
+ * past history. Purely additive — does not touch any other tool.
+ */
+async function lookupMyAppointmentImpl(ctx: AgentToolContext) {
+  const sql = db()
+  const convRows = (await sql`
+    SELECT customer_phone FROM tz_agent_conversations WHERE id = ${ctx.conversationId} LIMIT 1
+  `) as Array<{ customer_phone: string | null }>
+  const phone10 = normalizeMobile10(convRows[0]?.customer_phone ?? null)
+  if (!phone10) {
+    return {
+      found: false,
+      reason: 'no_caller_number',
+      message:
+        "I can't see the number you're calling from, so I can't pull up your appointment from here. I can take a message for the office instead.",
+    }
+  }
+
+  const matches = (await sql`
+    SELECT hcp_customer_id FROM tz_hcp_customers WHERE mobile_phone = ${phone10}
+  `) as Array<{ hcp_customer_id: string }>
+  if (matches.length === 0) {
+    return {
+      found: false,
+      reason: 'not_recognized',
+      message:
+        "I don't see this number in our system, so I can't confirm an appointment from here. I can take a message and have the office follow up.",
+    }
+  }
+  if (matches.length > 1) {
+    return {
+      found: false,
+      reason: 'ambiguous',
+      message:
+        "I see more than one account on this number, so I can't safely confirm an appointment. I can take a message for the office.",
+    }
+  }
+
+  const job = await getUpcomingJobForCustomer(matches[0].hcp_customer_id)
+  if (!job) {
+    return {
+      found: false,
+      reason: 'no_upcoming',
+      message:
+        "I don't see an upcoming appointment scheduled on your account. Want me to have the office reach out to set one up?",
+    }
+  }
+
+  const start = new Date(job.scheduledStart)
+  const date = start.toLocaleDateString('en-US', {
+    timeZone: 'America/New_York',
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+  })
+  const time = start.toLocaleTimeString('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
+  return {
+    found: true,
+    date,
+    time,
+    arrival_window_minutes: job.arrivalWindowMinutes,
+    description: job.description,
+    message: `Your next appointment is ${date}, with the technician's arrival window starting around ${time}.`,
+  }
 }
 
 function lookupBusinessHoursImpl() {
