@@ -29,7 +29,7 @@ import {
   getUpcomingJobForCustomer,
   type HCPCustomer,
 } from './housecall-pro'
-import { normalizeMobile10 } from './hcp-customers'
+import { lookupHcpCustomerByPhone, normalizeMobile10 } from './hcp-customers'
 import { attachHcpEstimate, attachHcpLeadId, insertLead } from './leads-store'
 import {
   sendClaireLeadCapturedEmail,
@@ -111,6 +111,24 @@ export function buildAgentTools(ctx: AgentToolContext) {
                 updated_at     = NOW()
             WHERE id = ${ctx.conversationId}
           `
+          // #3 phase-2: silently link the HCP customer record when this phone
+          // matches our synced mirror — same recognition the voice path does at
+          // call start, now applied to web chat / SMS (both capture the phone
+          // here). Attaches hcp_customer_id for the office; does NOT change
+          // Claire's behavior or her opener. Non-fatal, never overwrites.
+          try {
+            const hcpMatch = await lookupHcpCustomerByPhone(normalizedPhone)
+            if (hcpMatch) {
+              await sql`
+                UPDATE tz_agent_conversations
+                SET hcp_customer_id = COALESCE(hcp_customer_id, ${hcpMatch.hcpCustomerId}),
+                    updated_at = NOW()
+                WHERE id = ${ctx.conversationId}
+              `
+            }
+          } catch (linkErr) {
+            console.error('[agent-tools] HCP customer link (non-fatal):', linkErr)
+          }
           return {
             ok: true,
             saved: {
