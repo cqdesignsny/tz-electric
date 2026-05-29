@@ -136,16 +136,56 @@ export async function getOpenFollowUps(daysBack = 14): Promise<OpenFollowUps> {
   return { person, personDisplay, general, total: rows.length }
 }
 
-/** Mark a callback handled (presence of a row = done). Idempotent. */
-export async function resolveFollowUp(flagMessageId: string, email: string | null): Promise<void> {
+/** Mark a callback handled with an outcome (presence of a row = done). Idempotent. */
+export async function resolveFollowUp(
+  flagMessageId: string,
+  email: string | null,
+  outcome: string | null = null,
+  note: string | null = null,
+): Promise<void> {
   const sql = db()
   await sql`
-    INSERT INTO tz_followup_resolutions (flag_message_id, resolved_by_email)
-    VALUES (${flagMessageId}, ${email})
+    INSERT INTO tz_followup_resolutions (flag_message_id, resolved_by_email, outcome, note)
+    VALUES (${flagMessageId}, ${email}, ${outcome}, ${note})
     ON CONFLICT (flag_message_id) DO UPDATE SET
       resolved_by_email = EXCLUDED.resolved_by_email,
+      outcome = EXCLUDED.outcome,
+      note = EXCLUDED.note,
       resolved_at = NOW()
   `
+}
+
+export type ResolvedFollowUp = FollowUpItem & {
+  outcome: string | null
+  note: string | null
+  resolvedByEmail: string | null
+  resolvedAt: string
+}
+
+/** Recently-handled callbacks (last `daysBack` days) with their outcome, so the
+ *  board shows that the call was actually made and what came of it. */
+export async function getRecentlyHandled(daysBack = 7): Promise<ResolvedFollowUp[]> {
+  const sql = db()
+  const cutoff = new Date(Date.now() - daysBack * 86_400_000).toISOString()
+  const rows = (await sql`
+    SELECT m.id AS flag_message_id, m.tool_name, m.tool_input, m.created_at,
+           c.id AS conversation_id, c.channel, c.customer_name, c.customer_phone,
+           r.outcome, r.note, r.resolved_by_email, r.resolved_at
+    FROM tz_followup_resolutions r
+    JOIN tz_agent_messages m ON m.id = r.flag_message_id
+    JOIN tz_agent_conversations c ON c.id = m.conversation_id
+    WHERE r.resolved_at >= ${cutoff}
+    ORDER BY r.resolved_at DESC
+    LIMIT 100
+  `) as Array<Row & { outcome: string | null; note: string | null; resolved_by_email: string | null; resolved_at: string }>
+
+  return rows.map((row) => ({
+    ...toItem(row),
+    outcome: row.outcome,
+    note: row.note,
+    resolvedByEmail: row.resolved_by_email,
+    resolvedAt: row.resolved_at,
+  }))
 }
 
 /** Reopen a callback (remove the resolution). */

@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 import FollowUpsClient, { type FollowUpGroup } from '@/components/switchboard/FollowUpsClient'
 import { requireModuleAccess } from '@/lib/current-user'
-import { getOpenFollowUps } from '@/lib/followups'
+import { getOpenFollowUps, getRecentlyHandled, type ResolvedFollowUp } from '@/lib/followups'
 
 export const metadata: Metadata = { title: 'Follow-Ups' }
 export const dynamic = 'force-dynamic'
@@ -13,11 +13,13 @@ export default async function FollowUpsPage() {
 
   let groups: FollowUpGroup[] = []
   let total = 0
+  let recentlyHandled: ResolvedFollowUp[] = []
   let error: string | null = null
 
   try {
-    const open = await getOpenFollowUps(14)
+    const [open, handled] = await Promise.all([getOpenFollowUps(14), getRecentlyHandled(7)])
     total = open.total
+    recentlyHandled = handled
     // Person groups first (alphabetical by display name), then General office.
     const personGroups: FollowUpGroup[] = [...open.person.entries()]
       .map(([key, items]) => ({ label: open.personDisplay.get(key) || key, items }))
@@ -57,7 +59,7 @@ export default async function FollowUpsPage() {
         </div>
       )}
 
-      {!error && <FollowUpsClient groups={groups} total={total} />}
+      {!error && <FollowUpsClient groups={groups} total={total} recentlyHandled={recentlyHandled} />}
     </div>
   )
 }
