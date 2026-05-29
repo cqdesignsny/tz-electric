@@ -38,6 +38,7 @@ import {
 } from '@/lib/agent-conversations'
 import { buildSystemPrompt } from '@/lib/agent-prompt'
 import { db } from '@/lib/db'
+import { lookupHcpCustomerByPhone } from '@/lib/hcp-customers'
 import {
   buildVapiFunctionDefinitions,
   executeVapiToolCall,
@@ -216,16 +217,34 @@ async function handleAssistantRequest(message: VapiServerMessage) {
   const callerPhone = normalizePhone(call.customer?.number ?? null)
   const callerName = call.customer?.name?.trim() || null
 
+  // Silent returning-customer recognition. If this caller's number matches a
+  // customer in our nightly-synced HCP mirror, attach their name + HCP id to
+  // the conversation row so the call logs show a name instead of a bare
+  // number. Non-fatal: lookupHcpCustomerByPhone never throws, returns null on
+  // miss/error so a cold caller is unaffected.
+  //
+  // DESIGN (locked session 25): this is SILENT. The matched name is attached
+  // to the conversation row ONLY — it is deliberately NOT passed into
+  // buildSystemPrompt, so Claire does not greet by name (avoids creepiness +
+  // wrong-name-on-shared-line). Letting Claire use known details to skip
+  // re-collecting info is a separate, prompt-level phase 2 that routes through
+  // Cesar.
+  const hcpMatch = await lookupHcpCustomerByPhone(callerPhone)
+
   // Idempotent: if Vapi retries the assistant-request for the same call
   // id, reuse the existing conversation row instead of creating a dup.
   const conversation = await findOrStartConversation({
     channel: 'voice',
     customerPhone: callerPhone,
-    customerName: callerName,
+    customerName: hcpMatch?.fullName ?? callerName,
+    hcpCustomerId: hcpMatch?.hcpCustomerId ?? null,
     attributionChannel: 'Voice Claire',
     externalCallId: call.id,
   })
 
+  // NOTE: customerName intentionally NOT set from hcpMatch here — see the
+  // silent-recognition design note above. Pass only Vapi's own caller name
+  // (almost always null for cold inbound), keeping Claire's opener generic.
   const systemPrompt = await buildSystemPrompt({
     channel: 'voice',
     customerPhone: callerPhone,

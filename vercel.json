@@ -12,6 +12,10 @@
     {
       "path": "/api/cron/claire-daily-analysis",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/hcp-customer-sync",
+      "schedule": "0 7 * * *"
     }
   ]
 }
