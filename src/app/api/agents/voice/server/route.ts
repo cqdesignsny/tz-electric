@@ -303,6 +303,25 @@ async function handleAssistantRequest(message: VapiServerMessage) {
       silenceTimeoutSeconds: 30,
       maxDurationSeconds: 900, // 15 min hard cap (matches the prompt rule)
       backchannelingEnabled: false,
+      // Interruption (barge-in) tuning — added 2026-05-29. Default behavior
+      // stopped Claire on ANY detected audio (numWords 0), so a cough, a
+      // background bump, or line static would cut her off mid-sentence and
+      // then leave dead air (nothing real to respond to). Tuned so a stray
+      // sub-word sound does NOT stop her, but an actual word does:
+      //   numWords: 1     — require at least one real (transcribed) word; a
+      //                     non-word blip won't interrupt her.
+      //   voiceSeconds: 0.3 — need a brief sustained moment of speech, not a
+      //                     momentary spike, to count as the caller talking.
+      //   backoffSeconds: 1.0 — wait ~1s after a real interruption to resume.
+      // Dial numWords to 2 if it's still too sensitive on noisy lines.
+      stopSpeakingPlan: {
+        numWords: 1,
+        voiceSeconds: 0.3,
+        backoffSeconds: 1.0,
+      },
+      // Filter ambient/line noise so background sound isn't mistaken for the
+      // caller speaking (works with the stopSpeakingPlan above).
+      backgroundDenoisingEnabled: true,
       // Vapi defaults a transcriber (Deepgram) and the call will use
       // whatever's set in the assistant dashboard if we omit it. We
       // leave it default to avoid pinning a provider.
