@@ -78,6 +78,13 @@ function pickOpener(): string {
   return Math.random() < 0.5 ? OPENER_A : OPENER_B
 }
 
+// Known Central Hudson (local utility) numbers, normalized to 10 digits.
+// A call from one of these skips the homeowner qualification flow and routes
+// to the office (utility/business coordination, not a lead). Recognition only —
+// Claire never proactively asks anyone whether they're from a utility. Add more
+// numbers here if the utility calls from additional lines.
+const CENTRAL_HUDSON_NUMBERS = new Set(['8454522000', '8454522010'])
+
 type VapiCall = {
   id: string
   customer?: { number?: string | null; name?: string | null } | null
@@ -263,6 +270,10 @@ async function handleAssistantRequest(message: VapiServerMessage) {
     channel: 'voice',
     customerPhone: callerPhone,
     customerName: callerName,
+    // Known Central Hudson (utility) numbers → skip homeowner qualification and
+    // route to the office. Recognition only; Claire never asks anyone if they
+    // are from a utility (per Dennis 2026-05-29).
+    utilityCaller: callerPhone ? CENTRAL_HUDSON_NUMBERS.has(callerPhone) : false,
   })
 
   const tools = buildVapiFunctionDefinitions({

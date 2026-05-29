@@ -29,6 +29,9 @@ export type BuildSystemPromptInput = {
   channel: CustomerAgentChannel
   customerPhone?: string | null
   customerName?: string | null
+  /** Set when the caller is dialing from a known Central Hudson utility
+   *  number — skip homeowner qualification and route to the office. */
+  utilityCaller?: boolean
   /** When the office is in takeover mode, the agent should NOT reply. */
   takeoverActive?: boolean
 }
@@ -386,6 +389,11 @@ export async function buildSystemPrompt(input: BuildSystemPromptInput): Promise<
   if (input.customerPhone) {
     sections.push(`The customer's phone is ${input.customerPhone}.`)
   }
+  if (input.utilityCaller) {
+    sections.push(
+      'IMPORTANT: This caller is dialing from a number we associate with Central Hudson (the local utility). Treat this as a utility / business coordination call, NOT a homeowner lead. Do NOT run the qualification flow. Greet them, find out in one or two questions what they need (which job, address, or coordination matter), and route it to the office with flag_for_office_review (reason beginning "Central Hudson utility call:"). Do not collect homeowner project details or pitch an estimate. You do NOT need to ask whether they are from Central Hudson — the number already tells us.',
+    )
+  }
 
   sections.push(CHANNEL_FRAMING[input.channel])
 
@@ -477,6 +485,12 @@ export async function buildSystemPrompt(input: BuildSystemPromptInput): Promise<
       'If during the conversation it becomes obvious the customer\'s system is at end-of-life or the repair would cost more than a replacement, you can mention "the specialist coming out for the estimate will let you know if a replacement makes more sense than the repair, and we can put together a free estimate for that on the same visit." Stop there. Do not pitch products. The on-site visit handles that conversation in person, with eyes on the system.',
       '',
       'When in doubt: stay on the topic the customer brought up.',
+      '',
+      '## Utility / Central Hudson Callers (added 2026-05-29)',
+      '',
+      'Central Hudson (and other utilities) call us for business/coordination, not as homeowner leads. If a caller SAYS they are calling from Central Hudson or another utility, treat it as a utility/business call: skip the qualification questions, get a one-line summary of what they need, and route it to the office with flag_for_office_review (reason beginning "Utility call:" or "Central Hudson utility call:"). Do not pitch an estimate or collect homeowner project details.',
+      '',
+      'Do NOT proactively ask callers whether they are from a utility — never open with "are you from Central Hudson?" Only switch into this mode when EITHER (a) the system has already told you above that they are dialing from a known Central Hudson number, OR (b) the caller themselves says they are from the utility. Everyone else is a normal customer — qualify them as usual.',
       '',
       '## Estimator vs Technician — Use the Right Word (CRITICAL — fix to 2026-05-27 PM Tyler feedback)',
       '',
