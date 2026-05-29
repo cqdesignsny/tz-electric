@@ -81,18 +81,41 @@ curl -s -u "$TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN" \
 4. Call logs already render `customer_name` from the conversation row — once populated, returning callers show by name automatically. No call-logs UI change needed.
 5. Note: `findExistingCustomer` (by phone/email/name) already exists in `housecall-pro.ts` but hits HCP live — use the Neon table for call-time speed, reserve the live lookup for lead creation.
 
-#### 4. Dispatch visibility page + Twilio StatusCallback (now higher value given the SMS blackout)
+#### 4. Claire call transfer / forwarding (NEW — direction locked session 25, Tyler's recurring ask)
+
+**Context:** Tyler keeps asking for Claire to forward/transfer calls, most recently 2026-05-28 ("a way to forward calls to [an extra HCP voicemail] number from her at the end of a call... so that our current voicemail which nobody answers links to her wouldn't happen"). Decision after Cesar talked it through:
+
+- **Build in-call TRANSFER, not "bypass Claire to a voicemail box."** A plain voicemail box recreates the exact "nobody answers it" problem Claire was built to solve (Marina Long, Alex Sadeh et al. fell through that crack pre-Claire). Claire already functions as a smart voicemail — records, transcribes, emails the office, surfaces in the Switchboard. So voicemail becomes an option Claire OFFERS, never a path that replaces her.
+- **Clarify the primitive: transfer ≠ outbound dial.** We ALREADY dial out — after-hours dispatch places Twilio calls to the on-call tech. What's missing is connecting the LIVE inbound caller to another number mid-call. That's transfer, and it's the thing to build.
+- **Vapi supports transfer natively.** Our voice server route ALREADY receives the `transfer-destination-request` event (it's in the `VapiServerMessage` type union + the switch in `src/app/api/agents/voice/server/route.ts`) — we currently return `{ok:true}` and do nothing with it. Wiring = handle that event + give Claire a transfer trigger.
+
+**Two transfer targets:**
+1. **Warm transfer to a staffer's cell** when a caller genuinely needs a human, it's business hours, and someone's likely available. Reuse the staff directory (`src/lib/staff-directory.ts`, KB §3) for name → number.
+2. **Cold handoff to the HCP voicemail number** as the graceful "leave a message with a real box" out for callers who refuse Claire. **Get the exact extra HCP number from Tyler before building.**
+
+**Design decisions to make first (don't skip):**
+- **No-answer path:** if a warm transfer rings and nobody picks up, where does it land? Must NOT loop Claire → HCP forward → Claire. Land it on the HCP voicemail number or fall back to Claire's take-a-message flow.
+- **Business-hours gating:** cell transfers only during 7:30 AM–4:00 PM; after-hours route to dispatch (emergencies) or voicemail.
+- **Cost:** a transfer holds two concurrent call legs briefly. Minor, but note it.
+- **Prompt rewrite:** the prompt currently FORBIDS promising transfers ("no warm-transfer wired" in the transfer-handling block of `agent-prompt.ts`). Once transfer is live, rewrite that block so Claire offers it in the right cases — and still does NOT over-promise (same lesson as the SMS over-promise fix: only claim what actually happens).
+
+**Implementation sketch:**
+- Handle `transfer-destination-request` in the voice route: return the destination number based on context (named staffer from the directory, or the voicemail number).
+- Add a `transfer_call` tool (or use Vapi's native transfer destinations) so Claire triggers it intentionally with a spoken reason, gated by hours + availability, with the no-answer fallback wired.
+- Update the agent-prompt transfer block to the new reality.
+
+#### 5. Dispatch visibility page + Twilio StatusCallback (now higher value given the SMS blackout)
 
 **Why:** Tyler thought after-hours dispatch was broken because he had no view into it. It DOES fire (voice works), but `tz_dispatch_attempts.status` records "sent" (Twilio-accepted) even when the carrier later rejects (undelivered/30034) — there's no delivery feedback wired.
 1. Add `StatusCallback` URL to `sendSms` + `placeCall` in `src/lib/twilio-outbound.ts` pointing at a new `/api/webhooks/twilio-delivery` route.
 2. That route updates `tz_dispatch_attempts.delivered_at` + `error_code` by matching the Twilio SID (`MessageSid`/`CallSid`).
 3. New `/switchboard/after-hours` page: one card per dispatch (`tz_emergency_dispatches`) with its attempt ladder (T+0/T+15/T+30/T+60) showing channel + real delivery status. Owner/admin gated.
 
-#### 5. User management UI: edit name + remove/disable
+#### 6. User management UI: edit name + remove/disable
 
 Tyler can't fix Mike's lowercase name or remove anyone. `src/components/switchboard/UsersClient.tsx` already has `ROLE_OPTIONS` including `disabled`. Add: inline edit of `name`, and a remove/disable action (prefer soft-disable via `disabled_at` over hard delete to preserve audit/attribution). Owner-only.
 
-#### 6. Smaller open items (knock out as time allows)
+#### 7. Smaller open items (knock out as time allows)
 
 - **"Customer said no → Claire re-asked the same question."** Tyler's Joey call (917-808-9404, 2026-05-28 ~1:51pm). Distinct from the agent-intent fix. Add a prompt rule: when a caller says "no" to a confirmation, acknowledge and move on — never re-ask the same question in different words (ties into the existing "Accept I Don't Know" rule in `agent-prompt.ts`).
 - **Opener A/B test.** Session 24's analyzer flagged 8 calls where the caller heard the opener and hung up. Test a shorter/more human opener.
