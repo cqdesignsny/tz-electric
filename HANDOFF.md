@@ -2,13 +2,25 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-05-28 afternoon/evening, **session 25** (SSD desktop). See the **"⭐ DENNIS — START HERE"** section immediately below for the current handoff (what shipped today + your prioritized task list for the morning of 2026-05-29). The session 24 summary and all prior history are preserved unchanged underneath it.
+**Last verified:** 2026-05-29 morning, **session 26** (Dennis). See the **"✅ SESSION 26 UPDATE"** block at the top of the DENNIS section immediately below for what got done this session; the original session-25 task list and all prior history are preserved unchanged underneath it.
 
 ---
 
 ## ⭐ DENNIS — START HERE (session 25 → 26 handoff, morning of 2026-05-29)
 
 Read this whole section before touching anything. You have full access **as Tyler** on Twilio and Housecall Pro, and access to the Vercel `tz-electric` project via Cesar. Everything below is ordered by priority.
+
+### ✅ SESSION 26 UPDATE (Dennis, 2026-05-29 morning) — what got done
+
+Worked the task list top-to-bottom. Status of the session-25 priorities:
+
+- **#1 A2P resubmission — DONE (awaiting carrier approval).** Pulled live status: campaign was still FAILED (errors 30896 opt-in / 30882 terms URL). Confirmed root cause — the 2026-05-21 submission predated the now-live compliant site content (re-verified live this morning: `/terms-condition` full SMS program terms incl. STOP/HELP + the no-third-party-sharing clause, `/privacy-policy` mirror, `/quote` default-unchecked consent checkbox in `LeadForm.tsx`). **Resubmitted via the Twilio API** (a failed A2P campaign can't be PATCHed): backed up the old registration to `/tmp/a2p-backup/`, deleted it, and POSTed a fresh Low-Volume campaign on the same service `MGd889a7...`, reusing every field verbatim and changing ONLY `message_flow` to (a) embed the verbatim consent-checkbox language and (b) point Terms at `https://tzelectricinc.com/terms-condition`. New status: **`IN_PROGRESS`, no errors.** Number `+15186786153` still attached. **When it flips to REGISTERED/APPROVED → set `TWILIO_SMS_ENABLED=true` on Vercel** (re-check command unchanged, below).
+
+- **#2 HCP auto-responder — CORRECTED + PINNED (not "Sparky").** "Sparky" does not exist in HCP today; the handoff naming was stale. The "reaching out about your API Leads request" text is the **Job Inbox → Auto-reply** (global toggle: Settings → Job Inbox, or `pro.housecallpro.com/app/apps/details/job_inbox`). Confirmed via HCP help docs — it's Job Inbox's exact default template, and it runs on HCP's own texting number (independent of our A2P blackout). **It was already OFF** when Dennis checked (all Pipeline → Leads SMS automations are off too). Per Dennis: **leave it PINNED as "might still be an issue — watch for it."** If the double-text resurfaces, this is the culprit. Do NOT disable the Pipeline Estimates follow-ups or Jobs archive rules — those are legit and wanted.
+
+- **#3 HCP customer name recognition — SHIPPED + VERIFIED IN PROD (commit `8824b86`).** Built to spec. `migrations/014_add_hcp_customers.sql` (additive only — `CREATE TABLE/INDEX IF NOT EXISTS`, no existing table touched). `src/lib/hcp-customers.ts`: `normalizeMobile10` (mirrors the voice route's 10-digit logic so keys match), `syncHcpCustomers` (paginate + batched upsert via `sql.transaction`, ~37 round-trips), `lookupHcpCustomerByPhone` (never throws). Cron `/api/cron/hcp-customer-sync` at `0 7 * * *` (3 AM ET, after the analyzer) added to `vercel.json`. Voice route (`handleAssistantRequest`) attaches `customer_name` + `hcp_customer_id` to the conversation row ONLY — **deliberately NOT passed into `buildSystemPrompt`**, so Claire does not greet by name (honors the locked decision). Backfilled prod: **3,622 customers, 3,155 with valid phones**; lookup round-trip verified ("Alex Mallory" resolved from a stored number); deploy confirmed live (prod sync returned 200). **HCP was read-only throughout — GET /customers only, a one-way copy into Neon; no HCP record or setting, and no existing Neon table, was modified.** Phase 2 (deferred, routes through Cesar): same lookup on the web/SMS entry points + a prompt rule letting Claire use known details to skip re-collecting info.
+
+**Still open from the session-25 list:** #4 Claire call transfer (blocked on the exact HCP voicemail number from Tyler), #5 dispatch visibility page (buildable now), #6 user management edit/disable, #7 smaller items. Also still open: **`CRON_SECRET` is unset on Vercel** — it now gates the new sync cron too, so that endpoint is currently open (same as the analyzer).
 
 ### Context in 60 seconds
 
@@ -29,6 +41,8 @@ Voice cost baseline (last 14 days, from Vapi): **$7.88 / 79 calls / ~$0.11 per m
 ### YOUR TASK LIST (priority order)
 
 #### 1. Finish the A2P 10DLC resubmission — THE unblocker (all SMS dead until this clears)
+
+> ✅ **DONE session 26** — resubmitted via API, now `IN_PROGRESS`. See the SESSION 26 UPDATE above. Remaining: flip `TWILIO_SMS_ENABLED=true` on Vercel once it shows REGISTERED/APPROVED. Original instructions kept below for reference.
 
 **Current real status** (I pulled it from the Twilio API today):
 - ✅ Business profile "TZ Electric Voice" — twilio-approved
@@ -61,6 +75,8 @@ curl -s -u "$TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN" \
 
 #### 2. Disable Housecall Pro "Sparky" auto-responder
 
+> ⚠️ **CORRECTED + PINNED session 26** — it's NOT "Sparky"; it's the **Job Inbox → Auto-reply** (global), and it was already OFF. Pinned as "watch for it." See the SESSION 26 UPDATE above. The original (incorrect) steps below are kept only as history — ignore the "Sparky" hunt.
+
 **Problem:** when a website lead lands in HCP's "API Leads" channel, HCP's built-in **Sparky AI** auto-texts the customer "Hello [Name]! This is TZ Electric Inc reaching out about your API Leads request. How can we help you?" — double-messaging on top of Claire's intake. This is NOT our code (confirmed via Tyler's screenshot 2026-05-28). Can't be fixed from our codebase — it's an HCP setting.
 
 **Steps (Housecall Pro, signed in as Tyler):**
@@ -71,6 +87,8 @@ curl -s -u "$TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN" \
 5. Verify: next API lead should NOT trigger the "reaching out about your API Leads request" text.
 
 #### 3. Build HCP customer name-recognition sync
+
+> ✅ **SHIPPED session 26** (commit `8824b86`, verified in prod). Table, nightly cron, and silent call-time lookup all live. See the SESSION 26 UPDATE above. The build spec below was followed as written.
 
 **Goal (Cesar's chosen approach):** recognize returning customers by inbound phone so **call logs show names instead of just phone numbers**, and Claire skips re-collecting info she already has. **Decision: do NOT have Claire greet by name** (avoids creepiness + wrong-name-on-shared-line). Attach the HCP customer silently.
 
