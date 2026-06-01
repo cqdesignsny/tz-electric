@@ -29,6 +29,30 @@ function ShellContent({
 }) {
   const pathname = usePathname()
   const [mobileOpen, setMobileOpen] = useState(false)
+  // Desktop (lg+) right-column open/closed, persisted per-device so the panel
+  // stays how each person leaves it. Defaults open on roomy screens, collapsed
+  // on tablet-width where the always-open 3-column layout felt cluttered.
+  const [claireOpen, setClaireOpen] = useState(true)
+
+  useEffect(() => {
+    try {
+      const stored = window.localStorage.getItem('tz-claire-panel-open')
+      if (stored === '0') setClaireOpen(false)
+      else if (stored === '1') setClaireOpen(true)
+      else if (window.innerWidth < 1280) setClaireOpen(false)
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  function updateClaireOpen(v: boolean) {
+    setClaireOpen(v)
+    try {
+      window.localStorage.setItem('tz-claire-panel-open', v ? '1' : '0')
+    } catch {
+      // ignore
+    }
+  }
 
   useEffect(() => {
     setMobileOpen(false)
@@ -57,9 +81,10 @@ function ShellContent({
   const showRightPanel =
     sidebarUser?.source === 'google' &&
     (sidebarUser.role === 'owner' || sidebarUser.role === 'admin')
-  const rowGutterClass = showRightPanel
-    ? 'lg:pr-[320px] xl:pr-[380px] 2xl:pr-[420px]'
-    : ''
+  const rowGutterClass =
+    showRightPanel && claireOpen
+      ? 'lg:pr-[320px] xl:pr-[380px] 2xl:pr-[420px]'
+      : ''
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -67,7 +92,7 @@ function ShellContent({
         onMobileToggle={() => setMobileOpen((v) => !v)}
         mobileOpen={mobileOpen}
       />
-      <div className={`flex-1 flex relative ${rowGutterClass}`}>
+      <div className={`flex-1 flex relative transition-[padding] duration-300 ease-out ${rowGutterClass}`}>
         {/* Desktop sidebar */}
         <aside className="hidden md:block w-64 flex-shrink-0 border-r border-gray-200 dark:border-navy-light/40 bg-white dark:bg-[#0A1128]">
           <div className="sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
@@ -96,6 +121,8 @@ function ShellContent({
           Google sign-in required because KB edits need real attribution. */}
       {showRightPanel && sidebarUser && (
         <SwitchboardClairePanel
+          open={claireOpen}
+          onOpenChange={updateClaireOpen}
           actorName={sidebarUser.name}
           actorEmail={sidebarUser.email}
           actorRole={sidebarUser.role as 'owner' | 'admin'}

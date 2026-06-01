@@ -48,6 +48,11 @@ const messagesKeyFor = (id: string) => `tz-claire-panel-messages:${id}`
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
 type Props = {
+  /** Desktop (lg+) column open/closed. Controlled by DashboardShell so it can
+   *  drop the matching content gutter when collapsed. Mobile (<lg) keeps its
+   *  own bubble/modal state below and is unaffected. */
+  open: boolean
+  onOpenChange: (open: boolean) => void
   actorName: string | null
   actorEmail: string
   actorRole: 'owner' | 'admin'
@@ -90,7 +95,7 @@ function uiMessageText(m: UIMessage): string {
     .trim()
 }
 
-export default function SwitchboardClairePanel({ actorName, actorEmail, actorRole }: Props) {
+export default function SwitchboardClairePanel({ open, onOpenChange, actorName, actorEmail, actorRole }: Props) {
   const [conversationId, setConversationId] = useState('')
   const [mobileOpen, setMobileOpen] = useState(false)
   const [draft, setDraft] = useState('')
@@ -184,11 +189,16 @@ export default function SwitchboardClairePanel({ actorName, actorEmail, actorRol
   // if the viewport changes mid-conversation.
   return (
     <>
-      {/* DESKTOP — always-open inline column (lg+) */}
+      {/* DESKTOP — collapsible inline column (lg+). Always mounted so the chat
+          thread survives collapse/expand; slides off-screen to the right when
+          closed and DashboardShell drops the matching content gutter. */}
       <aside
         aria-label="Claire chat"
-        className="hidden lg:flex fixed right-0 top-16 bottom-0 z-30 flex-col bg-white dark:bg-[#0A1128] border-l border-gray-200 dark:border-navy-light/40 shadow-lg
-                   lg:w-[320px] xl:w-[380px] 2xl:w-[420px]"
+        aria-hidden={!open}
+        inert={!open}
+        className={`hidden lg:flex fixed right-0 top-16 bottom-0 z-30 flex-col bg-white dark:bg-[#0A1128] border-l border-gray-200 dark:border-navy-light/40 shadow-lg
+                   lg:w-[320px] xl:w-[380px] 2xl:w-[420px]
+                   transition-transform duration-300 ease-out ${open ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <ChatBody
           firstName={firstName}
@@ -201,8 +211,37 @@ export default function SwitchboardClairePanel({ actorName, actorEmail, actorRol
           submit={submit}
           startOver={startOver}
           mode="inline"
+          onHide={() => onOpenChange(false)}
         />
       </aside>
+
+      {/* DESKTOP LAUNCHER (lg+, when collapsed) — a tab on the right edge that
+          slides the panel back open. Hidden + inert while the panel is open. */}
+      <button
+        type="button"
+        onClick={() => onOpenChange(true)}
+        aria-label="Open Claire chat"
+        aria-hidden={open}
+        inert={open}
+        className={`hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-30 flex-col items-center gap-2 rounded-l-xl bg-blue dark:bg-blue-light text-white dark:text-navy shadow-lg px-2.5 py-3 hover:bg-blue-dark dark:hover:bg-blue transition ${open ? 'translate-x-full opacity-0 pointer-events-none' : 'translate-x-0 opacity-100'}`}
+      >
+        <svg
+          width="20"
+          height="20"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden
+        >
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+        <span className="text-[10px] font-bold uppercase tracking-wider [writing-mode:vertical-rl] rotate-180">
+          Claire
+        </span>
+      </button>
 
       {/* MOBILE BUBBLE (<lg) */}
       {!mobileOpen && (
@@ -273,6 +312,7 @@ type ChatBodyProps = {
   startOver: () => void
   mode: 'inline' | 'modal'
   onClose?: () => void
+  onHide?: () => void
 }
 
 function ChatBody(props: ChatBodyProps) {
@@ -288,6 +328,7 @@ function ChatBody(props: ChatBodyProps) {
     startOver,
     mode,
     onClose,
+    onHide,
   } = props
   const scrollerRef = useRef<HTMLDivElement | null>(null)
   const composerRef = useRef<HTMLTextAreaElement | null>(null)
@@ -357,6 +398,30 @@ function ChatBody(props: ChatBodyProps) {
           >
             New
           </button>
+          {mode === 'inline' && onHide && (
+            <button
+              type="button"
+              onClick={onHide}
+              aria-label="Hide Claire panel"
+              title="Hide panel"
+              className="touch-manipulation w-8 h-8 rounded-md hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors flex items-center justify-center"
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden
+              >
+                <polyline points="13 17 18 12 13 7" />
+                <polyline points="6 17 11 12 6 7" />
+              </svg>
+            </button>
+          )}
           {mode === 'modal' && onClose && (
             <button
               type="button"
