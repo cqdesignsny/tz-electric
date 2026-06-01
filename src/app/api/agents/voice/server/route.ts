@@ -326,7 +326,7 @@ async function handleAssistantRequest(message: VapiServerMessage) {
       //   backoffSeconds: 1.0 — wait ~1s after a real interruption to resume.
       // Dial numWords to 2 if it's still too sensitive on noisy lines.
       stopSpeakingPlan: {
-        numWords: 1,
+        numWords: 2,
         voiceSeconds: 0.3,
         backoffSeconds: 1.0,
       },
