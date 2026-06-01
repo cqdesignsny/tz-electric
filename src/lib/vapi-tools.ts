@@ -33,6 +33,23 @@ export type VapiFunctionTool = {
     description: string
     parameters: Record<string, unknown>
   }
+  /**
+   * Vapi platform-side "this is taking a moment" line. Spoken by Vapi ONCE if a
+   * tool's server response exceeds `timingMilliseconds` — fast tools stay
+   * silent. This moves wait-filler off the model (which, on 2026-06-01, stalled
+   * ~22s and stuttered "hold on a sec" six different ways while a tool churned)
+   * and onto the platform, said exactly once. Pairs with the prompt rule that
+   * the model stays quiet before a tool call.
+   */
+  messages?: Array<{ type: string; content: string; timingMilliseconds?: number }>
+}
+
+// One graceful "still working" line per tool. Threshold tuned so only a
+// genuinely slow call (e.g. an HCP round-trip) ever triggers it.
+const TOOL_DELAYED_MESSAGE = {
+  type: 'request-response-delayed',
+  content: 'Thanks for your patience, just a few more seconds.',
+  timingMilliseconds: 2500,
 }
 
 type LooseTool = {
@@ -56,6 +73,7 @@ export function buildVapiFunctionDefinitions(ctx: AgentToolContext): VapiFunctio
     out.push({
       type: 'function',
       function: { name, description, parameters },
+      messages: [TOOL_DELAYED_MESSAGE],
     })
   }
   return out
