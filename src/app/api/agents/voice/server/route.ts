@@ -402,10 +402,13 @@ async function handleToolCalls(message: VapiServerMessage) {
       externalId: call.id,
     })
 
-    const r = await executeVapiToolCall({
-      ctx: { conversationId: conv.id, channel: 'voice' },
-      call,
-    })
+    const r =
+      extractedName === 'create_lead_with_estimate' && lacksCoreContact(extractedArgs)
+        ? await routeMisfiredLeadToOffice(conv.id, call.id)
+        : await executeVapiToolCall({
+            ctx: { conversationId: conv.id, channel: 'voice' },
+            call,
+          })
 
     // Persist the tool_result turn alongside.
     await appendMessage({
@@ -421,6 +424,94 @@ async function handleToolCalls(message: VapiServerMessage) {
   }
 
   return NextResponse.json({ results })
+}
+
+// ---------------------------------------------------------------------------
+// Lead-misfire loop-breaker
+// ---------------------------------------------------------------------------
+
+/**
+ * A create_lead_with_estimate call with neither a first name nor a phone is a
+ * model misfire — a genuine booking always carries the contact Claire just
+ * collected. We detect it so we don't let it bounce off Zod validation in a
+ * retry loop: the 2026-06-01 "Mike" call fired create_lead_with_estimate 4x
+ * with empty `{}` args, stalling ~22 seconds while Claire stuttered "hold on a
+ * sec" six different ways. The booking tool is never the right answer with no
+ * data, so there is no legitimate retry path from here.
+ */
+function lacksCoreContact(args: Record<string, unknown>): boolean {
+  const has = (v: unknown) => typeof v === 'string' && v.trim().length > 0
+  return !has(args.first_name) && !has(args.phone)
+}
+
+/**
+ * Convert a misfired lead call into a single office hand-off: fire (and persist)
+ * one flag_for_office_review so the office gets the email and the lead lands on
+ * the Follow-Ups board, then return a result telling the model to STOP and wrap
+ * up. Deduped per conversation so a repeated misfire can't create duplicate
+ * flags or keep the loop alive. Best-effort: even if the flag write fails, we
+ * still return the stop directive so the model never sees a retryable error.
+ */
+async function routeMisfiredLeadToOffice(
+  conversationId: string,
+  callId: string,
+): Promise<{ toolCallId: string; name: string; result: string }> {
+  try {
+    const sql = db()
+    const existing = (await sql`
+      SELECT 1 FROM tz_agent_messages
+      WHERE conversation_id = ${conversationId}
+        AND role = 'tool_use'
+        AND tool_name IN ('flag_for_office_review', 'notify_team_member')
+      LIMIT 1
+    `) as unknown[]
+
+    if (existing.length === 0) {
+      const flagInput = {
+        reason:
+          'Lead capture did not complete — the booking tool was called with no customer data (a tool misfire). The caller is saved on this conversation; please create the estimate in HCP manually and call them back.',
+        priority: 'high' as const,
+      }
+      // Persist + run a real flag so it behaves exactly like a normal
+      // flag_for_office_review (office email + Follow-Ups board entry).
+      await appendMessage({
+        conversationId,
+        role: 'tool_use',
+        toolName: 'flag_for_office_review',
+        toolInput: flagInput,
+        toolUseId: `${callId}:autoflag`,
+        externalId: `${callId}:autoflag`,
+      })
+      const flag = await executeVapiToolCall({
+        ctx: { conversationId, channel: 'voice' },
+        call: {
+          id: `${callId}:autoflag`,
+          function: { name: 'flag_for_office_review', arguments: JSON.stringify(flagInput) },
+        },
+      })
+      await appendMessage({
+        conversationId,
+        role: 'tool_result',
+        content: flag.result,
+        toolName: flag.name,
+        toolUseId: flag.toolCallId,
+        externalId: flag.toolCallId,
+      })
+    }
+  } catch (e) {
+    console.error('[voice/server] lead-misfire auto-flag failed (non-fatal):', e)
+  }
+
+  return {
+    toolCallId: callId,
+    name: 'create_lead_with_estimate',
+    result: JSON.stringify({
+      ok: false,
+      handled: true,
+      error:
+        'No customer data was provided, so no lead was created. The office has ALREADY been notified to handle this lead manually — do NOT call create_lead_with_estimate again. Wrap up: tell the caller the office will follow up shortly to book their free estimate, then end the call.',
+    }),
+  }
 }
 
 // ---------------------------------------------------------------------------
