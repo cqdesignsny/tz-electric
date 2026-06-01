@@ -48,7 +48,7 @@ export default async function FollowUpsPage() {
         <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm md:text-base max-w-3xl leading-relaxed">
           Everyone Claire flagged for a callback over the last two weeks, grouped by who it&apos;s for,
           until someone marks it handled. This is the live version of the 6 PM recap email — open it
-          anytime to see who still needs a call back. Hit <strong>Mark done</strong> as you clear them.
+          anytime to see who still needs a call back. Hit <strong>Log outcome</strong> as you clear them.
         </p>
       </header>
 
