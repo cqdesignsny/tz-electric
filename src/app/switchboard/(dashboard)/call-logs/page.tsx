@@ -8,6 +8,7 @@ import {
   type AgentMessage,
 } from '@/lib/agent-conversations'
 import CallLogsClient from '@/components/switchboard/CallLogsClient'
+import { getReviewMarksFor, type ReviewMark } from '@/lib/call-review'
 import { requireModuleAccess } from '@/lib/current-user'
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default async function CallLogsPage({
   let conversations: AgentConversation[] = []
   let active: AgentConversation | null = null
   let messages: AgentMessage[] = []
+  let reviewMarks: Record<string, ReviewMark> = {}
   let error: string | null = null
 
   try {
@@ -44,6 +46,13 @@ export default async function CallLogsPage({
       active = conversations[0]
       messages = await listMessages(active.id)
     }
+    // Which of these calls are flagged for review (so the list can badge +
+    // filter them and the active call shows its mark state). Resilient — never
+    // throws, so it can't break the page.
+    const ids = Array.from(
+      new Set([...conversations.map((c) => c.id), ...(active ? [active.id] : [])]),
+    )
+    reviewMarks = await getReviewMarksFor(ids)
   } catch (e) {
     error = e instanceof Error ? e.message : String(e)
   }
@@ -84,6 +93,7 @@ export default async function CallLogsPage({
         activeId={active?.id || null}
         active={active}
         messages={messages}
+        reviewMarks={reviewMarks}
       />
     </div>
   )
