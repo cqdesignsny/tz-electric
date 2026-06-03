@@ -291,6 +291,50 @@ export const JOB_LISTINGS: JobListing[] = [
       'Weekend/overtime during peak periods',
     ],
   },
+  {
+    title: 'Warehouse Associate',
+    slug: 'warehouse-associate',
+    type: 'Full-Time',
+    location: 'Catskill, NY',
+    pay: '$20 – $28/hr (experience-based)',
+    description: 'Keep the warehouse organized and our field crews stocked. Receive inventory, stage materials for daily jobs, and manage stock for our electrical, plumbing, and HVAC teams.',
+    overview: [
+      'TZ Electric Inc. is looking for a dependable, organized Warehouse Associate to run the heart of our operation. Every job our electrical, plumbing, and HVAC crews complete starts with the right materials staged and ready, and that\'s where you come in.',
+      'You\'ll receive and organize inventory, pull and stage materials for the next day\'s jobs, load and unload trucks, and keep the warehouse clean and accurate. It\'s a hands-on role for someone who takes pride in order, hustle, and being the person the whole crew counts on.',
+    ],
+    responsibilities: [
+      'Receive, inspect, log, and shelve incoming materials, parts, and equipment',
+      'Pull and stage materials for each day\'s scheduled jobs so crews roll out ready',
+      'Load and unload trucks and vans, and help techs find what they need quickly',
+      'Keep accurate inventory counts using our warehouse management system',
+      'Reorder stock and flag low or out-of-stock items before they hold up a job',
+      'Maintain a clean, safe, and well-organized warehouse and yard',
+      'Coordinate with the office and field teams on parts availability and pickups',
+      'Track tools and equipment in and out, and help with basic upkeep',
+    ],
+    qualifications: [
+      'High school diploma or equivalent',
+      'Warehouse, inventory, or trade-materials experience preferred (not required)',
+      'Organized and detail-oriented with solid data-entry accuracy',
+      'Comfortable lifting 50+ pounds and on your feet throughout the day',
+      'Basic computer and tablet skills for inventory tracking',
+      'Valid driver\'s license with a clean record for occasional local pickups',
+      'Reliable, punctual, and a team player',
+    ],
+    benefits: [
+      'Health, dental, and vision insurance',
+      '401(k) with employer matching',
+      'Paid time off',
+      'Full uniform and safety gear provided',
+      'On-the-job training and room to grow',
+      'Overtime pay opportunities',
+      'Supportive, team-oriented environment',
+    ],
+    schedule: [
+      'Monday to Friday, full-time',
+      'Occasional overtime during peak seasons',
+    ],
+  },
 ]
 
 export function getJobBySlug(slug: string): JobListing | undefined {
