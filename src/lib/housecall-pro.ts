@@ -785,6 +785,88 @@ export async function getUpcomingJobForCustomer(hcpCustomerId: string): Promise<
   }
 }
 
+export type ActiveEstimateSummary = {
+  estimateId: string
+  estimateNumber: string | null
+  description: string | null
+  status: string | null
+}
+
+// Status signals that mean an estimate is dead/finished and should NOT be
+// surfaced as in-progress work: declined/canceled/lost quotes, and completed or
+// closed jobs. Everything else (open quote, approved, "created job from
+// estimate", needs scheduling) counts as ACTIVE — the David Kloss case was an
+// approved estimate already converted to a job, just not scheduled yet, so a
+// plain "open quotes only" filter would have missed it.
+const DEAD_ESTIMATE_SIGNALS = [
+  'lost',
+  'declined',
+  'canceled',
+  'cancelled',
+  'rejected',
+  'complete',
+  'completed',
+  'closed',
+  'expired',
+]
+
+/**
+ * Read-only: return a customer's ACTIVE estimates — quotes/jobs in progress that
+ * are NOT lost (declined/canceled) and NOT completed. Used by the
+ * `lookup_existing_project` tool so Claire can recognize a returning customer
+ * following up on work already in the system and route them to the office for a
+ * status update, instead of re-running new-lead qualification (the David Kloss
+ * mistake, 2026-06-03).
+ *
+ * Defensive client-side filter on customer_id in case the query param is
+ * ignored. Deliberately returns NO dollar amounts — Claire's no-unprompted-
+ * pricing rule. Returns [] on no active estimates or any error so the caller can
+ * degrade gracefully. Capped at 5 to keep the tool result small.
+ */
+export async function getActiveEstimatesForCustomer(
+  hcpCustomerId: string,
+): Promise<ActiveEstimateSummary[]> {
+  try {
+    const data = await hcpFetch(
+      `/estimates?customer_id=${encodeURIComponent(hcpCustomerId)}&page=1&page_size=100`,
+    )
+    const estimates: HCPEstimate[] = (data.estimates as HCPEstimate[]) || []
+    return estimates
+      .filter((e) => (e.customer_id ? e.customer_id === hcpCustomerId : true))
+      .filter((e) => {
+        const signals = [
+          rawEstimateStatus(e),
+          e.work_status,
+          ...(e.options || []).flatMap((o) => [o.status, o.approval_status]),
+        ]
+          .filter((s): s is string => !!s)
+          .map((s) => s.toLowerCase())
+        return !signals.some((s) => DEAD_ESTIMATE_SIGNALS.some((d) => s.includes(d)))
+      })
+      .slice(0, 5)
+      .map((e) => {
+        // Prefer a meaningful option name (e.g. "100-200amp Overhead Service
+        // Upgrade") over a generic "Option #1" placeholder.
+        const namedOpt = e.options?.find(
+          (o) => o.name && o.name.trim() && !/^option\s*#?\s*\d*$/i.test(o.name.trim()),
+        )?.name
+        const desc =
+          (typeof e.description === 'string' && e.description.trim() ? e.description : null) ||
+          namedOpt ||
+          (e.estimate_number ? `Estimate #${e.estimate_number}` : null)
+        return {
+          estimateId: e.id,
+          estimateNumber: (e.estimate_number as string) ?? null,
+          description: desc,
+          status: rawEstimateStatus(e),
+        }
+      })
+  } catch (e) {
+    console.error('[hcp] getActiveEstimatesForCustomer failed:', e)
+    return []
+  }
+}
+
 export async function tagExistingCustomer(customerId: string, planInfo: PlanInfo): Promise<void> {
   const tag = `${planInfo.planName}-${planInfo.billingCycle}`
   const note = `ONLINE SIGNUP: ${planInfo.templateName} (${planInfo.billingCycle}, $${planInfo.amount}${planInfo.frequency === 'monthly' || planInfo.frequency === '3year' ? '/mo' : '/yr'}). Paid via Stripe on ${new Date().toISOString().split('T')[0]}. Needs manual plan assignment in HCP.`

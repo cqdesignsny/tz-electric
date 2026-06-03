@@ -26,6 +26,7 @@ import {
   createEstimateForLead,
   createInboxLeadForEstimate,
   findExistingCustomer,
+  getActiveEstimatesForCustomer,
   getUpcomingJobForCustomer,
   type HCPCustomer,
 } from './housecall-pro'
@@ -226,6 +227,13 @@ export function buildAgentTools(ctx: AgentToolContext) {
       execute: async () => lookupMyAppointmentImpl(ctx),
     }),
 
+    lookup_existing_project: tool({
+      description:
+        "Check whether THIS caller already has work with us — an active quote/estimate or an upcoming appointment — identified by the number they are calling from (takes NO arguments). Call this the moment a RETURNING caller is following up on existing work (\"I'm calling about the job you're doing for me\", \"the people putting in my electric\", \"following up on my quote\", \"you were supposed to call me back about my upgrade\") so you can recognize their project and route them to the office for a status update INSTEAD of re-running new-lead qualification. Privacy: returns only THIS caller's own active items — never past history, never anyone else's, never pricing. If the number is not recognized or matches more than one customer it returns found=false; in that case do NOT guess — take a message via flag_for_office_review.",
+      inputSchema: z.object({}),
+      execute: async () => lookupExistingProjectImpl(ctx),
+    }),
+
     flag_for_office_review: tool({
       description:
         'Mark this conversation as needing office attention without paging anyone. Use for ambiguous situations, complaints, customer asks for a person, anything outside your authority.',
@@ -246,11 +254,12 @@ export function buildAgentTools(ctx: AgentToolContext) {
           type ConvRow = {
             customer_name: string | null
             customer_phone: string | null
+            inbound_caller_phone: string | null
             customer_email: string | null
             attribution_channel: string | null
           }
           const [conv] = (await sql`
-            SELECT customer_name, customer_phone, customer_email, attribution_channel
+            SELECT customer_name, customer_phone, inbound_caller_phone, customer_email, attribution_channel
             FROM tz_agent_conversations
             WHERE id = ${ctx.conversationId}
           `) as unknown as ConvRow[]
@@ -261,6 +270,7 @@ export function buildAgentTools(ctx: AgentToolContext) {
             priority,
             customerName: conv?.customer_name ?? null,
             customerPhone: conv?.customer_phone ?? null,
+            inboundCallerPhone: conv?.inbound_caller_phone ?? null,
             customerEmail: conv?.customer_email ?? null,
             attributionChannel: conv?.attribution_channel ?? null,
           })
@@ -394,10 +404,11 @@ export function buildAgentTools(ctx: AgentToolContext) {
           const sql = db()
           type ConvRow = {
             customer_name: string | null
+            inbound_caller_phone: string | null
             attribution_channel: string | null
           }
           const [conv] = (await sql`
-            SELECT customer_name, attribution_channel
+            SELECT customer_name, inbound_caller_phone, attribution_channel
             FROM tz_agent_conversations
             WHERE id = ${ctx.conversationId}
           `) as unknown as ConvRow[]
@@ -407,6 +418,7 @@ export function buildAgentTools(ctx: AgentToolContext) {
             reason,
             customerName: customer_name || conv?.customer_name || null,
             customerPhone: customer_phone,
+            inboundCallerPhone: conv?.inbound_caller_phone ?? null,
             address: address || null,
             attributionChannel: conv?.attribution_channel ?? null,
           })
@@ -544,6 +556,20 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
     }
   }
 
+  // Issue 2 (2026-06-03): the caller ID — the line they actually called in on —
+  // so the office email AND the HCP estimate note can show it alongside the
+  // dictated callback number (input.phone). Best-effort; never blocks the lead.
+  let inboundCallerPhone: string | null = null
+  try {
+    const sql = db()
+    const [c] = (await sql`
+      SELECT inbound_caller_phone FROM tz_agent_conversations WHERE id = ${ctx.conversationId} LIMIT 1
+    `) as Array<{ inbound_caller_phone: string | null }>
+    inboundCallerPhone = c?.inbound_caller_phone ?? null
+  } catch (e) {
+    console.error('[agent-tools] inbound caller phone lookup (non-fatal):', e)
+  }
+
   const sourceMap: Record<AgentChannelLabel, 'sms_agent' | 'voice_agent' | 'web_chat'> = {
     sms: 'sms_agent',
     voice: 'voice_agent',
@@ -643,7 +669,7 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
       if (cleanQualification.medical === 'Yes') tags.push('Medical Equipment in Home')
       if (cleanQualification.urgentNow === 'Yes — active leak') tags.push('ACTIVE LEAK')
 
-      const privateNotes = buildAgentEstimateNotes(input, ctx, hcpCustomerExisting, hcpMatchedBy)
+      const privateNotes = buildAgentEstimateNotes(input, ctx, hcpCustomerExisting, hcpMatchedBy, inboundCallerPhone)
       const description = `${input.service_label} — ${ctx.channel === 'sms' ? 'SMS' : ctx.channel === 'voice' ? 'Voice' : 'Chat'} Claire`
       const address =
         input.street && input.city && input.state && input.zip
@@ -726,6 +752,7 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
         channel: ctx.channel,
         customerName: `${input.first_name} ${input.last_name}`.trim() || null,
         customerPhone: input.phone || null,
+        inboundCallerPhone,
         customerEmail: input.email || null,
         serviceLabel: input.service_label,
         urgency: cleanQualification.urgency || null,
@@ -768,6 +795,7 @@ function buildAgentEstimateNotes(
   ctx: AgentToolContext,
   customerExisting: boolean,
   matchedBy: 'phone' | 'email' | 'name' | null,
+  inboundCallerPhone?: string | null,
 ): string {
   const lines: string[] = []
   lines.push('====================================================================')
@@ -780,6 +808,16 @@ function buildAgentEstimateNotes(
       ? `[EXISTING CUSTOMER]${matchedBy ? ` matched by ${matchedBy}` : ''}`
       : '[NEW CUSTOMER]',
   )
+  lines.push('')
+  // Issue 2: record the dictated callback number AND the caller ID (the line
+  // they actually called in on) so a mis-heard number is recoverable. The
+  // inbound number is only present on voice; collapse when it matches.
+  const digits = (s: string) => s.replace(/\D/g, '').slice(-10)
+  lines.push('--- Contact numbers ---')
+  lines.push(`Callback number (caller gave): ${input.phone}`)
+  if (inboundCallerPhone && digits(inboundCallerPhone) !== digits(input.phone)) {
+    lines.push(`Calling from (caller ID): ${inboundCallerPhone}`)
+  }
   lines.push('')
   lines.push(`Service: ${input.service_label} (${input.service_key})`)
   lines.push('')
@@ -885,6 +923,100 @@ async function lookupMyAppointmentImpl(ctx: AgentToolContext) {
     arrival_window_minutes: job.arrivalWindowMinutes,
     description: job.description,
     message: `Your next appointment is ${date}, with the technician's arrival window starting around ${time}.`,
+  }
+}
+
+/**
+ * Read-only "do they already have work with us?" lookup. Identifies the caller
+ * by the number on the conversation (inbound caller ID preferred, dictated
+ * callback number as fallback), requires an UNAMBIGUOUS single match in the
+ * synced HCP customer mirror (tz_hcp_customers), and returns their ACTIVE
+ * estimates plus soonest upcoming appointment — never past history, never
+ * pricing. Declines (found=false) on no-number / no-match / multiple-matches so
+ * Claire never exposes the wrong person's records. Purely additive — modeled on
+ * lookupMyAppointmentImpl, touches no other tool. Built 2026-06-03 after the
+ * David Kloss call, where Claire re-ran new-lead qualification on an existing
+ * customer following up on a service upgrade already booked in HCP.
+ */
+async function lookupExistingProjectImpl(ctx: AgentToolContext) {
+  const sql = db()
+  const convRows = (await sql`
+    SELECT inbound_caller_phone, customer_phone
+    FROM tz_agent_conversations WHERE id = ${ctx.conversationId} LIMIT 1
+  `) as Array<{ inbound_caller_phone: string | null; customer_phone: string | null }>
+  const phone10 =
+    normalizeMobile10(convRows[0]?.inbound_caller_phone ?? null) ||
+    normalizeMobile10(convRows[0]?.customer_phone ?? null)
+  if (!phone10) {
+    return {
+      found: false,
+      reason: 'no_caller_number',
+      message:
+        "I can't see the number you're calling from, so I can't pull up an existing project here. I can take a message for the office instead.",
+    }
+  }
+
+  const matches = (await sql`
+    SELECT hcp_customer_id FROM tz_hcp_customers WHERE mobile_phone = ${phone10}
+  `) as Array<{ hcp_customer_id: string }>
+  if (matches.length === 0) {
+    return {
+      found: false,
+      reason: 'not_recognized',
+      message:
+        "I don't see this number in our system, so I can't look up an existing project from here. I can take a message and have the office follow up.",
+    }
+  }
+  if (matches.length > 1) {
+    return {
+      found: false,
+      reason: 'ambiguous',
+      message:
+        "I see more than one account on this number, so I can't safely pull up a project. I can take a message for the office.",
+    }
+  }
+
+  const customerId = matches[0].hcp_customer_id
+  const [estimates, job] = await Promise.all([
+    getActiveEstimatesForCustomer(customerId),
+    getUpcomingJobForCustomer(customerId),
+  ])
+
+  if (estimates.length === 0 && !job) {
+    return {
+      found: false,
+      reason: 'no_active_work',
+      message:
+        "I don't see an open quote or upcoming appointment on your account from here. Let me take down what you need and have the office follow up.",
+    }
+  }
+
+  let upcoming: { date: string; time: string; description: string | null } | null = null
+  if (job) {
+    const start = new Date(job.scheduledStart)
+    upcoming = {
+      date: start.toLocaleDateString('en-US', {
+        timeZone: 'America/New_York',
+        weekday: 'long',
+        month: 'long',
+        day: 'numeric',
+      }),
+      time: start.toLocaleTimeString('en-US', {
+        timeZone: 'America/New_York',
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      }),
+      description: job.description,
+    }
+  }
+
+  return {
+    found: true,
+    estimates: estimates.map((e) => ({ description: e.description, status: e.status })),
+    upcoming_appointment: upcoming,
+    message:
+      'This caller already has work with us (see estimates / upcoming_appointment). Acknowledge it warmly and reference the project by name, take their callback number, and route to the office for a status update with flag_for_office_review. Do NOT run new-lead qualification and do NOT pitch a new estimate. Do not read out any pricing.',
   }
 }
 

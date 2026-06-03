@@ -23,6 +23,50 @@ export function escapeHtml(input: string): string {
     .replace(/'/g, '&#039;')
 }
 
+/**
+ * Issue 2 (2026-06-03, David Kloss call): render the caller's CALLBACK number
+ * (what they dictated to Claire — saved as customer_phone) AND the number the
+ * call actually came in on (caller ID — inbound_caller_phone), clearly labeled.
+ * The office complaint was that a mis-heard callback number left no way back to
+ * the real line. We now surface both so the calling-from number is always
+ * recoverable.
+ *
+ * Collapses to a single "Phone" line when the two match (the common case), or
+ * when only one is known (web chat has no caller ID; on SMS the inbound number
+ * IS the caller, so inbound is usually unset). Returns `{ html, text }` so the
+ * same logic feeds both the HTML body and the plaintext alternative.
+ */
+export function renderPhonePair(
+  provided: string | null | undefined,
+  inbound: string | null | undefined,
+  opts?: { color?: string },
+): { html: string; text: string[] } {
+  const color = opts?.color || '#1E40AF'
+  const digits = (s: string) => s.replace(/\D/g, '').slice(-10)
+  const p = provided?.trim() || null
+  const i = inbound?.trim() || null
+
+  const pairs: Array<[string, string]> = []
+  if (p && i && digits(p) === digits(i)) {
+    pairs.push(['Phone', p])
+  } else {
+    if (p) pairs.push(['Callback number (caller gave)', p])
+    if (i) pairs.push(['Calling from (caller ID)', i])
+  }
+  if (pairs.length === 0) pairs.push(['Phone', '(no number captured)'])
+
+  const html = pairs
+    .map(
+      ([label, val]) =>
+        `<strong>${escapeHtml(label)}:</strong> <a href="tel:${escapeHtml(
+          val,
+        )}" style="color:${color};text-decoration:none;font-weight:600;">${escapeHtml(val)}</a><br />`,
+    )
+    .join('\n      ')
+  const text = pairs.map(([label, val]) => `${label}: ${val}`)
+  return { html, text }
+}
+
 function getRecipients(): string[] {
   return (
     process.env.LEAD_FORM_TO_EMAILS ||
@@ -91,6 +135,9 @@ export async function sendOfficeFlagEmail(args: {
   priority: 'low' | 'normal' | 'high'
   customerName: string | null
   customerPhone: string | null
+  /** Voice caller ID (the line they called in on), shown alongside the dictated
+   * callback number so a mis-heard number is recoverable. Issue 2, 2026-06-03. */
+  inboundCallerPhone?: string | null
   customerEmail: string | null
   attributionChannel: string | null
 }): Promise<void> {
@@ -98,14 +145,14 @@ export async function sendOfficeFlagEmail(args: {
   const priorityLabel =
     args.priority === 'high' ? 'HIGH' : args.priority === 'low' ? 'Low' : 'Normal'
 
+  const phones = renderPhonePair(args.customerPhone, args.inboundCallerPhone)
   const customerLine =
     [
       args.customerName,
-      args.customerPhone,
       args.customerEmail,
     ]
       .filter(Boolean)
-      .join(' · ') || '(no contact captured)'
+      .join(' · ') || '(no name/email captured)'
 
   const subject = `[TZ Claire] ${priorityLabel === 'HIGH' ? 'HIGH PRIORITY ' : ''}${channelLabel} flagged: ${args.reason.slice(0, 70)}`
 
@@ -118,6 +165,7 @@ export async function sendOfficeFlagEmail(args: {
     </div>
     <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:1.7;color:#1E293B;">
       <strong>Customer:</strong> ${escapeHtml(customerLine)}<br />
+      ${phones.html}
       <strong>Channel:</strong> ${escapeHtml(channelLabel)}${args.attributionChannel ? ` · ${escapeHtml(args.attributionChannel)}` : ''}<br />
       <strong>Reason:</strong> ${escapeHtml(args.reason)}
     </div>`
@@ -135,6 +183,7 @@ export async function sendOfficeFlagEmail(args: {
     `[TZ Claire] ${priorityLabel} priority — ${channelLabel} flagged for review`,
     '',
     `Customer: ${customerLine}`,
+    ...phones.text,
     `Channel: ${channelLabel}${args.attributionChannel ? ' · ' + args.attributionChannel : ''}`,
     `Reason: ${args.reason}`,
     '',
@@ -154,10 +203,13 @@ export async function sendEmergencyEscalationEmail(args: {
   reason: string
   customerName: string | null
   customerPhone: string
+  /** Voice caller ID, shown alongside the collected number. Issue 2, 2026-06-03. */
+  inboundCallerPhone?: string | null
   address: string | null
   attributionChannel: string | null
 }): Promise<void> {
   const channelLabel = args.channel === 'web_chat' ? 'Web chat' : args.channel === 'sms' ? 'SMS' : 'Voice'
+  const phones = renderPhonePair(args.customerPhone, args.inboundCallerPhone, { color: '#DC2626' })
 
   const subject = `[TZ EMERGENCY] ${channelLabel}: ${args.reason.slice(0, 90)}`
 
@@ -170,7 +222,7 @@ export async function sendEmergencyEscalationEmail(args: {
     </div>
     <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:15px;line-height:1.7;color:#1E293B;">
       <strong>Customer:</strong> ${escapeHtml(args.customerName || '(no name captured)')}<br />
-      <strong>Phone:</strong> <a href="tel:${escapeHtml(args.customerPhone)}" style="color:#DC2626;font-weight:700;text-decoration:none;">${escapeHtml(args.customerPhone)}</a><br />
+      ${phones.html}
       ${args.address ? `<strong>Address:</strong> ${escapeHtml(args.address)}<br />` : ''}
       <strong>Channel:</strong> ${escapeHtml(channelLabel)}${args.attributionChannel ? ` · ${escapeHtml(args.attributionChannel)}` : ''}<br />
       <strong>What's happening:</strong> ${escapeHtml(args.reason)}
@@ -191,6 +243,7 @@ export async function sendEmergencyEscalationEmail(args: {
     `CALL ${args.customerPhone} IMMEDIATELY`,
     '',
     `Customer: ${args.customerName || '(no name)'}`,
+    ...phones.text,
     args.address ? `Address: ${args.address}` : '',
     `Channel: ${channelLabel}`,
     `What's happening: ${args.reason}`,
@@ -210,6 +263,8 @@ export async function sendClaireLeadCapturedEmail(args: {
   channel: 'sms' | 'voice' | 'web_chat'
   customerName: string | null
   customerPhone: string | null
+  /** Voice caller ID, shown alongside the dictated callback number. Issue 2. */
+  inboundCallerPhone?: string | null
   customerEmail: string | null
   serviceLabel: string
   urgency: string | null
@@ -222,6 +277,7 @@ export async function sendClaireLeadCapturedEmail(args: {
 }): Promise<void> {
   const channelLabel = args.channel === 'web_chat' ? 'Web chat' : args.channel === 'sms' ? 'SMS' : 'Voice'
   const fullName = args.customerName || '(name pending)'
+  const phones = renderPhonePair(args.customerPhone, args.inboundCallerPhone)
   const subject = `[TZ Claire] New lead via ${channelLabel}: ${args.serviceLabel} — ${fullName}`
 
   const stats = [
@@ -244,7 +300,7 @@ export async function sendClaireLeadCapturedEmail(args: {
     ${errorBlock}
     <div style="font-family:'Helvetica Neue',Arial,sans-serif;font-size:14px;line-height:1.7;color:#1E293B;">
       <strong>Customer:</strong> ${escapeHtml(fullName)}<br />
-      ${args.customerPhone ? `<strong>Phone:</strong> <a href="tel:${escapeHtml(args.customerPhone)}" style="color:#1E40AF;text-decoration:none;font-weight:600;">${escapeHtml(args.customerPhone)}</a><br />` : ''}
+      ${phones.html}
       ${args.customerEmail ? `<strong>Email:</strong> ${escapeHtml(args.customerEmail)}<br />` : ''}
       ${args.address ? `<strong>Address:</strong> ${escapeHtml(args.address)}<br />` : ''}
       ${args.scope ? `<strong>Scope:</strong> ${escapeHtml(args.scope)}<br />` : ''}
@@ -270,7 +326,7 @@ export async function sendClaireLeadCapturedEmail(args: {
     '',
     `Service: ${args.serviceLabel}`,
     `Customer: ${fullName}`,
-    args.customerPhone ? `Phone: ${args.customerPhone}` : '',
+    ...phones.text,
     args.customerEmail ? `Email: ${args.customerEmail}` : '',
     args.address ? `Address: ${args.address}` : '',
     args.urgency ? `Urgency: ${args.urgency}` : '',

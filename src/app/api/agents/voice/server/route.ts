@@ -257,6 +257,10 @@ async function handleAssistantRequest(message: VapiServerMessage) {
   const conversation = await findOrStartConversation({
     channel: 'voice',
     customerPhone: callerPhone,
+    // Persist the caller ID separately so it survives update_visitor_contact
+    // overwriting customer_phone with the dictated callback number (Issue 2,
+    // 2026-06-03). Office notifications + the HCP note then show both.
+    inboundCallerPhone: callerPhone,
     customerName: hcpMatch?.fullName ?? callerName,
     hcpCustomerId: hcpMatch?.hcpCustomerId ?? null,
     attributionChannel: 'Voice Claire',

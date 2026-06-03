@@ -21,6 +21,14 @@ export type AgentConversation = {
   id: string
   channel: AgentChannel
   customer_phone: string | null
+  /**
+   * Voice caller ID (the number the call actually came in on), captured once at
+   * call start and never overwritten by update_visitor_contact. customer_phone
+   * holds the callback number the caller dictates; this holds the line they're
+   * really on. Null for web chat (no caller ID) and typically equal to the
+   * caller on SMS. See migration 019.
+   */
+  inbound_caller_phone: string | null
   customer_email: string | null
   customer_name: string | null
   hcp_customer_id: string | null
@@ -57,6 +65,8 @@ export type AgentMessage = {
 export type StartConversationInput = {
   channel: AgentChannel
   customerPhone?: string | null
+  /** Voice caller ID (ANI). Set once at call start; see AgentConversation. */
+  inboundCallerPhone?: string | null
   customerEmail?: string | null
   customerName?: string | null
   hcpCustomerId?: string | null
@@ -109,13 +119,14 @@ export async function findOrStartConversation(
 
   const rows = (await sql`
     INSERT INTO tz_agent_conversations (
-      channel, customer_phone, customer_email, customer_name,
+      channel, customer_phone, inbound_caller_phone, customer_email, customer_name,
       hcp_customer_id, tz_lead_id,
       attribution_channel, attribution_first_touch,
       external_call_id
     ) VALUES (
       ${input.channel},
       ${input.customerPhone ?? null},
+      ${input.inboundCallerPhone ?? null},
       ${input.customerEmail ?? null},
       ${input.customerName ?? null},
       ${input.hcpCustomerId ?? null},
