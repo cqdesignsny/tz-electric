@@ -734,16 +734,28 @@ export async function sendPlanSignupEmail(args: {
   billingCycle: 'Monthly' | 'Yearly'
   amount: number
   perLabel: string
+  /** Raw signup cadence: 'monthly' | 'yearly' | '3year'. Drives the Term line. */
+  frequency: string
   hcpCustomerId: string
   isExisting: boolean
 }): Promise<void> {
   const fullName = `${args.firstName} ${args.lastName}`.trim()
   const subject = `[TZ Plan Signup] ${args.planName} — ${fullName}`
   const priceLine = `${args.billingCycle} · $${args.amount}${args.perLabel}`
+  // Surface the contract LENGTH, not just the billing cadence. Tyler (2026-06-03)
+  // could see a signup but not that it was a multi-year agreement — a 3-year plan
+  // bills monthly, so "Monthly · $X/mo" alone hid the commitment.
+  const termLabel =
+    args.frequency === '3year'
+      ? '3-year agreement (billed monthly)'
+      : args.frequency === 'yearly'
+        ? 'Annual (paid yearly)'
+        : 'Month-to-month'
 
   const stats = [
     { label: 'Plan', value: args.planName },
     { label: 'Billing', value: priceLine },
+    { label: 'Term', value: termLabel },
     { label: 'Customer', value: args.isExisting ? 'Existing' : 'New' },
   ]
 
@@ -760,6 +772,7 @@ export async function sendPlanSignupEmail(args: {
       ${args.address ? `<strong>Address:</strong> ${escapeHtml(args.address)}<br />` : ''}
       <strong>Plan:</strong> ${escapeHtml(args.planName)}<br />
       <strong>Billing:</strong> ${escapeHtml(priceLine)}<br />
+      <strong>Term:</strong> ${escapeHtml(termLabel)}<br />
       <strong>HCP Customer ID:</strong> ${escapeHtml(args.hcpCustomerId)}
     </div>
     <div style="background:#FEF3C7;border-left:4px solid #D97706;border-radius:8px;padding:14px 16px;margin-top:18px;">
@@ -786,6 +799,7 @@ export async function sendPlanSignupEmail(args: {
     args.address ? `Address: ${args.address}` : '',
     `Plan: ${args.planName}`,
     `Billing: ${priceLine}`,
+    `Term: ${termLabel}`,
     `HCP Customer ID: ${args.hcpCustomerId}`,
     '',
     'ACTION REQUIRED: assign the service plan to this customer in Housecall Pro.',

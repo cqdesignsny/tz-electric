@@ -59,6 +59,19 @@ const SERVICE_KEYS = [
   'other',
 ] as const
 
+// Human-readable fallback label per service key, used when the model fires
+// create_lead_with_estimate without an explicit service_label (so a lead still
+// lands with a sensible name instead of bouncing on a missing field).
+const SERVICE_LABELS: Record<(typeof SERVICE_KEYS)[number], string> = {
+  hvac: 'HVAC',
+  electrical: 'Electrical',
+  generator: 'Generator',
+  plumbing: 'Plumbing',
+  'ev-charger': 'EV Charger',
+  surge: 'Surge Protection',
+  other: 'Service request',
+}
+
 /**
  * Build the tool surface for a given conversation. Returning a function
  * (instead of a static export) lets us close over the conversation id /
@@ -184,10 +197,10 @@ export function buildAgentTools(ctx: AgentToolContext) {
 
     create_lead_with_estimate: tool({
       description:
-        'BOOK THE LEAD INTO HOUSECALL PRO. This is the same backend the website /quote form uses, called via the same pipeline. Calling this tool: (1) persists the lead to the TZ DB, (2) finds-or-creates the HCP customer (by phone, email, or name), (3) creates an unscheduled estimate with all qualification answers in office-internal private notes, (4) drops a card in HCP Job Inbox so the office sees the new lead immediately, (5) mirrors to the TZ Switchboard Lead Pipeline, and (6) attaches the resulting tz_lead_id to this conversation. There is no other way to land a lead in HCP from this conversation; this tool IS the booking step. Call when: the visitor has agreed to a free estimate AND you have first name + last name + phone + ownership at minimum. Use the qualification keys from section 6 of the knowledge base ("Canonical Lead Intake Question Set") so the office reads consistent fields across the website form and every agent.',
+        'BOOK THE LEAD INTO HOUSECALL PRO. This is the same backend the website /quote form uses, called via the same pipeline. Calling this tool: (1) persists the lead to the TZ DB, (2) finds-or-creates the HCP customer (by phone, email, or name), (3) creates an unscheduled estimate with all qualification answers in office-internal private notes, (4) drops a card in HCP Job Inbox so the office sees the new lead immediately, (5) mirrors to the TZ Switchboard Lead Pipeline, and (6) attaches the resulting tz_lead_id to this conversation. There is no other way to land a lead in HCP from this conversation; this tool IS the booking step. Call when: the visitor has agreed to a free estimate AND you have at least their first name and phone. Always also pass last name, the service, and ownership whenever the caller has given them (they default sensibly if missing, but the office wants them). Use the qualification keys from section 6 of the knowledge base ("Canonical Lead Intake Question Set") so the office reads consistent fields across the website form and every agent.',
       inputSchema: z.object({
         first_name: z.string(),
-        last_name: z.string(),
+        last_name: z.string().optional().describe('Caller last name if given; optional.'),
         phone: z.string().describe('10-digit US phone, any format.'),
         email: z.string().optional(),
         street: z.string().optional(),
@@ -195,14 +208,17 @@ export function buildAgentTools(ctx: AgentToolContext) {
         state: z.string().optional().describe('2-letter state code, default NY.'),
         zip: z.string().optional(),
         service_key: z.enum(SERVICE_KEYS),
-        service_label: z.string().describe('Human-readable service name like "HVAC / Mini-Split".'),
+        service_label: z
+          .string()
+          .optional()
+          .describe('Human-readable service name like "HVAC / Mini-Split". Optional — defaults from service_key if omitted.'),
         qualification: z
           .record(z.string(), z.string())
           .optional()
           .describe(
             'Map of qualification question id → customer answer. Use the keys from section 6 of the knowledge base (heatingOrCooling, scope, urgency, etc.).',
           ),
-        ownership: z.enum(['homeowner', 'renter']),
+        ownership: z.enum(['homeowner', 'renter']).optional().describe('Defaults to homeowner if not stated.'),
         landlord_name: z.string().optional(),
         landlord_phone: z.string().optional(),
         landlord_email: z.string().optional(),
@@ -529,7 +545,7 @@ export function buildAgentTools(ctx: AgentToolContext) {
 
 type LeadInput = {
   first_name: string
-  last_name: string
+  last_name?: string
   phone: string
   email?: string
   street?: string
@@ -537,9 +553,9 @@ type LeadInput = {
   state?: string
   zip?: string
   service_key: (typeof SERVICE_KEYS)[number]
-  service_label: string
+  service_label?: string
   qualification?: Record<string, string>
-  ownership: 'homeowner' | 'renter'
+  ownership?: 'homeowner' | 'renter'
   landlord_name?: string
   landlord_phone?: string
   landlord_email?: string
@@ -555,6 +571,15 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
       error: 'Renter inquiries require landlord_name, landlord_phone, and landlord_permission=true',
     }
   }
+
+  // Best-effort defaults so a real lead still lands if the model omits a
+  // non-core field. first_name + phone are the true minimum (and the voice
+  // route's misfire guard enforces them); last name, service label, and
+  // ownership default sensibly rather than bouncing the whole booking.
+  const lastName = (input.last_name ?? '').trim()
+  const serviceLabel =
+    input.service_label?.trim() || SERVICE_LABELS[input.service_key] || 'Service request'
+  const ownership = input.ownership ?? 'homeowner'
 
   // Issue 2 (2026-06-03): the caller ID — the line they actually called in on —
   // so the office email AND the HCP estimate note can show it alongside the
@@ -590,16 +615,16 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
     storedLeadId = await insertLead({
       source,
       serviceKey: input.service_key,
-      serviceLabel: input.service_label,
+      serviceLabel,
       firstName: input.first_name.trim(),
-      lastName: input.last_name.trim(),
+      lastName,
       phone: input.phone,
       email: input.email,
       street: input.street,
       city: input.city,
       state: input.state || 'NY',
       zip: input.zip,
-      ownership: input.ownership,
+      ownership,
       landlordName: input.landlord_name,
       landlordPhone: input.landlord_phone,
       landlordEmail: input.landlord_email,
@@ -624,7 +649,7 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
   try {
     const match = await findExistingCustomer({
       firstName: input.first_name,
-      lastName: input.last_name,
+      lastName,
       phone: input.phone,
       email: input.email,
     })
@@ -635,7 +660,7 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
     } else {
       hcpCustomer = await createCustomerForLead({
         firstName: input.first_name.trim(),
-        lastName: input.last_name.trim(),
+        lastName,
         phone: input.phone,
         email: input.email,
         street: input.street,
@@ -654,23 +679,29 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
       // Inbox card answers "what is this?" at a glance. Same convention
       // as the web-form path.
       const cityState = [input.city, input.state].filter((v): v is string => !!v).join(', ').trim()
-      const summary = cityState ? `${input.service_label} · ${cityState}` : input.service_label
+      const summary = cityState ? `${serviceLabel} · ${cityState}` : serviceLabel
       const tags: string[] = [
         summary,
         `Channel: Agent ${ctx.channel.toUpperCase()}`,
         'TZ AI AGENT',
-        `Service: ${input.service_label}`,
+        `Service: ${serviceLabel}`,
       ]
       if (cleanQualification.urgency)
         tags.push(`Urgency: ${cleanQualification.urgency.slice(0, 39)}`)
       if (cleanQualification.scope) tags.push(cleanQualification.scope.slice(0, 49))
       if (hcpCustomerExisting) tags.push('Existing customer')
-      if (input.ownership === 'renter') tags.push('Renter - Verify with Landlord')
+      if (ownership === 'renter') tags.push('Renter - Verify with Landlord')
       if (cleanQualification.medical === 'Yes') tags.push('Medical Equipment in Home')
       if (cleanQualification.urgentNow === 'Yes — active leak') tags.push('ACTIVE LEAK')
 
-      const privateNotes = buildAgentEstimateNotes(input, ctx, hcpCustomerExisting, hcpMatchedBy, inboundCallerPhone)
-      const description = `${input.service_label} — ${ctx.channel === 'sms' ? 'SMS' : ctx.channel === 'voice' ? 'Voice' : 'Chat'} Claire`
+      const privateNotes = buildAgentEstimateNotes(
+        { ...input, last_name: lastName, service_label: serviceLabel, ownership },
+        ctx,
+        hcpCustomerExisting,
+        hcpMatchedBy,
+        inboundCallerPhone,
+      )
+      const description = `${serviceLabel} — ${ctx.channel === 'sms' ? 'SMS' : ctx.channel === 'voice' ? 'Voice' : 'Chat'} Claire`
       const address =
         input.street && input.city && input.state && input.zip
           ? { street: input.street, city: input.city, state: input.state, zip: input.zip }
@@ -750,11 +781,11 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
       await sendClaireLeadCapturedEmail({
         conversationId: ctx.conversationId,
         channel: ctx.channel,
-        customerName: `${input.first_name} ${input.last_name}`.trim() || null,
+        customerName: `${input.first_name} ${lastName}`.trim() || null,
         customerPhone: input.phone || null,
         inboundCallerPhone,
         customerEmail: input.email || null,
-        serviceLabel: input.service_label,
+        serviceLabel,
         urgency: cleanQualification.urgency || null,
         scope: cleanQualification.scope || null,
         address: fullAddress,

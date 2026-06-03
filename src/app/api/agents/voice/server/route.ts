@@ -59,7 +59,11 @@ export const maxDuration = 30
 const VOICE_PROVIDER = process.env.VAPI_VOICE_PROVIDER || '11labs'
 const VOICE_ID = process.env.VAPI_VOICE_ID || 'jBpfuIE2acCO8z3wKNLl' // Jenny on 11labs (placeholder default)
 const MODEL_PROVIDER = process.env.VAPI_MODEL_PROVIDER || 'anthropic'
-const MODEL_NAME = process.env.VAPI_MODEL_NAME || 'claude-3-5-sonnet-20241022'
+// Sonnet 4.6 is the floor for voice: Haiku 4.5 could not assemble the large
+// create_lead_with_estimate payload (41/41 voice calls sent empty {} args →
+// 0 HCP leads) and narrated its reasoning aloud (2026-06-03 Cindy call). Both
+// disappear on Sonnet, which web chat already runs. VAPI_MODEL_NAME overrides.
+const MODEL_NAME = process.env.VAPI_MODEL_NAME || 'claude-sonnet-4-6'
 
 // Opener A/B test (added 2026-05-29). Session-24 analyzer flagged ~8 calls
 // where the caller heard the opener and hung up. We serve one of two openers

@@ -910,6 +910,7 @@ export async function sendInternalNotification(
       billingCycle: planInfo.billingCycle,
       amount: planInfo.amount,
       perLabel,
+      frequency: planInfo.frequency,
       hcpCustomerId: customerId,
       isExisting,
     })
