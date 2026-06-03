@@ -229,7 +229,7 @@ export function buildAgentTools(ctx: AgentToolContext) {
 
     lookup_existing_project: tool({
       description:
-        "Check whether THIS caller already has work with us — an active quote/estimate or an upcoming appointment — identified by the number they are calling from (takes NO arguments). Call this the moment a RETURNING caller is following up on existing work (\"I'm calling about the job you're doing for me\", \"the people putting in my electric\", \"following up on my quote\", \"you were supposed to call me back about my upgrade\") so you can recognize their project and route them to the office for a status update INSTEAD of re-running new-lead qualification. Privacy: returns only THIS caller's own active items — never past history, never anyone else's, never pricing. If the number is not recognized or matches more than one customer it returns found=false; in that case do NOT guess — take a message via flag_for_office_review.",
+        "Check whether THIS caller already has a project with us — an active quote/estimate or a job in progress — identified by the number they are calling from (takes NO arguments). Call this the moment a RETURNING caller is following up on existing work (\"I'm calling about the job you're doing for me\", \"the people putting in my electric\", \"following up on my quote\", \"you were supposed to call me back about my upgrade\") so you can recognize and CONFIRM their project by name and route them to the office for a status update INSTEAD of re-running new-lead qualification. Returns project NAME(S) only — NO dates or scheduled times; if the caller asks specifically about timing, use lookup_my_appointment for that. Privacy: returns only THIS caller's own active items — never past history, never anyone else's, never pricing. If the number is not recognized or matches more than one customer it returns found=false; in that case do NOT guess — take a message via flag_for_office_review.",
       inputSchema: z.object({}),
       execute: async () => lookupExistingProjectImpl(ctx),
     }),
@@ -991,32 +991,21 @@ async function lookupExistingProjectImpl(ctx: AgentToolContext) {
     }
   }
 
-  let upcoming: { date: string; time: string; description: string | null } | null = null
-  if (job) {
-    const start = new Date(job.scheduledStart)
-    upcoming = {
-      date: start.toLocaleDateString('en-US', {
-        timeZone: 'America/New_York',
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-      }),
-      time: start.toLocaleTimeString('en-US', {
-        timeZone: 'America/New_York',
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-      }),
-      description: job.description,
-    }
-  }
+  // Project RECOGNITION only — names/types, deliberately NO dates or scheduled
+  // times. Tyler (2026-06-03): reference the project so we don't re-qualify, but
+  // never volunteer dates/schedule unless the caller asks (then lookup_my_-
+  // appointment handles timing). So this tool returns project names + status
+  // only; the upcoming job contributes its description, not its date.
+  const projects: Array<{ description: string | null; status: string | null }> = estimates.map(
+    (e) => ({ description: e.description, status: e.status }),
+  )
+  if (job) projects.push({ description: job.description, status: null })
 
   return {
     found: true,
-    estimates: estimates.map((e) => ({ description: e.description, status: e.status })),
-    upcoming_appointment: upcoming,
+    projects,
     message:
-      'This caller already has work with us (see estimates / upcoming_appointment). Acknowledge it warmly and reference the project by name, take their callback number, and route to the office for a status update with flag_for_office_review. Do NOT run new-lead qualification and do NOT pitch a new estimate. Do not read out any pricing.',
+      'This caller already has a project with us. Confirm WHICH project they mean by name ("I see there\'s a project for a [name] — is that the one you\'re calling about?"), then take their callback number and route to the office with flag_for_office_review (reason beginning "Existing customer follow-up:"). Do NOT volunteer any dates, scheduled times, or "you\'re on the calendar" — discuss timing ONLY if the caller specifically asks, and use lookup_my_appointment for that. Do NOT re-run new-lead qualification or pitch a new estimate. No pricing.',
   }
 }
 
