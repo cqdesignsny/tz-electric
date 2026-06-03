@@ -2,11 +2,73 @@
 
 This is the rolling handoff doc. Last verified state, what's done, what's next, what's deferred. If anything below conflicts with code, trust the code. Keep this updated after every working session.
 
-**Last verified:** 2026-05-29 **end of day**, **session 26** (Dennis + Cesar). Session 26 is COMPLETE — see **"⭐ NEXT SESSION — START HERE"** directly below for the current state + prioritized open items. The detailed session-26 work log is in the **"✅ SESSION 26 UPDATE"** block further down; the original session-25 task list and all prior history are preserved underneath that.
+**Last verified:** 2026-06-03, **session 28** (Cesar). Sessions 27 (2026-06-01) and 28 (2026-06-03) are COMPLETE and live in prod (HEAD `84a82b0`, repo synced local = origin). See **"⭐ NEXT SESSION — START HERE"** directly below for current state + open items, then the **SESSION 28** and **SESSION 27** detail blocks. All prior history (session 26 and earlier) is preserved underneath.
 
 ---
 
-## ⭐ NEXT SESSION — START HERE (picking up after session 26, 2026-05-29 EOD)
+## ⭐ NEXT SESSION — START HERE (picking up after session 28, 2026-06-03)
+
+Sessions 27 (2026-06-01) and 28 (2026-06-03) are both live in prod and pushed (HEAD `84a82b0`, repo synced local = origin). Session 27 was a voice-reliability + Switchboard-polish pass; session 28 fixed the two issues Tyler flagged from the David Kloss call. Detail blocks for both are directly below. Start here.
+
+### Do these first (in order)
+1. **One validating voice test call** — a batch of live voice changes from sessions 27–28 can only be confirmed on a real call:
+   - **Session 28 — returning-customer recognition.** Call from a number that maps to an HCP customer with an open estimate/job and ask a follow-up ("when are you coming to do my upgrade?"). Claire should call `lookup_existing_project`, recognize the project by name, and NOT re-run new-lead qualification. Live target: **David Kloss's number (845-853-2224) has a real "100-200amp Overhead Service Upgrade" estimate + a June 11 8:30 AM job**, so it resolves end-to-end.
+   - **Session 27 — voice config.** The Vapi "still working" line fires on a slow tool call (commit `a4d6cf8` changed the live assistant config — if Vapi ever rejects it, revert just that commit); barge-in numWords 2 (cough mid-sentence → she keeps talking; a real word stops her); anti-filler/no-stall; lost-lead guardrail (qualify a lead → confirm a routing tool actually fired before the "office will follow up" close).
+2. **Re-check A2P, then flip SMS if approved.** Still the SMS unblocker, unchanged since session 26 (last seen `IN_PROGRESS` 2026-05-29 — it's been several days, re-check via the command in Key facts). **If `REGISTERED`/`APPROVED`:** set `TWILIO_SMS_ENABLED=true` on Vercel `tz-electric` Production (`printf 'true' | npx vercel env add TWILIO_SMS_ENABLED production`), redeploy, send a test page, confirm Messages status = `delivered` not `undelivered/30034`.
+
+### Needs Tyler (blocked on his input — ask him)
+- **#4 Claire call transfer** — needs the **exact extra HCP voicemail number** before building. Once we have it (and/or SMS is live), build in-call transfer + the "route utility calls to a named staffer" follow-on (also needs Tyler to name the staffer).
+- **3 open policy questions** (from the 5/28 report): (a) `notify_team_member` on EVERY named callback or only when urgent? (b) how much detail to capture on document/COI requests? (c) does TZ install customer-supplied EV chargers or source them? — answers unblock the **permit/COI KB entry** + small EV/notify prompt tweaks.
+
+### What shipped session 28 (live + verified — commit `84a82b0`)
+`lookup_existing_project` tool + a "Returning Customer Following Up On Existing Work" prompt rule so Claire recognizes a returning customer instead of re-qualifying them; the dictated callback number AND the caller ID now both appear, labeled, in every office notification + the HCP job note (migration 019 `inbound_caller_phone`). Purely additive — 10 Claire tools now.
+
+### What shipped session 27 (live — commits `b48e086` → `60d62d0`)
+Call-review marks on call logs (migration 018 — the ⚑ flag-for-review Cesar used on the David call), collapsible admin Claire panel, Follow-Ups "Log outcome" works on iPad, plus a voice-reliability batch: lost-lead guardrail, one anti-filler/no-stall rule, goodbye-loop fix, barge-in numWords 1→2, a deterministic break of the `create_lead` empty-args retry loop, and a Vapi platform "still working" line for slow tools.
+
+### Key facts / gotchas (carried forward; updated for 27–28)
+- **Migrations at 019.** `npm run migrate` is idempotent (tracked in `_migrations`). 018 (call-review marks) + 019 (inbound caller phone) applied to prod.
+- **Claire tool surface = 10 tools.** Any tool added to `buildAgentTools` auto-wires to voice/web/SMS via `buildVapiFunctionDefinitions` — no manual registration step.
+- **Model swap Haiku → Sonnet is the real voice-adherence lever** (pinned session 27): most voice "struggling" is the model not following rules that already exist, not missing rules.
+- **Env/secrets:** SSD + this-mount `.env.local` have the full set incl. `CRON_SECRET`. Vercel CLI authed as `cqdesignsny` on the **TZ Electric** team. Project: `tz-electric` (`prj_wtBcaXPS6KOeXJniJroHRYnxiDtm`, team `team_rgs4fNAHW2dNT1fCPsjf5aVg`). Deploy from this mount works (verify with `npx vercel ls --scope tz-electric`). Vercel MCP 403s — use the CLI.
+- **A2P re-check command** (from `tz-site/`):
+  ```bash
+  export $(grep -E '^TWILIO_(ACCOUNT_SID|AUTH_TOKEN)=' .env.local | xargs)
+  curl -s -u "$TWILIO_ACCOUNT_SID:$TWILIO_AUTH_TOKEN" \
+    "https://messaging.twilio.com/v1/Services/MGd889a7dbf8976d2b4363f47433741902/Compliance/Usa2p" | python3 -m json.tool
+  ```
+- **Deploy:** commit on `main` → post-commit hook pushes to GitHub → Vercel auto-deploys. Verify by hitting the prod URL (a page returns 307 to login = clean build). Don't run local dev to verify.
+- **Prompt changes are Cesar's domain** — session 28's prompt rule + session 27's voice rules were made at Cesar/Dennis's direction; keep that norm.
+
+---
+
+### ✅ SESSION 28 UPDATE (2026-06-03, Cesar) — David Kloss call fixes (live + verified, commit `84a82b0`)
+
+Tyler flagged the **David Kloss** voice call (845-853-2224, conv `bc44f964`, 2026-06-02 6:53 PM ET) via the new ⚑ call-review mark. Two issues, both fixed additively and verified against live HCP data before shipping.
+
+- **Issue 1 — Claire re-qualified an existing customer (felt like re-selling).** David called to follow up on a 100-to-200 amp service upgrade already booked in HCP, and Claire ran the full new-lead qualification battery (project type, overhead/underground, reason, timeline) as if he were new. Root cause: the existing-customer signal (she even matched him via `find_existing_customer`) didn't change her flow, and she had no view of his existing estimate/job. Fix = **A + B**:
+  - **B (new tool `lookup_existing_project`)** in `agent-tools.ts` + `getActiveEstimatesForCustomer` in `housecall-pro.ts`. Identifies the caller by their number (inbound caller ID preferred, dictated callback as fallback), requires a single unambiguous `tz_hcp_customers` match, returns their ACTIVE estimates (drops lost/completed) + soonest upcoming job — no history, no pricing. Mirrors the privacy gating of `lookup_my_appointment`. Auto-wires to all channels. Verified live: David's record returns "100-200amp Overhead Service Upgrade" + a June 11 8:30 AM job.
+  - **A (prompt rule)** in `agent-prompt.ts`: new "Returning Customer Following Up On Existing Work" section + a Tool-Use bullet. On follow-up signals (or an HCP match), Claire skips qualification, references the existing project by name, takes a callback number, and routes to the office via `flag_for_office_review` ("Existing customer follow-up:"). Cesar's domain.
+- **Issue 2 — notifications only showed the dictated callback number.** The voice route captured caller ID at call start into `customer_phone`, but `update_visitor_contact` then overwrote it with the number the caller read out; a mis-heard digit left no way back. Fix: **migration 019** adds `inbound_caller_phone` (captured once at call start in the voice route, never overwritten by `update_visitor_contact`); new `renderPhonePair` in `agent-notifications.ts` shows BOTH numbers, labeled ("Callback number (caller gave)" + "Calling from (caller ID)"), in the flag / emergency / lead-captured emails AND the HCP estimate note. Collapses to one line when they match; voice-only in practice (web chat has no caller ID, SMS inbound == caller).
+
+Purely additive: no existing tool or behavior removed (10 tools now). `tsc` clean, migration 019 applied to prod, deploy `8zqx2yeei` Ready, live domain verified (/ 200, /switchboard 307, /claire 200). **Open follow-up:** a real test call from David's number to confirm recognition end-to-end (see Do-These-First #1). NOTE: the `agent-prompt.ts` change is a prompt rule — Cesar's domain; made + shipped by Cesar this session.
+
+### ✅ SESSION 27 UPDATE (2026-06-01) — voice reliability + Switchboard polish (catch-up writeup — shipped but never logged)
+
+Six commits on 2026-06-01 that weren't written up at the time. All live in prod. The Follow-Ups/iPad fix + collapsible panel came from Tyler's usability feedback; the voice batch came from a review of the last 6 voice calls Tyler flagged as Claire "struggling."
+
+- `b48e086` **Follow-Ups: Log-outcome works on all devices.** Tyler couldn't tap "Log outcome" on iPad — the inline chips sat under the Claire panel/bubble and the "Other" note used `window.prompt` (a no-op in iOS standalone mode). Now a centered z-[60] modal, inline "Other" note field, the saved note renders on Recently-handled cards, Reopen is a real button, "Mark done" → "Log outcome". Client-only, same resolve-route contract.
+- `05fdb52` **Collapsible admin Claire panel.** The always-open right column crowded tablets. Now collapsible (hide button + right-edge "Claire" tab), state lifted to `DashboardShell` so the content gutter reclaims width, persisted per-device in localStorage (`tz-claire-panel-open`), defaults open ≥1280px / collapsed 1024–1279. Panel stays mounted (slides off-screen) so the thread survives. Desktop + mobile bubble untouched.
+- `5065e00` **Voice: lost-lead guardrail + anti-filler + goodbye fix + barge-in numWords 2.** Lost-lead guardrail — a routing tool MUST fire before any "office will follow up" close (a 6/1 pool-electrical lead qualified fully but fired no tool, never reached HCP). One general anti-stall rule banning all holding phrases (silence preferred before tools). Goodbye-loop fix (a stray "Hello?" after goodbyes isn't a reason to restart intake). Barge-in `stopSpeakingPlan.numWords` 1→2. Prompt/config only.
+- `da9f7ef` **Voice: break the `create_lead` empty-args retry loop.** A 6/1 "Mike" call fired `create_lead_with_estimate` with empty `{}` four times (each a ~3-5s Zod bounce, papered over with stall lines). Now a contactless create-lead call is treated as a model misfire: route to the office ONCE (single deduped `flag_for_office_review` + stop directive). Deterministic; legitimate bookings untouched. Also closes the earlier conv `0717f9c8` loop.
+- `a4d6cf8` **Voice: Vapi platform "still working" line for slow tools.** Each function tool now carries a `request-response-delayed` message — if the server response exceeds 2.5s, Vapi speaks ONE line ("Thanks for your patience, just a few more seconds."), fast tools stay silent. Moves wait-filler off the model. **Changes the live assistant config — needs a test call; revert just this commit if Vapi rejects it.**
+- `60d62d0` **Call Logs: mark calls for review.** Migration 018 `tz_call_review_marks` (conversation-keyed; presence = flagged + optional note), `src/lib/call-review.ts`, `/api/switchboard/call-logs/review-mark`, and a ⚑ toggle + "⚑" filter + detail-header button on call logs. This is the feature Cesar used to flag the David Kloss call for session 28.
+
+Noted for later (not done): **model swap Haiku → Sonnet** as the real voice-adherence lever — most failures were the model not following existing rules.
+
+---
+
+## NEXT SESSION (session-26 snapshot — superseded by the session-28 block above; kept for history)
 
 Whoever picks this up (Cesar or Dennis): session 26 shipped a large batch, all verified in prod and pushed (HEAD `99ec4a3`). Repo is fully synced (local = origin). Start here.
 
