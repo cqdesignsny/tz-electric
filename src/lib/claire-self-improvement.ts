@@ -249,6 +249,12 @@ export type BaselineMetrics = {
     /** Number of conversations where Claire said "one moment" / "hold tight"
      *  / similar more than twice. */
     stall_phrase_calls: number
+    /** Args-required tool calls that fired with empty/missing arguments, keyed
+     *  by tool name. A model misfire — the action silently didn't happen. */
+    empty_arg_tool_calls: Record<string, number>
+    /** Shortcut: empty-arg create_lead_with_estimate calls. Each one is a lead
+     *  Claire qualified that never reached Housecall Pro. */
+    lead_tool_misfires: number
   }
 }
 
@@ -261,6 +267,39 @@ const STALL_PHRASES = [
   'i\'ll connect you',
   'stay on the line',
 ]
+
+// Tools that REQUIRE arguments. An empty {} call to one of these is a model
+// misfire, and create_lead_with_estimate firing empty is the worst case: Claire
+// gathered the lead but it never reached Housecall Pro (this is exactly the bug
+// that hid behind "0 leads booked" for weeks — the analyzer reads transcripts,
+// not tool payloads, so it couldn't see it). Read-only lookups
+// (lookup_business_hours, lookup_my_appointment, lookup_existing_project) take no
+// args, so they're deliberately excluded — an empty call to those is correct.
+const ARGS_REQUIRED_TOOLS = new Set([
+  'create_lead_with_estimate',
+  'update_visitor_contact',
+  'flag_for_office_review',
+  'notify_team_member',
+])
+
+/** True when a tool was called with no usable arguments (null, {}, or all-blank). */
+function isEmptyToolArgs(input: Record<string, unknown> | null | undefined): boolean {
+  if (!input) return true
+  const values = Object.values(input)
+  if (values.length === 0) return true
+  return values.every(
+    (v) => v === null || v === undefined || (typeof v === 'string' && v.trim() === ''),
+  )
+}
+
+/** Compact, readable preview of which arg keys a tool call actually carried. */
+function toolArgKeys(input: Record<string, unknown> | null | undefined): string[] {
+  if (!input) return []
+  return Object.keys(input).filter((k) => {
+    const v = input[k]
+    return v !== null && v !== undefined && !(typeof v === 'string' && v.trim() === '')
+  })
+}
 
 export function computeBaselineMetrics(data: DailyDataset): BaselineMetrics {
   const conv = data.conversations
@@ -297,8 +336,24 @@ export function computeBaselineMetrics(data: DailyDataset): BaselineMetrics {
   let longest = 0
   let stallCalls = 0
   let repeatCalls = 0
+  const emptyArgToolCalls: Record<string, number> = {}
   for (const c of conv) {
     const msgs = data.messagesByConversation.get(c.id) || []
+
+    // Tool-payload health: an args-required tool fired with no usable args is a
+    // misfire — most damagingly create_lead_with_estimate with {}, which means
+    // the lead never reached Housecall Pro even though Claire qualified it.
+    for (const m of msgs) {
+      if (
+        m.role === 'tool_use' &&
+        m.tool_name &&
+        ARGS_REQUIRED_TOOLS.has(m.tool_name) &&
+        isEmptyToolArgs(m.tool_input)
+      ) {
+        emptyArgToolCalls[m.tool_name] = (emptyArgToolCalls[m.tool_name] || 0) + 1
+      }
+    }
+
     const turns = msgs.filter((m) => m.role === 'user' || m.role === 'assistant')
     totalMessages += turns.length
     if (turns.length > longest) longest = turns.length
@@ -341,6 +396,8 @@ export function computeBaselineMetrics(data: DailyDataset): BaselineMetrics {
       longest_conversation_messages: longest,
       repeated_phrase_calls: repeatCalls,
       stall_phrase_calls: stallCalls,
+      empty_arg_tool_calls: emptyArgToolCalls,
+      lead_tool_misfires: emptyArgToolCalls['create_lead_with_estimate'] || 0,
     },
   }
 }
@@ -389,7 +446,16 @@ export function shapeConversationsForLLM(data: DailyDataset): string {
 
     for (const m of turns) {
       if (m.role === 'tool_use') {
-        lines.push(`  [tool: ${m.tool_name}]`)
+        if (ARGS_REQUIRED_TOOLS.has(m.tool_name || '') && isEmptyToolArgs(m.tool_input)) {
+          // Surface the misfire to the LLM in plain language — it can't see the
+          // raw payload otherwise, only that a tool "ran".
+          lines.push(
+            `  [tool: ${m.tool_name} — ⚠ EMPTY ARGS: fired with no data, so this action did NOT happen (e.g. the lead was never saved to Housecall Pro)]`,
+          )
+        } else {
+          const keys = toolArgKeys(m.tool_input)
+          lines.push(`  [tool: ${m.tool_name}${keys.length ? ` — args: ${keys.join(', ')}` : ''}]`)
+        }
         continue
       }
       const speaker = m.role === 'user' ? 'caller' : 'Claire'
@@ -531,6 +597,7 @@ Rules of engagement:
    - Claire reading phone numbers as a fast blur instead of paced digits
    - Claire stating the $475 fee as a charge instead of a conditional
    - Customer asking a question Claire fell back on "the office will help" instead of answering
+   - A write tool fired with EMPTY arguments — shown as "⚠ EMPTY ARGS" in the transcript and as a nonzero "Lead-booking tool misfires" / "Empty-arg calls" line in the metrics. This is the most damaging failure: Claire collected the customer's info but the action never happened (the lead never reached Housecall Pro, the message never reached the office). Flag ANY nonzero count as a HIGH-severity failure_pattern with the affected conversation ids. This is the ONE case where even a single occurrence (N=1) must be surfaced, because each one is a real lost lead, not noise.
 
 7. **Skip the noise.** If nothing in a category is worth flagging, return an empty array. Don't pad.
 
@@ -556,6 +623,8 @@ Emergency dispatches fired: ${data.metrics.emergency_dispatch_count}
 Silence timeouts: ${data.metrics.silence_timeout_count}
 Stall-phrase calls (Claire said "hold tight" / "one moment" / etc. 2+ times): ${data.metrics.extras.stall_phrase_calls}
 Calls where Claire repeated herself verbatim: ${data.metrics.extras.repeated_phrase_calls}
+Lead-booking tool misfires (create_lead_with_estimate fired with EMPTY args, so NO Housecall Pro lead was created): ${data.metrics.extras.lead_tool_misfires}
+Empty-arg calls to args-required tools, by tool: ${JSON.stringify(data.metrics.extras.empty_arg_tool_calls)}
 Closed-reason breakdown: ${JSON.stringify(data.metrics.extras.closed_reasons)}
 Lead sources: ${JSON.stringify(data.metrics.extras.leads_by_source)}
 Leads with HCP sync errors: ${data.metrics.extras.leads_with_hcp_errors}

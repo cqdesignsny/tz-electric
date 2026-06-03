@@ -362,6 +362,7 @@ type DailyAnalysisEmailArgs = {
       repeated_phrase_calls: number
       leads_with_hcp_errors: number
       avg_conversation_messages: number
+      lead_tool_misfires: number
     }
   }
   proposals: ClaireProposals
@@ -451,6 +452,11 @@ export function renderClaireDailyAnalysisEmail(args: DailyAnalysisEmailArgs): {
       ${metrics.extras.stall_phrase_calls} call${metrics.extras.stall_phrase_calls === 1 ? '' : 's'} with stall-phrase repetition,
       ${metrics.extras.repeated_phrase_calls} call${metrics.extras.repeated_phrase_calls === 1 ? '' : 's'} where Claire repeated herself verbatim,
       ${metrics.extras.leads_with_hcp_errors} lead${metrics.extras.leads_with_hcp_errors === 1 ? '' : 's'} with HCP sync errors,
+      ${
+        metrics.extras.lead_tool_misfires > 0
+          ? `<strong style="color:#DC2626;">${metrics.extras.lead_tool_misfires} lead-booking tool misfire${metrics.extras.lead_tool_misfires === 1 ? '' : 's'} (empty-args create_lead, lead NOT booked in HCP)</strong>,`
+          : '0 lead-booking tool misfires,'
+      }
       avg ${metrics.extras.avg_conversation_messages} turns / conversation.
     </div>
     ${listBlock('Wins', winsHtml, '(no standout wins today)')}
@@ -482,7 +488,7 @@ export function renderClaireDailyAnalysisEmail(args: DailyAnalysisEmailArgs): {
     proposals.summary,
     '',
     `Volume: ${metrics.voice_count} voice, ${metrics.web_chat_count} web chat, ${metrics.sms_count} SMS, ${metrics.lead_form_count} lead-form. ${metrics.total_leads} total leads.`,
-    `Signals: ${metrics.escalation_count} escalations, ${metrics.emergency_dispatch_count} emergency dispatches, ${metrics.silence_timeout_count} silence timeouts, ${metrics.extras.stall_phrase_calls} stall-phrase calls, ${metrics.extras.repeated_phrase_calls} self-repeat calls.`,
+    `Signals: ${metrics.escalation_count} escalations, ${metrics.emergency_dispatch_count} emergency dispatches, ${metrics.silence_timeout_count} silence timeouts, ${metrics.extras.stall_phrase_calls} stall-phrase calls, ${metrics.extras.repeated_phrase_calls} self-repeat calls, ${metrics.extras.lead_tool_misfires} lead-booking tool misfires.`,
     '',
     'WINS',
     ...(proposals.wins.length === 0
