@@ -118,13 +118,6 @@ export const TEAM_MEMBERS: TeamMember[] = [
     category: 'technician',
   },
   {
-    name: 'Jonathan Vanderwerken',
-    role: 'Electrician',
-    photo: '/images/team/jonathan-vanderwerken.jpg',
-    bio: 'Meet Jonathan, a man with plenty of miles behind the wheel who, after more than 25 years of driving, has somehow still managed to avoid mastering one skill: driving a stick. In his downtime, he enjoys golfing, camping, and listening to techno music. He has watched every episode of Law & Order and is pretty sure he could pass the Bar tomorrow with no prep or law school required (according to him, at least!).',
-    category: 'technician',
-  },
-  {
     name: 'Christopher Weiner',
     role: 'HVAC Tech',
     photo: '/images/team/christopher-weiner.jpg',
