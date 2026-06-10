@@ -229,7 +229,7 @@ Redesigning tzelectricinc.com from Webflow to Next.js 15. Live production site -
 - [ ] **Email Assistant, Office Ops, Warehouse, Sales/Outbound modules** — info pages live, build out as ops grows. Likely deliver as Claire surfaces (post in-app refactor) rather than standalone modules.
 - [ ] **Customer-side delivery of office takeover replies** on `/claire` (and SMS) — currently office reply persists to transcript only; needs SSE / polling on the chat client.
 - [ ] **Vercel BotID** dashboard toggle for `/api/agents/*` paths, plus AI Gateway rate-limit + budget-alert ceilings.
-- [ ] Blog content migration from old Webflow site (nav hidden, code ready)
+- [x] ~~Blog content migration from old Webflow site~~ — **DONE session 30 (2026-06-10).** 20 posts migrated into a file-based markdown blog at `/blog` (`src/content/blog/*.md` rendered with `marked`). Footer + header nav links, old-slug 301 redirects, sitemap entries. See HANDOFF.md SESSION 30.
 - [ ] Sanity.io CMS setup
 - [ ] Google Maps embeds (placeholders in contact & service-areas)
 - [ ] Interactive gallery filtering

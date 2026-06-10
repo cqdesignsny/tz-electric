@@ -209,7 +209,7 @@ Recipients default to the office team (Tyler/Terry/service@/Cesar); override per
 
 ## Pages
 
-The public site has 50+ static and dynamic routes including the homepage, 7 service pages, sub-service pages, the Mitsubishi landing, signature plans, maintenance plans, about, contact, reviews, financing, gallery, promotions, careers (with 6 individual job pages), 7 city pages, 5 county pages, 5 legal pages, the lead form at `/quote`, the hidden `/thank-you` page, and **`/claire`** (full-page web chat surface, top-level segment with its own minimal layout).
+The public site has 50+ static and dynamic routes including the homepage, 7 service pages, sub-service pages, the Mitsubishi landing, signature plans, maintenance plans, about, contact, reviews, financing, gallery, promotions, careers (with 7 individual job pages), the blog at `/blog` (index + 20 article pages), 7 city pages, 5 county pages, 5 legal pages, the lead form at `/quote`, the hidden `/thank-you` page, and **`/claire`** (full-page web chat surface, top-level segment with its own minimal layout).
 
 Two campaign-specific landings:
 - **`/stay-cool`** — billboard QR target for the summer mini-split campaign. `noIndex`, UTM-trackable.
@@ -273,7 +273,7 @@ All scripts loaded directly in `(public)/layout.tsx` so they only fire on the pu
 - **Google Search Console:** verified, sitemap submitted
 - **JSON-LD:** LocalBusiness + BreadcrumbList + FAQ schemas
 - **www redirect:** configured via Vercel
-- **Blog:** hidden from nav until content migrated (code ready at `/blog`)
+- **Blog:** LIVE at `/blog`. 20 posts migrated from the old Webflow site into a file-based markdown blog (`src/content/blog/*.md` rendered with `marked`). Footer + header nav links, old-slug 301 redirects in `next.config.ts`, index + posts in the sitemap, BlogPosting + breadcrumb JSON-LD.
 
 ## Integrations
 
@@ -303,6 +303,18 @@ All scripts loaded directly in `(public)/layout.tsx` so they only fire on the pu
 - Apply buttons currently link to Typeform (will be replaced with native form)
 - Data source: `src/lib/careers-data.ts`
 
+## Blog
+
+File-based blog migrated from the old Webflow site (session 30, 2026-06-10). 20 posts live at `/blog`.
+
+- **Source of truth:** markdown files in `src/content/blog/<slug>.md` (frontmatter + body). Read at build time and rendered with `marked` via `src/lib/blog.ts`; styled by the hand-rolled `.blog-prose` block in `globals.css`.
+- **Routes:** `/blog` (index: featured + responsive grid) and `/blog/[slug]` (article), statically generated (`dynamicParams = false`) with BlogPosting + breadcrumb JSON-LD.
+- **Images:** one hero per post at `/public/images/blog/<slug>.webp`, pulled local off the old Webflow CDN.
+- **Nav:** footer (`footerCompany` in `Footer.tsx`) + header About menu (`ABOUT_LINKS` in `Header.tsx`, desktop + mobile).
+- **Redirects:** 7 old duplicate/typo Webflow slugs 301-redirect to canonical posts (`next.config.ts`).
+- **Publish a new post:** drop a `<slug>.md` into `src/content/blog/` + a hero at `/public/images/blog/<slug>.webp`, then commit. Frontmatter keys: `title`, `description`, `category`, `date` (YYYY-MM-DD), `heroImage`, `sourceImage` (optional provenance), `author`.
+- **Known follow-ups:** publish dates are approximate (the old site did not expose them; editable per post); a few posts reuse the same hero image; a Switchboard authoring UI for Tyler is a deferred Phase 2.
+
 ## What's shipped
 
 The persona for all customer-facing agents is **Claire** (warm / neighborly / professional, identifies as a "smart assistant" in the opener — never "AI assistant" in customer-facing copy; internal HCP tag stays as `TZ AI AGENT`). Source of truth for behavior: [`docs/agent-training-answers.md`](docs/agent-training-answers.md), with Tyler-authored overrides on top via the in-app editor at `/switchboard/knowledge-base`.
@@ -329,10 +341,11 @@ The persona for all customer-facing agents is **Claire** (warm / neighborly / pr
 - ✓ **Voice reliability + Switchboard polish (LIVE 2026-06-01, commits `b48e086` → `60d62d0`).** Call-review marks on call logs (a ⚑ flag + note + filter, migration 018 `tz_call_review_marks`) for a focused Claire-improvement pass; collapsible admin Claire panel; Follow-Ups "Log outcome" reworked into a modal so it works on iPad. Plus a voice batch from a review of 6 flagged calls: a lost-lead guardrail (a routing tool must fire before any "office will follow up" close), one anti-filler/no-stall rule (silence preferred before tools), a goodbye-loop fix, barge-in `stopSpeakingPlan.numWords` 1→2, a deterministic break of the `create_lead` empty-args retry loop (a contactless misfire routes to the office once), and a Vapi platform "still working" line for genuinely slow tool calls. (The pinned-for-later Haiku→Sonnet model swap was done in session 29, see below.)
 - ✓ **Returning-customer recognition + dual caller numbers (LIVE 2026-06-03, commit `84a82b0`).** Two fixes from the flagged David Kloss call. (1) New read-only `lookup_existing_project` Claire tool (+ `getActiveEstimatesForCustomer` in `housecall-pro.ts`): identifies the caller by their number, requires a single `tz_hcp_customers` match, and returns their ACTIVE estimates + soonest upcoming job (no history, no pricing) so Claire recognizes a returning customer following up on existing work and routes them to the office for a status update instead of re-running new-lead qualification. A new "Returning Customer Following Up On Existing Work" rule in `agent-prompt.ts` teaches the behavior. (2) **Both phone numbers everywhere the office sees a lead:** migration 019 adds `inbound_caller_phone` (the caller ID, captured at call start and never overwritten by `update_visitor_contact`), and `renderPhonePair` shows the dictated callback number AND the calling-from number, labeled, in the flag / emergency / lead-captured emails + the HCP estimate note — so a mis-heard callback number is always recoverable. Purely additive (10 Claire tools now); the dual-number piece is voice-only in practice.
 - ✓ **Voice lead-bug fix: Haiku → Sonnet 4.6, plus analyzer / Stripe / careers (LIVE 2026-06-03, commits `4458f9b` → `d8296ee`).** A read of the Neon logs found Voice Claire (on Haiku 4.5) was firing `create_lead_with_estimate` with empty `{}` args on 41 of 41 calls, booking **0 leads into HCP from voice** (the session-27 misfire guard quietly routed each to a manual office flag), and on the Cindy call it spoke its reasoning out loud. The same shared tool from web chat (Sonnet 4.6) filled args 9/9, proving it was the model. Fixes: voice model swapped to **Sonnet 4.6** (pinned in `voice/server/route.ts`; `VAPI_MODEL_NAME` removed from Vercel); `create_lead_with_estimate` schema hardened (last name / service label / ownership optional with safe defaults so a partial lead still lands); a voice "never think out loud" prompt rule + "Just a sec" stall ban + ask-only-for-the-wrong-digits; the Stripe plan-signup office email now shows the contract Term (3-year / annual / month-to-month); the nightly analyzer now inspects tool payloads and flags empty-args misfires (`extras.lead_tool_misfires`, red in the daily report when > 0); and a **Warehouse Associate** job posting at `/careers/warehouse-associate`. Pending one live test call for end-to-end confirmation.
+- ✓ **Blog migrated + live (2026-06-10, commit `36bf342`).** 20 posts migrated from the old Webflow blog into a file-based markdown blog: `/blog` index (featured + grid) and `/blog/[slug]` articles, statically generated with BlogPosting + breadcrumb JSON-LD, `.blog-prose` styling, hero images local under `/public/images/blog`. Blog link restored in the footer + header About menu. 7 old duplicate/typo Webflow slugs 301-redirect to canonical posts. Index + posts in the sitemap. See the **Blog** section above for the authoring workflow. (Same session also caught the A2P regression, see What's next #9.)
 
 ## What's next (in build order)
 
-> **Current priorities live in `HANDOFF.md` → "⭐ NEXT SESSION — START HERE"** (updated 2026-06-03, session 28). In short: (1) one validating voice test call for the session 27–28 voice changes — including returning-customer recognition (call from a recognized customer's number and ask a follow-up); (2) re-check A2P and flip `TWILIO_SMS_ENABLED` if approved; (3) Tyler-dependent items — #4 transfer (needs the HCP voicemail number), the permit/COI KB entry, and 3 open policy questions. The numbered list below is the older session-22 backlog, kept for reference.
+> **Current priorities live in `HANDOFF.md` → "⭐ NEXT SESSION — START HERE"** (updated 2026-06-10, session 30). In short: (1) **A2P is FAILED again** (error 30909, CTA verification) and needs a fix + resubmit via the Twilio API before SMS can flip; (2) the still-unverified Sonnet 4.6 voice test call; (3) read the at-scale Sonnet nightly report; (4) Tyler-dependent items (speak-to-human behavior, warehouse pay, #4 transfer voicemail number, 3 policy questions). The numbered list below is the older session-22 backlog, kept for reference.
 
 Voice Claire is now fully live end-to-end as of session 22 (2026-05-27) — HCP Phone Pro routing flipped, Vapi tool-call parser bug fixed (every tool call since launch had been failing silently), brevity/voicemail/intake/transfer prompt rules added, after-hours emergency routing safety net deployed. Next priorities:
 
@@ -344,9 +357,9 @@ Voice Claire is now fully live end-to-end as of session 22 (2026-05-27) — HCP 
 6. **Cesar Vercel team migration.** Cesar's CLI is still on the pre-handoff `cq-marketings-projects` team (empty shell). Tyler needs to invite `cqdesignsny@gmail.com` to TZ Electric's Vercel team so `vercel link` + `vercel env pull` work locally. Workaround until then: SSD copy's `.env.local`.
 7. **AI Gateway credit hardening** (session 21 outage follow-up). Friendlier failure UI on web chat when gateway 402s, hourly health-monitor cron, enable AI Gateway low-credit email alert in dashboard.
 8. **In-app Claire (the major arc).** Refactor `agent-prompt.ts` from per-channel branching to layered `buildPrompt({ surface, role, user, context })`. Build tool registry abstraction with role-gating + destructive-action confirmation. Ship right-side slide-out chat panel in the TZ Switchboard. Wire admin chat surface first (`update_kb_section`, `set_on_call_today` are the two starter tools — Tyler is the bottleneck). Office chat surface second. Tech SMS third. Training mode fourth. Multimodal fifth. QC auditor sixth. MCP wrapper seventh. See HANDOFF.md "Claire as TZ AI (architecture direction)" for the full plan.
-9. **SMS Claire model wire-up + flip `TWILIO_SMS_ENABLED`.** All outbound SMS (after-hours dispatch texts, `notify_team_member` paging) and inbound SMS Claire are blocked until the A2P 10DLC **campaign** clears carrier review. Status as of 2026-05-29: the campaign failed its first review (errors 30896 opt-in / 30882 terms URL), was **resubmitted via the Twilio API** with corrected message-flow + `/terms-condition` URL, and is now `IN_PROGRESS`. The moment it shows `REGISTERED`/`APPROVED`: (a) set `TWILIO_SMS_ENABLED=true` on Vercel — `sendSms` reads it at runtime, re-enabling dispatch + paging with no code change; (b) replace the TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call (~30 min). Re-check status with the curl in HANDOFF.md.
+9. **SMS Claire model wire-up + flip `TWILIO_SMS_ENABLED`.** All outbound SMS (after-hours dispatch texts, `notify_team_member` paging) and inbound SMS Claire are blocked until the A2P 10DLC **campaign** clears carrier review. Status as of 2026-06-10 (session 30): the 5/29 API resubmission was reviewed and **rejected again, now `FAILED` with error 30909 (the Call to Action could not be verified)** on `MESSAGE_FLOW`. It needs another fix + resubmit (delete + re-POST, since a FAILED campaign cannot be PATCHed) before SMS can go live. The moment it shows `REGISTERED`/`APPROVED`: (a) set `TWILIO_SMS_ENABLED=true` on Vercel — `sendSms` reads it at runtime, re-enabling dispatch + paging with no code change; (b) replace the TODO block in `src/app/api/agents/sms/webhook/route.ts` with a `generateText({...})` call (~30 min). Re-check status with the curl in HANDOFF.md.
 10. **Tech response acknowledgment + Vapi `<Dial>` bridge.** Post-launch polish on the after-hours cascade once it sees real traffic. Inbound SMS "ON IT" reply stops escalation; `<Dial>` bridge for privacy-preserving direct tech-customer call.
-11. **Blogs back on the site.** Code is ready, nav was hidden during the agent push.
+11. ~~**Blogs back on the site.**~~ **DONE session 30 (2026-06-10):** 20 posts migrated from the old Webflow site, live at `/blog`, footer + header nav links restored. See the **Blog** section above.
 12. **Phase R2 HCP Won/Lost integration.** Close rate by channel, average time-to-won, won lead value. Needs `total_amount` sync from HCP estimates.
 13. **Phase R3 ad-cost integration.** Google Ads + Meta Marketing API → CPL, CPA, ROAS by campaign. Daily cron pulls cost into `tz_ad_spend`.
 14. **Phase 7 self-improving learning loop.** Office flags transcripts in the agent conversation views; flagged items become proposed KB overrides; owners approve and they merge into `tz_kb_overrides` via the existing override mechanism. Reports module gains agent KPIs: handoff rate, false-escalation count, sentiment proxy, top failure modes.
@@ -357,7 +370,7 @@ Voice Claire is now fully live end-to-end as of session 22 (2026-05-27) — HCP 
 2. **Vercel team → AI Gateway → Budget Alerts.** Suggested $100 alert / $500 hard cap so a real attack triggers a warning + degradation instead of a surprise bill.
 
 ### Backlog
-- [ ] Blog content migration from old Webflow site
+- [x] Blog content migration from old Webflow site (DONE session 30, 2026-06-10)
 - [ ] Sanity.io CMS setup
 - [ ] Google Maps embeds (placeholders in contact & service-areas)
 - [ ] Interactive gallery filtering (client component)
