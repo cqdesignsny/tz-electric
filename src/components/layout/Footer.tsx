@@ -19,7 +19,7 @@ const footerCompany = [
   { label: 'About Us', href: '/about-us' },
   { label: 'Reviews', href: '/reviews' },
   { label: 'Gallery', href: '/gallery' },
-  // { label: 'Blog', href: '/blog' }, // Hidden until blog content is migrated
+  { label: 'Blog', href: '/blog' },
   { label: 'Careers', href: '/careers' },
   { label: 'Signature Plans', href: '/signature-plans' },
   { label: 'Financing', href: '/financing' },

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { getAllPosts } from '@/lib/blog'
 
 const BASE_URL = 'https://tzelectricinc.com'
 
@@ -13,6 +14,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: '/contact-us', priority: 0.8, changeFrequency: 'monthly' as const },
     { url: '/reviews', priority: 0.7, changeFrequency: 'weekly' as const },
     { url: '/gallery', priority: 0.6, changeFrequency: 'monthly' as const },
+    { url: '/blog', priority: 0.8, changeFrequency: 'weekly' as const },
     { url: '/financing', priority: 0.7, changeFrequency: 'monthly' as const },
     { url: '/promotions', priority: 0.7, changeFrequency: 'weekly' as const },
     { url: '/careers', priority: 0.6, changeFrequency: 'monthly' as const },
@@ -147,8 +149,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'monthly' as const,
   }))
 
+  // Blog posts (file-based, from src/content/blog)
+  const blogPages = getAllPosts().map((post) => ({
+    url: `/blog/${post.slug}`,
+    priority: 0.6,
+    changeFrequency: 'monthly' as const,
+  }))
+
   const allPages = [
     ...staticPages,
+    ...blogPages,
     ...servicePages,
     ...electricalSubs,
     ...hvacSubs,
