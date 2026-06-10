@@ -302,6 +302,9 @@ export default function Footer() {
             <Link href="/privacy-policy" className="hover:text-white transition-colors">
               Privacy Policy
             </Link>
+            <Link href="/sms-opt-in" className="hover:text-white transition-colors">
+              SMS Messaging
+            </Link>
             <Link href="/terms" className="hover:text-white transition-colors">
               Terms of Service
             </Link>

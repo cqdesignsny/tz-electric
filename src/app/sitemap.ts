@@ -24,6 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: '/emergency', priority: 0.8, changeFrequency: 'monthly' as const },
     { url: '/privacy-policy', priority: 0.3, changeFrequency: 'yearly' as const },
     { url: '/terms-condition', priority: 0.3, changeFrequency: 'yearly' as const },
+    { url: '/sms-opt-in', priority: 0.3, changeFrequency: 'yearly' as const },
     { url: '/accessibility-statement', priority: 0.3, changeFrequency: 'yearly' as const },
     { url: '/cookies', priority: 0.3, changeFrequency: 'yearly' as const },
     { url: '/refund-cancellation-policy', priority: 0.3, changeFrequency: 'yearly' as const },

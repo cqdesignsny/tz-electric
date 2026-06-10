@@ -197,7 +197,7 @@ export function buildAgentTools(ctx: AgentToolContext) {
 
     create_lead_with_estimate: tool({
       description:
-        'BOOK THE LEAD INTO HOUSECALL PRO. This is the same backend the website /quote form uses, called via the same pipeline. Calling this tool: (1) persists the lead to the TZ DB, (2) finds-or-creates the HCP customer (by phone, email, or name), (3) creates an unscheduled estimate with all qualification answers in office-internal private notes, (4) drops a card in HCP Job Inbox so the office sees the new lead immediately, (5) mirrors to the TZ Switchboard Lead Pipeline, and (6) attaches the resulting tz_lead_id to this conversation. There is no other way to land a lead in HCP from this conversation; this tool IS the booking step. Call when: the visitor has agreed to a free estimate AND you have at least their first name and phone. Always also pass last name, the service, and ownership whenever the caller has given them (they default sensibly if missing, but the office wants them). Use the qualification keys from section 6 of the knowledge base ("Canonical Lead Intake Question Set") so the office reads consistent fields across the website form and every agent.',
+        'BOOK THE LEAD INTO HOUSECALL PRO. This is the same backend the website /quote form uses, called via the same pipeline. Calling this tool: (1) persists the lead to the TZ DB, (2) finds-or-creates the HCP customer (by phone, email, or name), (3) creates an unscheduled estimate with all qualification answers in office-internal private notes, (4) drops a card in HCP Job Inbox so the office sees the new lead immediately, (5) mirrors to the TZ Switchboard Lead Pipeline, and (6) attaches the resulting tz_lead_id to this conversation. There is no other way to land a lead in HCP from this conversation; this tool IS the booking step. Call when: the visitor has agreed to a free estimate AND you have at least their first name and phone. Always also pass last name, the service, and ownership whenever the caller has given them (they default sensibly if missing, but the office wants them). Put a short plain-text summary of the caller\'s answers to the section-6 qualification questions ("Canonical Lead Intake Question Set") into the qualification field, so the office reads consistent details across the website form and every agent.',
       inputSchema: z.object({
         first_name: z.string(),
         last_name: z.string().optional().describe('Caller last name if given; optional.'),
@@ -213,10 +213,10 @@ export function buildAgentTools(ctx: AgentToolContext) {
           .optional()
           .describe('Human-readable service name like "HVAC / Mini-Split". Optional — defaults from service_key if omitted.'),
         qualification: z
-          .record(z.string(), z.string())
+          .string()
           .optional()
           .describe(
-            'Map of qualification question id → customer answer. Use the keys from section 6 of the knowledge base (heatingOrCooling, scope, urgency, etc.).',
+            "A short plain-text summary of the caller's answers to the qualification questions (scope, urgency, problem details, etc.) from section 6 of the knowledge base. One or two sentences. Plain text, NOT a JSON object.",
           ),
         ownership: z.enum(['homeowner', 'renter']).optional().describe('Defaults to homeowner if not stated.'),
         landlord_name: z.string().optional(),
@@ -554,7 +554,7 @@ type LeadInput = {
   zip?: string
   service_key: (typeof SERVICE_KEYS)[number]
   service_label?: string
-  qualification?: Record<string, string>
+  qualification?: string | Record<string, string>
   ownership?: 'homeowner' | 'renter'
   landlord_name?: string
   landlord_phone?: string
@@ -602,7 +602,19 @@ async function createLeadWithEstimateImpl(input: LeadInput, ctx: AgentToolContex
   }
   const source = sourceMap[ctx.channel]
   const valueCents = leadValueCents(input.service_key)
-  const cleanQualification = input.qualification || {}
+  // Voice + web both now pass `qualification` as a short summary string. It used
+  // to be a dynamic-key object (z.record), which the Vapi tool-calling path could
+  // not serialize: the model gathered everything conversationally then emitted
+  // EMPTY {} args, so 50 of 52 voice bookings never reached HCP (the bug the
+  // Haiku→Sonnet swap did not fix, because the model was never the cause — the
+  // open-object schema was). Coerce a string into a single-key map for the notes;
+  // still tolerate a legacy map if one ever arrives.
+  const cleanQualification: Record<string, string> =
+    typeof input.qualification === 'string'
+      ? input.qualification.trim()
+        ? { summary: input.qualification.trim() }
+        : {}
+      : input.qualification || {}
   const channelLabel =
     ctx.channel === 'sms'
       ? 'Agent: SMS Claire'
