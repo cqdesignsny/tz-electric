@@ -15,6 +15,7 @@ import type { UserRole } from './users'
 export type ModuleSlug =
   | 'lead-pipeline'
   | 'reports'
+  | 'marketing-reports'
   | 'knowledge-base'
   | 'agent-training'
   | 'sms-conversations'
@@ -57,6 +58,12 @@ export const MODULES: ModuleEntry[] = [
   {
     slug: 'reports',
     label: 'Reports',
+    category: 'operations',
+    defaultRoles: ['owner', 'admin'],
+  },
+  {
+    slug: 'marketing-reports',
+    label: 'Marketing Reports',
     category: 'operations',
     defaultRoles: ['owner', 'admin'],
   },

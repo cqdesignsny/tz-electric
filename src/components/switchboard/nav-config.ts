@@ -97,6 +97,14 @@ export const NAV_SECTIONS: NavSection[] = [
         needs: [],
       },
       {
+        label: 'Marketing Reports',
+        slug: 'marketing-reports',
+        status: 'live',
+        tagline: 'CQ marketing performance: traffic, search, ads, social.',
+        overview:
+          'The marketing report CQ Signal sends, newest first. Website traffic (GA4), Search Console, Google Ads, organic social, Core Web Vitals, and recommendations across 7-day, 30-day, 90-day, and 12-month windows.',
+      },
+      {
         label: 'Cost Analysis',
         slug: 'cost-analysis',
         status: 'live',
