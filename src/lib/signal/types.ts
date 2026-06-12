@@ -186,6 +186,42 @@ export type GoogleAdsSnapshot = {
   notes?: string;
 };
 
+// --- Meta Ads ---
+
+export type MetaAdsCampaignEntry = {
+  id: string;
+  name: string;
+  spend: number;
+  clicks: number;
+  impressions: number;
+  conversions: number;
+  ctr: number;
+  cpc: number;
+  cost_per_conv: number;
+};
+
+export type MetaAdsSnapshot = {
+  status: IntegrationStatus;
+  source?: string;
+  source_description?: string;
+  totals?: {
+    spend: Delta;
+    clicks: Delta;
+    impressions: Delta;
+    conversions: Delta;
+    reach: Delta;
+    ctr: CurrentPrior;
+    cpc: CurrentPrior;
+    cost_per_conv: CurrentPrior;
+  };
+  /** Sorted by spend desc, max 10. */
+  top_campaigns?: MetaAdsCampaignEntry[];
+  // Manual-overlay fallback (status === "manual").
+  primary?: ManualMetric;
+  secondary?: ManualMetric[];
+  notes?: string;
+};
+
 // --- Omnisend ---
 
 export type OmnisendCampaignEntry = {
@@ -379,7 +415,7 @@ export type SignalSnapshot = {
   search_console: SearchConsoleSnapshot;
   typeform: TypeformSnapshot;
   google_ads: GoogleAdsSnapshot;
-  meta_ads: ManualChannelBlock;
+  meta_ads: MetaAdsSnapshot;
   instagram: InstagramSnapshot;
   facebook: FacebookSnapshot;
   linkedin: ManualChannelBlock;

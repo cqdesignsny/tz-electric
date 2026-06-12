@@ -197,6 +197,8 @@ export default async function ReportDetailPage({ params, searchParams }: Props) 
   const sc = snapshot.search_console;
   const ads = snapshot.google_ads;
   const topAd = ads.top_campaigns?.[0];
+  const metaAds = snapshot.meta_ads;
+  const topMeta = metaAds.top_campaigns?.[0];
   const omni = snapshot.omnisend;
   const fb = snapshot.facebook;
   const fbTop = fb.top_post;
@@ -488,6 +490,44 @@ export default async function ReportDetailPage({ params, searchParams }: Props) 
                 Top campaign by spend:{" "}
                 <span className="text-gray-900 dark:text-white">{topAd.name}</span> ·{" "}
                 {formatCurrency(topAd.spend)} · {formatNumber(topAd.clicks)} clicks
+              </p>
+            ) : null}
+          </SectionCard>
+        </div>
+      ) : null}
+
+      {/* Paid social */}
+      {metaAds.status === "live" && metaAds.totals ? (
+        <div className="mt-6">
+          <SectionCard eyebrow="Paid · Meta Ads" title="Paid social">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <MetricTile
+                label="Spend"
+                value={formatCurrency(metaAds.totals.spend.current)}
+                deltaPct={metaAds.totals.spend.delta_pct}
+              />
+              <MetricTile
+                label="Clicks"
+                value={formatNumber(metaAds.totals.clicks.current)}
+                deltaPct={metaAds.totals.clicks.delta_pct}
+              />
+              <MetricTile
+                label="Reach"
+                value={formatNumber(metaAds.totals.reach.current)}
+                deltaPct={metaAds.totals.reach.delta_pct}
+              />
+              <MetricTile
+                label="Cost / click"
+                value={formatCurrency(metaAds.totals.cpc.current)}
+                deltaPct={cpDelta(metaAds.totals.cpc)}
+                invertSign
+              />
+            </div>
+            {topMeta ? (
+              <p className="mt-5 text-sm text-gray-600 dark:text-gray-300">
+                Top campaign by spend:{" "}
+                <span className="text-gray-900 dark:text-white">{topMeta.name}</span> ·{" "}
+                {formatCurrency(topMeta.spend)} · {formatNumber(topMeta.clicks)} clicks
               </p>
             ) : null}
           </SectionCard>
