@@ -1,6 +1,6 @@
 // Contract types for what TZ Switchboard consumes from CQ Signal.
 // Source of truth: CQ Signal's `src/lib/api/v1/snapshot-shape.ts` (the frozen v1
-// contract). Last synced 2026-06-11 against Signal's snapshot.
+// contract). Last synced 2026-06-12 against Signal's snapshot (added google_lsa).
 //
 // Signal owns the connectors. TZ only reads. Every block always arrives
 // with a `status`; data fields are optional and absent for "empty"/"manual"
@@ -222,6 +222,39 @@ export type MetaAdsSnapshot = {
   notes?: string;
 };
 
+// --- Google LSA (Local Services Ads — pay-per-lead) ---
+// Lead-based, not spend-based: the story is lead volume, charge rate, and cost
+// per lead. Mirrors CQ Signal's V1GoogleLsaBlock.
+
+export type GoogleLsaLeadType = {
+  type: string;
+  label: string;
+  leads: number;
+};
+
+export type GoogleLsaCategory = {
+  category: string;
+  label: string;
+  leads: number;
+};
+
+export type GoogleLsaSnapshot = {
+  status: IntegrationStatus;
+  source?: string;
+  source_description?: string;
+  totals?: {
+    leads: Delta;
+    charged_leads: Delta;
+    credited_leads: Delta;
+    cost: Delta;
+    cost_per_lead: CurrentPrior;
+  };
+  /** Current-window lead mix by contact type, desc by leads. */
+  by_type?: GoogleLsaLeadType[];
+  /** Current-window lead mix by service category, desc by leads. */
+  by_category?: GoogleLsaCategory[];
+};
+
 // --- Omnisend ---
 
 export type OmnisendCampaignEntry = {
@@ -416,6 +449,9 @@ export type SignalSnapshot = {
   typeform: TypeformSnapshot;
   google_ads: GoogleAdsSnapshot;
   meta_ads: MetaAdsSnapshot;
+  // Optional: payloads pushed before LSA shipped (2026-06-12) lack this block,
+  // so guard with `?.` in the renderer rather than assuming it's present.
+  google_lsa?: GoogleLsaSnapshot;
   instagram: InstagramSnapshot;
   facebook: FacebookSnapshot;
   linkedin: ManualChannelBlock;

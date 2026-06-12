@@ -199,6 +199,7 @@ export default async function ReportDetailPage({ params, searchParams }: Props) 
   const topAd = ads.top_campaigns?.[0];
   const metaAds = snapshot.meta_ads;
   const topMeta = metaAds.top_campaigns?.[0];
+  const lsa = snapshot.google_lsa;
   const omni = snapshot.omnisend;
   const fb = snapshot.facebook;
   const fbTop = fb.top_post;
@@ -528,6 +529,66 @@ export default async function ReportDetailPage({ params, searchParams }: Props) 
                 Top campaign by spend:{" "}
                 <span className="text-gray-900 dark:text-white">{topMeta.name}</span> ·{" "}
                 {formatCurrency(topMeta.spend)} · {formatNumber(topMeta.clicks)} clicks
+              </p>
+            ) : null}
+          </SectionCard>
+        </div>
+      ) : null}
+
+      {/* Local Services Ads — pay-per-lead. Lead-based, so it leads with lead
+          volume and cost per lead, not impressions/clicks. */}
+      {lsa?.status === "live" && lsa.totals ? (
+        <div className="mt-6">
+          <SectionCard eyebrow="Paid · Google LSA" title="Local Services Ads">
+            <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+              <MetricTile
+                label="Leads"
+                value={formatNumber(lsa.totals.leads.current)}
+                deltaPct={lsa.totals.leads.delta_pct}
+                highlight
+              />
+              <MetricTile
+                label="Charged leads"
+                value={formatNumber(lsa.totals.charged_leads.current)}
+                deltaPct={lsa.totals.charged_leads.delta_pct}
+              />
+              <MetricTile
+                label="Spend"
+                value={formatCurrency(lsa.totals.cost.current)}
+                deltaPct={lsa.totals.cost.delta_pct}
+              />
+              <MetricTile
+                label="Cost / lead"
+                value={formatCurrency(lsa.totals.cost_per_lead.current)}
+                deltaPct={cpDelta(lsa.totals.cost_per_lead)}
+                invertSign
+              />
+            </div>
+            {(lsa.by_category ?? []).length > 0 ? (
+              <div className="mt-6">
+                <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.22em] text-gray-500 dark:text-gray-400">
+                  Leads by category
+                </p>
+                <ul className="mt-3 divide-y divide-gray-200 dark:divide-navy-light/40">
+                  {(lsa.by_category ?? []).map((c) => (
+                    <li
+                      key={c.category}
+                      className="flex items-center justify-between gap-3 py-2.5 text-sm text-gray-900 dark:text-white"
+                    >
+                      <span className="truncate">{c.label}</span>
+                      <span className="font-mono text-xs tabular-nums text-gray-600 dark:text-gray-300">
+                        {formatNumber(c.leads)} leads
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            {(lsa.by_type ?? []).length > 0 ? (
+              <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
+                {(lsa.by_type ?? [])
+                  .map((t) => `${t.label}: ${formatNumber(t.leads)}`)
+                  .join(" · ")}
               </p>
             ) : null}
           </SectionCard>
